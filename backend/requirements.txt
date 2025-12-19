@@ -1,8 +1,29 @@
-Django==6.0
-djangorestframework==3.16.1
-django-cors-headers==4.9.0
-psycopg2-binary==2.9.11
-python-decouple==3.8
-google-generativeai==0.7.0
-Pillow==11.0.0
-workos==1.0.0
+# Core Django framework
+Django>=6.0
+djangorestframework>=3.16.1
+
+# Database adapters
+psycopg2>=2.9.11
+# For local development with SQLite (included with Python)
+
+# Web server for production
+gunicorn>=23.0.0
+
+# CORS handling
+django-cors-headers>=4.9.0
+
+# Authentication and external services
+workos>=5.37.0
+
+# AI integration
+google-generativeai>=0.8.6
+
+# Image processing
+Pillow>=12.0.0
+
+# Testing
+pytest>=8.3.0
+pytest-django>=4.9.0
+
+# Development utilities
+python-dotenv>=1.0.1

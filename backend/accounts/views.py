@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.conf import settings
-from workos import WorkOS
+from workos import WorkOSClient
 from .models import User
 from .serializers import UserSerializer, UserProfileSerializer
 from .permissions import IsAdmin
@@ -55,7 +55,7 @@ class WorkOSAuthView(APIView):
     
     def post(self, request):
         # Initialize WorkOS
-        workos = WorkOS(settings.WORKOS_API_KEY)
+        workos = WorkOSClient(api_key=settings.WORKOS_API_KEY)
         
         # Get the authorization code from the request
         code = request.data.get('code')

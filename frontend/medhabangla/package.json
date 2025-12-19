@@ -10,21 +10,29 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/hind-siliguri": "^5.2.7",
+    "@fontsource/inter": "^5.2.8",
+    "@tailwindcss/postcss": "^4.1.18",
+    "dexie": "^3.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "dexie": "^3.2.4",
-    "react-pdf": "^7.7.1"
+    "react-pdf": "^10.2.0",
+    "react-router-dom": "^7.11.0",
+    "vite-plugin-pwa": "^1.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.4.23",
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.2.2",
-    "vite": "^5.0.8"
+    "vite": "^7.3.0"
   }
 }

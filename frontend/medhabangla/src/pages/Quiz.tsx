@@ -74,18 +74,6 @@ const Quiz: React.FC = () => {
     setQuizFinished(true);
   };
 
-  const handleImproveWithAI = async () => {
-    // Collect wrong answers for AI remediation
-    const wrongAnswers = Object.keys(mistakes).map(index => ({
-      question: quizData.questions[parseInt(index)].text,
-      userAnswer: selectedAnswers[parseInt(index)],
-      correctAnswer: quizData.questions[parseInt(index)].correctAnswer
-    }));
-    
-    // In a real implementation, this would call the backend API
-    // For now, we'll simulate the AI response
-    console.log('Sending to AI for remediation:', wrongAnswers);
-    
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -126,6 +114,8 @@ Conceptual gaps identified in: ${wrongAnswers.length} questions
 
 In Bangla: This feature would explain the concepts in Bangla and provide 3 check-for-understanding points.`);
   };
+
+  const currentQ = quizData.questions[currentQuestion];
 
   if (quizFinished) {
     const score = calculateScore();
@@ -200,8 +190,6 @@ In Bangla: This feature would explain the concepts in Bangla and provide 3 check
       </div>
     );
   }
-
-  const currentQ = quizData.questions[currentQuestion];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
