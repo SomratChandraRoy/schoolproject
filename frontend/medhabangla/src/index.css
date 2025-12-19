@@ -1,9 +1,9 @@
-@import '@fontsource/inter';
-@import '@fontsource/hind-siliguri';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import '@fontsource/inter';
+@import '@fontsource/hind-siliguri';
 
 :root {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
