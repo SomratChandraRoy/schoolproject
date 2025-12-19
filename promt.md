@@ -10,4 +10,9 @@ The all quizes are class specific . When user first signin ask her class, and fa
 8. Also the website have a book reading section he can read books according her interest like , story , poem ,poetry also  the books is bangla and when he chhose language englsih so he can see books in english language ok . 
 9. Also the website use workos.com for add just google signin option for authentication . 
 10. The website have white and dark mode of all pages .
-11. The website has PWA option , that user can installed it when user installed it , user can get notes , ai help user for geting notes class specific or normal , the notes are saved to user machine storage and user can read the notes in offline . if user download the web app all time he see the notes option also , ai help for getting notes , a button that is take notes for user , her problems and her questions answer automaticaly and add ai automaticaly in notes and also the notes are saved in user machine storage so the notes are show when offline and onliine both . 
+
+
+
+
+
+first read and understand the whole project . Than cheack all feauters are work or not work cheack website all feauters and prompt.mf file all feauters are added or not added .if any featuers not work or not added add it . if any error so solve it all time first identify main root cause then solve it .
