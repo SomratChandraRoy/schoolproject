@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, StudySession
+from .models import User, StudySession, Note
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -27,3 +27,9 @@ class StudySessionSerializer(serializers.ModelSerializer):
         model = StudySession
         fields = ('id', 'user', 'subject', 'duration', 'date', 'created_at')
         read_only_fields = ('id', 'user', 'date', 'created_at')
+
+class NoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Note
+        fields = ('id', 'user', 'title', 'content', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'user', 'created_at', 'updated_at')

@@ -39,11 +39,11 @@ class QuizListCreateView(generics.ListCreateAPIView):
         return queryset
     
     def perform_create(self, serializer):
-        # Only teachers can create quizzes
-        if self.request.user.is_teacher:
+        # Only teachers and admins can create quizzes
+        if self.request.user.is_teacher or self.request.user.is_admin:
             serializer.save()
         else:
-            raise permissions.PermissionDenied("Only teachers can create quizzes.")
+            raise permissions.PermissionDenied("Only teachers and admins can create quizzes.")
 
 
 class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -52,18 +52,18 @@ class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, IsTeacherOrAdmin]
     
     def perform_update(self, serializer):
-        # Only teachers can update quizzes
-        if self.request.user.is_teacher:
+        # Only teachers and admins can update quizzes
+        if self.request.user.is_teacher or self.request.user.is_admin:
             serializer.save()
         else:
-            raise permissions.PermissionDenied("Only teachers can update quizzes.")
+            raise permissions.PermissionDenied("Only teachers and admins can update quizzes.")
     
     def perform_destroy(self, instance):
-        # Only teachers can delete quizzes
-        if self.request.user.is_teacher:
+        # Only teachers and admins can delete quizzes
+        if self.request.user.is_teacher or self.request.user.is_admin:
             instance.delete()
         else:
-            raise permissions.PermissionDenied("Only teachers can delete quizzes.")
+            raise permissions.PermissionDenied("Only teachers and admins can delete quizzes.")
 
 
 class QuizAttemptView(APIView):

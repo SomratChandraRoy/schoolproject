@@ -33,6 +33,26 @@ export const useOfflineNotes = () => {
   // Load notes from IndexedDB
   useEffect(() => {
     loadNotes();
+    
+    // Attempt to sync when the component mounts if we have a token and are online
+    const token = localStorage.getItem('token');
+    if (navigator.onLine && token) {
+      syncNotesWithBackend(token);
+    }
+
+    // Add event listener for online status
+    const handleOnline = () => {
+      const currentToken = localStorage.getItem('token');
+      if (currentToken) {
+        syncNotesWithBackend(currentToken);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
   }, []);
 
   const loadNotes = async () => {
@@ -90,36 +110,42 @@ export const useOfflineNotes = () => {
   };
 
   // Sync notes with backend (when online)
-  // const syncNotesWithBackend = async (authToken: string) => {
-  //   try {
-  //     // Get all local notes
-  //     const localNotes = await db.notes.toArray();
-  //     
-  //     // In a real implementation, you would send these to your backend API
-  //     // For now, we'll just log them
-  //     console.log('Syncing notes with backend:', localNotes);
-  //     
-  //     // Example API call (uncomment and modify as needed):
-  //     /*
-  //     const response = await fetch('/api/offline-notes/sync/', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Token ${authToken}`
-  //       },
-  //       body: JSON.stringify({ notes: localNotes })
-  //     });
-  //     
-  //     if (response.ok) {
-  //       // Clear synced notes from local storage if needed
-  //       console.log('Notes synced successfully');
-  //     }
-  //     */
-  //   } catch (error) {
-  //     console.error('Error syncing notes with backend:', error);
-  //     throw error;
-  //   }
-  // };
+  const syncNotesWithBackend = async (authToken: string) => {
+    try {
+      // Get all local notes
+      const localNotes = await db.notes.toArray();
+      
+      // In a real implementation, you would send these to your backend API
+      // For now, we'll just log them
+      console.log('Syncing notes with backend:', localNotes);
+      
+      const response = await fetch('http://localhost:8000/api/accounts/notes/sync/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${authToken}`
+        },
+        body: JSON.stringify({ notes: localNotes })
+      });
+      
+      if (response.ok) {
+        const syncedNotes = await response.json();
+        console.log('Notes synced successfully:', syncedNotes);
+        
+        // Update local notes with backend IDs if they were new
+        // Ideally we should replace local DB content with backend response to be in sync
+        await db.transaction('rw', db.notes, async () => {
+             await db.notes.clear();
+             await db.notes.bulkAdd(syncedNotes);
+        });
+        
+        await loadNotes();
+      }
+    } catch (error) {
+      console.error('Error syncing notes with backend:', error);
+      // throw error; // Don't throw to avoid breaking UI if offline
+    }
+  };
 
   return {
     notes,
@@ -127,6 +153,7 @@ export const useOfflineNotes = () => {
     addNote,
     updateNote,
     deleteNote,
-    refreshNotes: loadNotes
+    refreshNotes: loadNotes,
+    syncNotesWithBackend
   };
 };

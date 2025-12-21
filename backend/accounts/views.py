@@ -6,9 +6,40 @@ from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from django.db.models import Sum
 from datetime import timedelta
-from .models import User, StudySession
-from .serializers import UserSerializer, UserProfileSerializer, StudySessionSerializer
+from django.conf import settings
+from workos import WorkOSClient
+from rest_framework.authtoken.models import Token
+from .models import User, StudySession, Note
+from .serializers import UserSerializer, UserProfileSerializer, StudySessionSerializer, NoteSerializer
 from .permissions import IsAdmin
+from quizzes.models import QuizAttempt
+from games.models import GameSession
+from books.models import Bookmark
+
+class UserDashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        
+        # Get stats
+        quizzes_taken = QuizAttempt.objects.filter(user=user).count()
+        games_played = GameSession.objects.filter(user=user).count()
+        # Count unique books bookmarked as a proxy for books read
+        books_read = Bookmark.objects.filter(user=user).values('book').distinct().count()
+        
+        return Response({
+            'user': UserProfileSerializer(user).data,
+            'stats': {
+                'total_points': user.total_points,
+                'quizzes_taken': quizzes_taken,
+                'games_played': games_played,
+                'books_read': books_read,
+                'current_streak': user.current_streak,
+                'longest_streak': user.longest_streak,
+                'total_study_time': user.total_study_time
+            }
+        })
 
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -112,6 +143,15 @@ class StudyStatsView(APIView):
             'weekly_study_time': weekly_study_time,
             'subject_breakdown': list(subject_breakdown)
         })
+
+class GlobalLeaderboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Top 20 students by total points
+        top_students = User.objects.filter(is_student=True).order_by('-total_points')[:20]
+        serializer = UserProfileSerializer(top_students, many=True)
+        return Response(serializer.data)
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
@@ -260,6 +300,54 @@ class AdminPanelView(APIView):
             return Response({
                 'error': 'User not found'
             }, status=status.HTTP_404_NOT_FOUND)
+
+class NoteListCreateView(generics.ListCreateAPIView):
+    serializer_class = NoteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Note.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class NoteDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = NoteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Note.objects.filter(user=self.request.user)
+
+class NoteSyncView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        notes_data = request.data.get('notes', [])
+        synced_notes = []
+
+        for note_data in notes_data:
+            # If backend ID exists, update
+            if note_data.get('id'):
+                try:
+                    note = Note.objects.get(id=note_data['id'], user=request.user)
+                    serializer = NoteSerializer(note, data=note_data, partial=True)
+                    if serializer.is_valid():
+                        serializer.save()
+                        synced_notes.append(serializer.data)
+                except Note.DoesNotExist:
+                    # Treat as new if ID not found (unlikely but safe)
+                    serializer = NoteSerializer(data=note_data)
+                    if serializer.is_valid():
+                        serializer.save(user=request.user)
+                        synced_notes.append(serializer.data)
+            else:
+                # Create new
+                serializer = NoteSerializer(data=note_data)
+                if serializer.is_valid():
+                    serializer.save(user=request.user)
+                    synced_notes.append(serializer.data)
+        
+        return Response(synced_notes)
 
 
 class UpdateUserProfileView(APIView):

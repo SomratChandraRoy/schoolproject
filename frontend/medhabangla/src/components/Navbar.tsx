@@ -20,11 +20,20 @@ const Navbar: React.FC = () => {
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Quizzes', path: '/quiz' },
+    { name: 'Quizzes', path: '/quiz/select' },
     { name: 'Books', path: '/books' },
     { name: 'Games', path: '/games' },
-    { name: 'Profile', path: '/profile' },
+    { name: 'Leaderboard', path: '/leaderboard' },
+    { name: 'Notes', path: '/notes' },
   ];
+
+  if (user && (user.is_teacher || user.is_admin)) {
+    navItems.push({ name: 'Manage Quizzes', path: '/quiz/manage' });
+  }
+
+  if (user && user.is_admin) {
+    navItems.push({ name: 'Admin', path: '/admin-dashboard' });
+  }
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow">

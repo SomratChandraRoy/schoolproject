@@ -25,7 +25,7 @@ const Dashboard: React.FC = () => {
         return;
       }
 
-      const response = await fetch('/api/accounts/profile/', {
+      const response = await fetch('/api/accounts/dashboard/', {
         headers: {
           'Authorization': `Token ${token}`
         }
@@ -33,15 +33,15 @@ const Dashboard: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setUserData(data);
-        localStorage.setItem('user', JSON.stringify(data));
+        setUserData(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
         
         // Update stats with real data
         setStats([
-          { name: "Total Points", value: data.total_points || 0 },
-          { name: "Quizzes Taken", value: 0 }, // TODO: Fetch from analytics
-          { name: "Games Played", value: 0 }, // TODO: Fetch from game sessions
-          { name: "Books Read", value: 0 }, // TODO: Fetch from books
+          { name: "Total Points", value: data.stats.total_points || 0 },
+          { name: "Quizzes Taken", value: data.stats.quizzes_taken || 0 },
+          { name: "Games Played", value: data.stats.games_played || 0 },
+          { name: "Books Read", value: data.stats.books_read || 0 },
         ]);
       } else {
         // Token might be invalid, redirect to login

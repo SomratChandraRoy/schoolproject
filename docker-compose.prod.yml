@@ -33,7 +33,7 @@ services:
       context: ./frontend/medhabangla
       dockerfile: Dockerfile.prod
     volumes:
-      - frontend_build:/app/dist
+      - frontend_build:/usr/share/nginx/html
     expose:
       - "80"
     restart: unless-stopped

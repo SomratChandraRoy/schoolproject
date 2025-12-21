@@ -10,9 +10,11 @@ import Quiz from './pages/Quiz';
 import QuizSelection from './pages/QuizSelection';
 import Books from './pages/Books';
 import Games from './pages/Games';
+import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import Notes from './pages/Notes';
 import AdminDashboard from './pages/AdminDashboard';
+import QuizManagement from './pages/QuizManagement';
 import AuthCallback from './pages/AuthCallback';
 import Syllabus from './pages/Syllabus';
 import StudyTimer from './pages/StudyTimer';
@@ -20,9 +22,13 @@ import StudyStats from './pages/StudyStats';
 
 // Import components
 import AIChat from './components/AIChat';
+import ProtectedRoute from './components/ProtectedRoute';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 
 function App() {
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
   return (
     <DarkModeProvider>
       <Router>
@@ -31,18 +37,31 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/quiz/select" element={<QuizSelection />} />
-            <Route path="/quiz" element={<Quiz />} />
-            <Route path="/books" element={<Books />} />
-            <Route path="/games" element={<Games />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/notes" element={<Notes />} />
-            <Route path="/syllabus" element={<Syllabus />} />
-            <Route path="/study-timer" element={<StudyTimer />} />
-            <Route path="/study-stats" element={<StudyStats />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            
+            {/* Protected Routes for Authenticated Users */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/quiz/select" element={<QuizSelection />} />
+              <Route path="/quiz" element={<Quiz />} />
+              <Route path="/books" element={<Books />} />
+              <Route path="/games" element={<Games />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/notes" element={<Notes />} />
+              <Route path="/syllabus" element={<Syllabus />} />
+              <Route path="/study-timer" element={<StudyTimer />} />
+              <Route path="/study-stats" element={<StudyStats />} />
+            </Route>
+
+            {/* Protected Routes for Admin */}
+            <Route element={<ProtectedRoute isAllowed={!!user && user.is_admin} redirectPath="/dashboard" />}>
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            </Route>
+
+            {/* Protected Routes for Teachers and Admins */}
+            <Route element={<ProtectedRoute isAllowed={!!user && (user.is_teacher || user.is_admin)} redirectPath="/dashboard" />}>
+              <Route path="/quiz/manage" element={<QuizManagement />} />
+            </Route>
           </Routes>
           <AIChat />
         </div>
