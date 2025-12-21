@@ -12,6 +12,9 @@ class User(AbstractUser):
     fav_subjects = models.JSONField(default=list, blank=True)
     disliked_subjects = models.JSONField(default=list, blank=True)
     total_points = models.IntegerField(default=0)
+    
+    # Role fields
+    is_student = models.BooleanField(default=True)  # Default role is student
     is_teacher = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     

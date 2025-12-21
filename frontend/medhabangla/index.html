@@ -1,13 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MedhaBangla - Educational Platform for Bangladeshi Students</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+
+  <!-- Primary Meta Tags -->
+  <title>MedhaBangla - Educational Platform for Bangladeshi Students</title>
+  <meta name="title" content="MedhaBangla - Educational Platform for Bangladeshi Students" />
+  <meta name="description"
+    content="AI-powered educational platform for Class 6-12 students with quizzes, games, digital library, and personalized learning." />
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="MedhaBangla" />
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="MedhaBangla - Educational Platform" />
+  <meta property="og:description" content="AI-powered educational platform for Bangladeshi students" />
+  <meta property="og:image" content="/icon-512.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="MedhaBangla - Educational Platform" />
+  <meta property="twitter:description" content="AI-powered educational platform for Bangladeshi students" />
+  <meta property="twitter:image" content="/icon-512.png" />
+
+  <!-- Preconnect to external domains -->
+  <link rel="preconnect" href="https://api.workos.com" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+  <!-- Fonts -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    as="style" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+
+  <!-- Install prompt for PWA -->
+  <noscript>
+    <div style="padding: 20px; text-align: center; background: #fee; color: #c00;">
+      JavaScript is required to run this application. Please enable JavaScript in your browser.
+    </div>
+  </noscript>
+</body>
+
 </html>

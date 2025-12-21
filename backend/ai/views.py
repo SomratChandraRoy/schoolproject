@@ -6,8 +6,9 @@ from rest_framework.views import APIView
 from django.conf import settings
 from .models import AIChatSession, AIChatMessage, OfflineNote, RemedialExplanation
 from .serializers import AIChatSessionSerializer, AIChatMessageSerializer, OfflineNoteSerializer, RemedialExplanationSerializer
-from accounts.models import User
-from quizzes.models import Quiz, Analytics
+from .ai_helper import ai_helper
+from accounts.models import User, StudySession
+from quizzes.models import Quiz, Analytics, QuizAttempt
 from quizzes.serializers import QuizSerializer
 
 
@@ -290,3 +291,158 @@ class ManageClassQuestionsView(APIView):
             return Response({'error': 'Question not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f'Error deleting question: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class GenerateStudyNotesView(APIView):
+    """Generate AI-powered study notes from content"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        content = request.data.get('content')
+        subject = request.data.get('subject', 'General')
+        note_type = request.data.get('note_type', 'summary')  # summary, flashcard, detailed
+        
+        if not content:
+            return Response({'error': 'Content is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            notes = ai_helper.generate_study_notes(
+                content=content,
+                class_level=user.class_level or 9,
+                subject=subject,
+                note_type=note_type
+            )
+            
+            return Response({'notes': notes})
+        except Exception as e:
+            return Response({'error': f'Error generating notes: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GenerateBookSummaryView(APIView):
+    """Generate AI summary of a book chapter"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        book_title = request.data.get('book_title')
+        chapter = request.data.get('chapter')
+        
+        if not book_title or not chapter:
+            return Response({'error': 'Book title and chapter are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            summary = ai_helper.generate_book_summary(
+                book_title=book_title,
+                chapter=chapter,
+                class_level=user.class_level or 9
+            )
+            
+            return Response({'summary': summary})
+        except Exception as e:
+            return Response({'error': f'Error generating summary: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GenerateGameHintView(APIView):
+    """Generate AI hints for games"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        game_type = request.data.get('game_type')
+        difficulty = request.data.get('difficulty', 'medium')
+        current_state = request.data.get('current_state', '')
+        
+        if not game_type:
+            return Response({'error': 'Game type is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            hint = ai_helper.generate_game_hint(
+                game_type=game_type,
+                difficulty=difficulty,
+                current_state=current_state
+            )
+            
+            return Response({'hint': hint})
+        except Exception as e:
+            return Response({'error': f'Error generating hint: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AnalyzeStudyPatternView(APIView):
+    """Analyze student's study pattern and provide recommendations"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        
+        try:
+            # Get study sessions
+            study_sessions = StudySession.objects.filter(user=user).values('subject', 'duration', 'date')
+            study_sessions_list = list(study_sessions)
+            
+            # Get quiz attempts
+            quiz_attempts = QuizAttempt.objects.filter(user=user).values('is_correct', 'attempted_at')
+            quiz_attempts_list = list(quiz_attempts)
+            
+            # Generate analysis
+            analysis = ai_helper.analyze_study_pattern(
+                study_sessions=study_sessions_list,
+                quiz_attempts=quiz_attempts_list,
+                class_level=user.class_level or 9
+            )
+            
+            return Response(analysis)
+        except Exception as e:
+            return Response({'error': f'Error analyzing study pattern: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GenerateSyllabusBreakdownView(APIView):
+    """Generate detailed breakdown of a syllabus chapter"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        subject = request.data.get('subject')
+        chapter = request.data.get('chapter')
+        
+        if not subject or not chapter:
+            return Response({'error': 'Subject and chapter are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            breakdown = ai_helper.generate_syllabus_breakdown(
+                subject=subject,
+                class_level=user.class_level or 9,
+                chapter=chapter
+            )
+            
+            return Response(breakdown)
+        except Exception as e:
+            return Response({'error': f'Error generating breakdown: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ImprovedRemedialLearningView(APIView):
+    """Enhanced remedial learning with AI helper"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        question = request.data.get('question')
+        user_answer = request.data.get('user_answer')
+        correct_answer = request.data.get('correct_answer')
+        subject = request.data.get('subject', 'General')
+        
+        if not all([question, user_answer, correct_answer]):
+            return Response({'error': 'Question, user answer, and correct answer are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            explanation = ai_helper.generate_remedial_explanation(
+                question=question,
+                user_answer=user_answer,
+                correct_answer=correct_answer,
+                class_level=user.class_level or 9,
+                subject=subject
+            )
+            
+            return Response({'explanation': explanation})
+        except Exception as e:
+            return Response({'error': f'Error generating explanation: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

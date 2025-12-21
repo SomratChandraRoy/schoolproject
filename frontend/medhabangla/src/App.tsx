@@ -23,6 +23,8 @@ import StudyStats from './pages/StudyStats';
 // Import components
 import AIChat from './components/AIChat';
 import ProtectedRoute from './components/ProtectedRoute';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
+import OfflineIndicator from './components/OfflineIndicator';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 
 function App() {
@@ -33,12 +35,15 @@ function App() {
     <DarkModeProvider>
       <Router>
         <div className="App">
+          {/* Offline/Online Indicator */}
+          <OfflineIndicator />
+
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            
+
             {/* Protected Routes for Authenticated Users */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
@@ -46,6 +51,7 @@ function App() {
               <Route path="/quiz" element={<Quiz />} />
               <Route path="/books" element={<Books />} />
               <Route path="/games" element={<Games />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/notes" element={<Notes />} />
               <Route path="/syllabus" element={<Syllabus />} />
@@ -63,7 +69,12 @@ function App() {
               <Route path="/quiz/manage" element={<QuizManagement />} />
             </Route>
           </Routes>
+
+          {/* AI Chat Assistant */}
           <AIChat />
+
+          {/* PWA Install Prompt */}
+          <PWAInstallPrompt />
         </div>
       </Router>
     </DarkModeProvider>
