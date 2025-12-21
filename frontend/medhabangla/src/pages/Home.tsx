@@ -95,6 +95,7 @@ const Home: React.FC = () => {
 
         <div className="mt-16 text-center">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">How It Works</h2>
+          <p className="test-css-loading">If you see this text in red and bold, CSS is working!</p>
           <div className="flex flex-col md:flex-row justify-center items-center space-y-8 md:space-y-0 md:space-x-12">
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-2xl font-bold mb-4">1</div>

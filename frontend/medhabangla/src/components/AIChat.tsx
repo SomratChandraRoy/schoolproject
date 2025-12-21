@@ -19,6 +19,7 @@ const AIChat: React.FC = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -41,33 +42,55 @@ const AIChat: React.FC = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentMessage = inputValue;
     setInputValue('');
     setIsLoading(true);
 
     try {
       // Get auth token
       const token = localStorage.getItem('token');
-      
+
+      // Create session if not exists
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        const sessionResponse = await fetch('http://localhost:8000/api/ai/chat/start/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${token}`
+          }
+        });
+
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json();
+          currentSessionId = sessionData.session_id;
+          setSessionId(currentSessionId);
+        } else {
+          throw new Error('Failed to create chat session');
+        }
+      }
+
       // Call backend API to get AI response
-      const response = await fetch('/api/ai/chat/', {
+      const response = await fetch('http://localhost:8000/api/ai/chat/message/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Token ${token}`
         },
         body: JSON.stringify({
-          message: inputValue,
+          session_id: currentSessionId,
+          message: currentMessage,
           message_type: 'general'
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Add AI response
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: data.ai_message.message,
+          text: data.ai_message.message || data.ai_message,
           isUser: false,
           timestamp: new Date()
         };
@@ -99,22 +122,22 @@ const AIChat: React.FC = () => {
 
   const saveConversationToNotes = async () => {
     if (messages.length <= 1) return; // Don't save if only the welcome message
-    
+
     try {
       // Format conversation as note content
       let noteContent = '# AI Chat Conversation\n\n';
-      
+
       messages.forEach(message => {
         const role = message.isUser ? 'You' : 'AI Assistant';
         const timestamp = message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         noteContent += `**${role} (${timestamp}):**\n${message.text}\n\n`;
       });
-      
+
       // Get auth token
       const token = localStorage.getItem('token');
-      
+
       // Save to backend
-      const response = await fetch('/api/ai/offline-notes/', {
+      const response = await fetch('http://localhost:8000/api/ai/notes/save/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +148,7 @@ const AIChat: React.FC = () => {
           content: noteContent
         })
       });
-      
+
       if (response.ok) {
         // Show success message
         const successMessage: Message = {
@@ -134,7 +157,7 @@ const AIChat: React.FC = () => {
           isUser: false,
           timestamp: new Date()
         };
-        
+
         setMessages(prev => [...prev, successMessage]);
       } else {
         throw new Error('Failed to save conversation');
@@ -204,11 +227,10 @@ const AIChat: React.FC = () => {
                 className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.isUser
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'
-                  }`}
+                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.isUser
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'
+                    }`}
                 >
                   <p className="text-sm">{message.text}</p>
                   <p className={`text-xs mt-1 ${message.isUser ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
@@ -246,11 +268,10 @@ const AIChat: React.FC = () => {
               <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isLoading}
-                className={`bg-blue-600 text-white px-4 py-2 rounded-r-lg font-medium ${
-                  !inputValue.trim() || isLoading
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-blue-700'
-                }`}
+                className={`bg-blue-600 text-white px-4 py-2 rounded-r-lg font-medium ${!inputValue.trim() || isLoading
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'hover:bg-blue-700'
+                  }`}
               >
                 Send
               </button>

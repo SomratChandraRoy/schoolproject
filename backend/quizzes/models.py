@@ -24,6 +24,7 @@ class Quiz(models.Model):
     class_target = models.IntegerField(choices=[(i, f'Class {i}') for i in range(6, 13)])
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES)
     question_text = models.TextField()
+    question_type = models.CharField(max_length=10, choices=[('mcq', 'Multiple Choice'), ('short', 'Short Answer'), ('long', 'Long Answer')], default='mcq')
     options = models.JSONField(default=dict)  # Store options as JSON (for MCQ, short, long)
     correct_answer = models.TextField()
     explanation = models.TextField(blank=True)

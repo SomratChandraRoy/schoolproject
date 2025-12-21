@@ -15,4 +15,3 @@ The all quizes are class specific . When user first signin ask her class, and fa
 
 
 
-first read and understand the whole project . Than cheack all feauters are work or not work cheack website all feauters and prompt.mf file all feauters are added or not added .if any featuers not work or not added add it . if any error so solve it all time first identify main root cause then solve it .

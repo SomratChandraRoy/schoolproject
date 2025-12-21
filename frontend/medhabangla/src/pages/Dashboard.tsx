@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 const Dashboard: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode] = useState(false);
 
   // Mock data for dashboard
   const userData = {
@@ -26,13 +26,13 @@ const Dashboard: React.FC = () => {
     { name: "Books Read", value: 5 },
   ];
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // In a real app, you would save this preference to localStorage
-  };
+  // const toggleDarkMode = () => {
+  //   setDarkMode(!darkMode);
+  //   // In a real app, you would save this preference to localStorage
+  // };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

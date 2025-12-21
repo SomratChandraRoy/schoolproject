@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 const Games: React.FC = () => {
   const navigate = useNavigate();
-  const [userPoints, setUserPoints] = useState(25); // For testing, set to a value above threshold
+  const [userPoints] = useState(25); // For testing, set to a value above threshold
   const [requiredPoints] = useState(20);
   const [activeGame, setActiveGame] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds

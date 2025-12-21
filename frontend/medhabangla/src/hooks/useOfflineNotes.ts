@@ -90,36 +90,36 @@ export const useOfflineNotes = () => {
   };
 
   // Sync notes with backend (when online)
-  const syncNotesWithBackend = async (authToken: string) => {
-    try {
-      // Get all local notes
-      const localNotes = await db.notes.toArray();
-      
-      // In a real implementation, you would send these to your backend API
-      // For now, we'll just log them
-      console.log('Syncing notes with backend:', localNotes);
-      
-      // Example API call (uncomment and modify as needed):
-      /*
-      const response = await fetch('/api/offline-notes/sync/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${authToken}`
-        },
-        body: JSON.stringify({ notes: localNotes })
-      });
-      
-      if (response.ok) {
-        // Clear synced notes from local storage if needed
-        console.log('Notes synced successfully');
-      }
-      */
-    } catch (error) {
-      console.error('Error syncing notes with backend:', error);
-      throw error;
-    }
-  };
+  // const syncNotesWithBackend = async (authToken: string) => {
+  //   try {
+  //     // Get all local notes
+  //     const localNotes = await db.notes.toArray();
+  //     
+  //     // In a real implementation, you would send these to your backend API
+  //     // For now, we'll just log them
+  //     console.log('Syncing notes with backend:', localNotes);
+  //     
+  //     // Example API call (uncomment and modify as needed):
+  //     /*
+  //     const response = await fetch('/api/offline-notes/sync/', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Token ${authToken}`
+  //       },
+  //       body: JSON.stringify({ notes: localNotes })
+  //     });
+  //     
+  //     if (response.ok) {
+  //       // Clear synced notes from local storage if needed
+  //       console.log('Notes synced successfully');
+  //     }
+  //     */
+  //   } catch (error) {
+  //     console.error('Error syncing notes with backend:', error);
+  //     throw error;
+  //   }
+  // };
 
   return {
     notes,
@@ -127,7 +127,6 @@ export const useOfflineNotes = () => {
     addNote,
     updateNote,
     deleteNote,
-    syncNotesWithBackend,
     refreshNotes: loadNotes
   };
 };

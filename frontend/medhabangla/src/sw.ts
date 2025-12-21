@@ -1,24 +1,22 @@
 /// <reference lib="webworker" />
 
-declare const self: ServiceWorkerGlobalScope;
-
-// Dexie for IndexedDB
-import Dexie from 'dexie';
-
-// Create a database for offline notes
-class NotesDatabase extends Dexie {
-  notes: Dexie.Table<any, number>;
-
-  constructor() {
-    super('MedhaBanglaNotes');
-    this.version(1).stores({
-      notes: '++id, title, content, createdAt'
-    });
-    this.notes = this.table('notes');
-  }
+// Define types for service worker events
+interface ExtendableEvent extends Event {
+  waitUntil(f: Promise<any>): void;
 }
 
-const db = new NotesDatabase();
+interface FetchEvent extends Event {
+  readonly request: Request;
+  respondWith(r: Response | Promise<Response>): void;
+}
+
+interface ExtendableMessageEvent extends ExtendableEvent {
+  readonly data: any;
+}
+
+interface SyncEvent extends ExtendableEvent {
+  readonly tag: string;
+}
 
 // Cache name
 const CACHE_NAME = 'medhabangla-v1';
@@ -39,7 +37,7 @@ const urlsToCache = [
   '/src/pages/AdminDashboard.tsx',
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', (event: ExtendableEvent) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -49,7 +47,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', (event: FetchEvent) => {
   // For API requests, try network first, then cache
   if (event.request.url.includes('/api/')) {
     event.respondWith(
@@ -109,7 +107,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', (event: ExtendableEvent) => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -125,7 +123,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Handle background sync for saving notes
-self.addEventListener('sync', (event) => {
+self.addEventListener('sync', (event: SyncEvent) => {
   if (event.tag === 'save-note') {
     event.waitUntil(saveNoteInBackground());
   }

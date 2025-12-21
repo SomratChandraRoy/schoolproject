@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 const Quiz: React.FC = () => {
@@ -8,35 +8,85 @@ const Quiz: React.FC = () => {
   const [quizFinished, setQuizFinished] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [mistakes, setMistakes] = useState<{[key: number]: boolean}>({});
+  const [quizData, setQuizData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
-  // Mock quiz data
-  const quizData = {
-    title: "Mathematics Quiz - Algebra Basics",
-    subject: "Mathematics",
-    difficulty: "Medium",
-    classLevel: 9,
-    questions: [
-      {
-        id: 1,
-        text: "What is the value of x in the equation 2x + 5 = 15?",
-        type: "mcq",
-        options: ["x = 5", "x = 10", "x = 7.5", "x = 20"],
-        correctAnswer: "x = 5"
-      },
-      {
-        id: 2,
-        text: "Simplify the expression: 3(x + 4) - 2x",
-        type: "short",
-        correctAnswer: "x + 12"
-      },
-      {
-        id: 3,
-        text: "Explain the process of solving a quadratic equation using the quadratic formula.",
-        type: "long",
-        correctAnswer: "The quadratic formula is x = (-b ± √(b²-4ac)) / (2a). First, identify coefficients a, b, and c from the equation ax² + bx + c = 0. Then substitute these values into the formula and simplify."
+  useEffect(() => {
+    const fetchQuizData = async () => {
+      try {
+        // Get parameters from location state
+        const { subjects, difficulty, classLevel } = location.state || {};
+        
+        // Get auth token
+        const token = localStorage.getItem('token');
+        
+        // Fetch quiz data from backend
+        const response = await fetch(`/api/quizzes/?subject=${subjects[0]}&difficulty=${difficulty}&class_level=${classLevel}`, {
+          headers: {
+            'Authorization': `Token ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Transform data to match expected format
+          const transformedData = {
+            title: `${data[0]?.subject || 'Quiz'} - ${difficulty} Level`,
+            subject: data[0]?.subject || 'General',
+            difficulty: difficulty || 'Medium',
+            classLevel: classLevel || 9,
+            questions: data.map((quiz: any) => ({
+              id: quiz.id,
+              text: quiz.question_text,
+              type: quiz.question_type || 'mcq',
+              options: quiz.options || [],
+              correctAnswer: quiz.correct_answer
+            }))
+          };
+          
+          setQuizData(transformedData);
+        } else {
+          throw new Error('Failed to fetch quiz data');
+        }
+      } catch (error) {
+        console.error('Error fetching quiz data:', error);
+        // Fallback to mock data if API fails
+        setQuizData({
+          title: "Mathematics Quiz - Algebra Basics",
+          subject: "Mathematics",
+          difficulty: "Medium",
+          classLevel: 9,
+          questions: [
+            {
+              id: 1,
+              text: "What is the value of x in the equation 2x + 5 = 15?",
+              type: "mcq",
+              options: ["x = 5", "x = 10", "x = 7.5", "x = 20"],
+              correctAnswer: "x = 5"
+            },
+            {
+              id: 2,
+              text: "Simplify the expression: 3(x + 4) - 2x",
+              type: "short",
+              correctAnswer: "x + 12"
+            },
+            {
+              id: 3,
+              text: "Explain the process of solving a quadratic equation using the quadratic formula.",
+              type: "long",
+              correctAnswer: "The quadratic formula is x = (-b ± √(b²-4ac)) / (2a). First, identify coefficients a, b, and c from the equation ax² + bx + c = 0. Then substitute these values into the formula and simplify."
+            }
+          ]
+        });
+      } finally {
+        setLoading(false);
       }
-    ]
-  };
+    };
+    
+    fetchQuizData();
+  }, [location.state]);
 
   // Timer effect
   React.useEffect(() => {
@@ -49,11 +99,33 @@ const Quiz: React.FC = () => {
     return () => clearInterval(timer);
   }, [timeLeft, quizFinished]);
 
-  const handleAnswerSelect = (answer: string) => {
+  const handleAnswerSelect = async (answer: string) => {
     setSelectedAnswers({
       ...selectedAnswers,
       [currentQuestion]: answer
     });
+    
+    // Send attempt to backend
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Get the current quiz question ID
+      const currentQuizId = quizData.questions[currentQuestion].id;
+      
+      await fetch('/api/quizzes/attempt/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          quiz_id: currentQuizId,
+          selected_answer: answer
+        })
+      });
+    } catch (error) {
+      console.error('Error submitting quiz attempt:', error);
+    }
   };
 
   const handleNextQuestion = () => {
@@ -70,7 +142,29 @@ const Quiz: React.FC = () => {
     }
   };
 
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = async () => {
+    // Calculate score before finishing
+    const score = calculateScore();
+    
+    // Send results to backend
+    try {
+      const token = localStorage.getItem('token');
+      
+      await fetch('/api/quizzes/submit-results/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          score: score,
+          mistakes: mistakes
+        })
+      });
+    } catch (error) {
+      console.error('Error submitting quiz results:', error);
+    }
+    
     setQuizFinished(true);
   };
 
@@ -83,19 +177,27 @@ const Quiz: React.FC = () => {
   const calculateScore = () => {
     let correct = 0;
     const newMistakes: {[key: number]: boolean} = {};
-    quizData.questions.forEach((question, index) => {
-      const isCorrect = selectedAnswers[index] === question.correctAnswer;
-      if (isCorrect) {
-        correct++;
-      } else {
-        newMistakes[index] = true;
+    
+    // Make sure we're checking all questions that were answered
+    Object.keys(selectedAnswers).forEach((key) => {
+      const index = parseInt(key);
+      if (index < quizData.questions.length) {
+        const isCorrect = selectedAnswers[index] === quizData.questions[index].correctAnswer;
+        if (isCorrect) {
+          correct++;
+        } else {
+          newMistakes[index] = true;
+        }
       }
     });
+    
     setMistakes(newMistakes);
-    return Math.round((correct / quizData.questions.length) * 100);
+    const score = quizData.questions.length > 0 ? Math.round((correct / quizData.questions.length) * 100) : 0;
+    console.log('Calculated score:', score, 'Correct:', correct, 'Total:', quizData.questions.length);
+    return score;
   };
 
-  const handleImproveWithAI = () => {
+  const handleImproveWithAI = async () => {
     // Collect wrong answers for AI remediation
     const wrongAnswers = Object.keys(mistakes).map(index => ({
       question: quizData.questions[parseInt(index)].text,
@@ -103,22 +205,76 @@ const Quiz: React.FC = () => {
       correctAnswer: quizData.questions[parseInt(index)].correctAnswer
     }));
     
-    // In a real implementation, this would call the backend API
-    // For now, we'll simulate the AI response
-    console.log('Sending to AI for remediation:', wrongAnswers);
-    
-    // Simulate AI response
-    alert(`AI Remediation Feature would explain:
+    // Send to backend for AI remediation
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/ai/remedial-learning/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          wrong_answers: wrongAnswers
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Show AI remediation in a modal or new page
+        alert(`AI Remediation Explanation:
+
+${data.explanation}`);
+      } else {
+        throw new Error('Failed to get AI remediation');
+      }
+    } catch (error) {
+      console.error('AI Remediation Error:', error);
+      alert(`AI Remediation Feature would explain:
 
 Conceptual gaps identified in: ${wrongAnswers.length} questions
 
 In Bangla: This feature would explain the concepts in Bangla and provide 3 check-for-understanding points.`);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading quiz questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!quizData) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 dark:text-red-400">Failed to load quiz data</p>
+          <Link 
+            to="/quiz/select" 
+            className="mt-4 inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
+          >
+            Try Again
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const currentQ = quizData.questions[currentQuestion];
 
   if (quizFinished) {
+    console.log('Quiz finished, calculating score...');
+    console.log('Selected answers:', selectedAnswers);
+    console.log('Quiz data:', quizData);
     const score = calculateScore();
+    console.log('Final score:', score);
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
@@ -143,18 +299,56 @@ In Bangla: This feature would explain the concepts in Bangla and provide 3 check
                   <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Correct</p>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {Object.keys(selectedAnswers).filter(key => 
-                        selectedAnswers[parseInt(key)] === quizData.questions[parseInt(key)].correctAnswer
-                      ).length}
+                      {Object.keys(selectedAnswers).filter(key => {
+                        const index = parseInt(key);
+                        return index < quizData.questions.length && selectedAnswers[index] === quizData.questions[index].correctAnswer;
+                      }).length}
                     </p>
                   </div>
                   <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Incorrect</p>
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                      {Object.keys(selectedAnswers).filter(key => 
-                        selectedAnswers[parseInt(key)] !== quizData.questions[parseInt(key)].correctAnswer
-                      ).length}
+                      {Object.keys(selectedAnswers).filter(key => {
+                        const index = parseInt(key);
+                        return index < quizData.questions.length && selectedAnswers[index] !== quizData.questions[index].correctAnswer;
+                      }).length}
                     </p>
+                  </div>
+                </div>
+                
+                {/* Detailed Results */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-8">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Detailed Results</h3>
+                  <div className="space-y-4">
+                    {quizData.questions.map((question: any, index: number) => {
+                      const userAnswer = selectedAnswers[index];
+                      const isCorrect = userAnswer === question.correctAnswer;
+                      const wasAnswered = selectedAnswers.hasOwnProperty(index);
+                      
+                      return (
+                        <div key={question.id} className={`p-4 rounded-lg ${isCorrect ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-gray-900 dark:text-white">Question {index + 1}</h4>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                              {wasAnswered ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'}
+                            </span>
+                          </div>
+                          <p className="text-gray-800 dark:text-gray-200 mb-2">{question.text}</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                            <div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Your Answer:</p>
+                              <p className={`font-medium ${isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                                {wasAnswered ? userAnswer : 'Not answered'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Correct Answer:</p>
+                              <p className="font-medium text-green-700 dark:text-green-300">{question.correctAnswer}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 

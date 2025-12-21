@@ -23,5 +23,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'class_level', 'fav_subjects', 
-                  'disliked_subjects', 'total_points', 'is_teacher', 'is_admin')
-        read_only_fields = ('id', 'username', 'email', 'is_teacher', 'is_admin')
+                  'disliked_subjects', 'total_points', 'is_teacher', 'is_admin',
+                  'google_id', 'profile_picture', 'first_name', 'last_name')
+        read_only_fields = ('id', 'username', 'email', 'is_teacher', 'is_admin', 'google_id')

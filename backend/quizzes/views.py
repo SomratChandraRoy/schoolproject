@@ -15,30 +15,28 @@ class QuizListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         queryset = Quiz.objects.all()
         
-        # Filter quizzes by user's class level
-        if user.class_level:
+        # Get query parameters
+        subject = self.request.query_params.get('subject', None)
+        difficulty = self.request.query_params.get('difficulty', None)
+        class_level = self.request.query_params.get('class_level', None)
+        
+        # Filter by subject if provided
+        if subject:
+            queryset = queryset.filter(subject=subject)
+            
+        # Filter by difficulty if provided
+        if difficulty:
+            queryset = queryset.filter(difficulty=difficulty)
+            
+        # Filter by class level if provided
+        if class_level:
+            queryset = queryset.filter(class_target=class_level)
+        
+        # If no filters provided, filter by user's class level
+        if not subject and not difficulty and not class_level and user.class_level:
             queryset = queryset.filter(class_target=user.class_level)
         
-        # Filter quizzes by user's performance difficulty level
-        # We'll get the highest difficulty the user has achieved in each subject
-        filtered_queryset = Quiz.objects.none()
-        
-        # Get distinct subjects from the queryset
-        subjects = queryset.values_list('subject', flat=True).distinct()
-        
-        for subject in subjects:
-            # Get the user's performance for this subject
-            try:
-                performance = UserPerformance.objects.get(user=user, subject=subject)
-                # Filter quizzes for this subject at the user's current difficulty level
-                subject_quizzes = queryset.filter(subject=subject, difficulty=performance.difficulty)
-                filtered_queryset = filtered_queryset.union(subject_quizzes)
-            except UserPerformance.DoesNotExist:
-                # If no performance data for this subject, show easy difficulty quizzes
-                subject_quizzes = queryset.filter(subject=subject, difficulty='easy')
-                filtered_queryset = filtered_queryset.union(subject_quizzes)
-        
-        return filtered_queryset if filtered_queryset.exists() else queryset
+        return queryset
     
     def perform_create(self, serializer):
         # Only teachers can create quizzes

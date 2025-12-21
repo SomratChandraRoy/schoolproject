@@ -1,23 +1,146 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [editing, setEditing] = useState(false);
-
-  // Mock user data
-  const userData = {
-    name: "Ahmed Rahman",
-    email: "ahmed.rahman@example.com",
+  const [userData, setUserData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
     classLevel: 9,
-    points: 1250,
-    rank: 15,
-    favSubjects: ["Mathematics", "Physics"],
-    dislikedSubjects: ["English"],
-    joinDate: "January 15, 2024",
-    lastActive: "2 hours ago"
+    favSubjects: [] as string[],
+    dislikedSubjects: [] as string[]
+  });
+
+  const subjects = [
+    'Mathematics', 'Physics', 'Chemistry', 'Biology', 
+    'English', 'Bangla', 'ICT', 'General Knowledge'
+  ];
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/accounts/profile/', {
+        headers: {
+          'Authorization': `Token ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
+        setFormData({
+          classLevel: data.class_level || 9,
+          favSubjects: data.fav_subjects || [],
+          dislikedSubjects: data.disliked_subjects || []
+        });
+      } else {
+        throw new Error('Failed to fetch user data');
+      }
+    } catch (err) {
+      setError('Failed to load profile data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSaveChanges = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/accounts/profile/update/', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          class_level: formData.classLevel,
+          fav_subjects: formData.favSubjects,
+          disliked_subjects: formData.dislikedSubjects
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data.user);
+        setEditing(false);
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (err) {
+      setError('Failed to update profile');
+      console.error(err);
+    }
+  };
+
+  const handleSubjectToggle = (subject: string, type: 'fav' | 'disliked') => {
+    if (type === 'fav') {
+      if (formData.favSubjects.includes(subject)) {
+        setFormData({
+          ...formData,
+          favSubjects: formData.favSubjects.filter(s => s !== subject)
+        });
+      } else {
+        setFormData({
+          ...formData,
+          favSubjects: [...formData.favSubjects, subject]
+        });
+      }
+    } else {
+      if (formData.dislikedSubjects.includes(subject)) {
+        setFormData({
+          ...formData,
+          dislikedSubjects: formData.dislikedSubjects.filter(s => s !== subject)
+        });
+      } else {
+        setFormData({
+          ...formData,
+          dislikedSubjects: [...formData.dislikedSubjects, subject]
+        });
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 dark:text-red-400">{error}</p>
+          <button 
+            onClick={fetchUserData}
+            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-300">No user data available</p>
+      </div>
+    );
+  }
 
   const achievements = [
     { id: 1, name: "Quiz Master", description: "Completed 10 quizzes", icon: "🏆" },
@@ -42,19 +165,21 @@ const Profile: React.FC = () => {
           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-12 sm:px-12">
             <div className="flex flex-col md:flex-row items-center">
               <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-blue-600 font-bold text-3xl shadow-lg">
-                AR
+                {userData.first_name?.charAt(0)}{userData.last_name?.charAt(0)}
               </div>
               <div className="md:ml-8 mt-6 md:mt-0 text-center md:text-left">
-                <h1 className="text-3xl font-bold text-white">{userData.name}</h1>
-                <p className="text-blue-100 mt-2">Class {userData.classLevel} Student</p>
+                <h1 className="text-3xl font-bold text-white">{userData.first_name} {userData.last_name}</h1>
+                <p className="text-blue-100 mt-2">Class {userData.class_level} Student</p>
                 <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-4">
                   <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
                     <p className="text-sm text-blue-100">Total Points</p>
-                    <p className="text-xl font-bold text-white">{userData.points}</p>
+                    <p className="text-xl font-bold text-white">{userData.total_points}</p>
                   </div>
                   <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                    <p className="text-sm text-blue-100">Class Rank</p>
-                    <p className="text-xl font-bold text-white">#{userData.rank}</p>
+                    <p className="text-sm text-blue-100">Role</p>
+                    <p className="text-xl font-bold text-white">
+                      {userData.is_admin ? 'Admin' : userData.is_teacher ? 'Teacher' : 'Student'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -116,30 +241,14 @@ const Profile: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Full Name
                     </label>
-                    {editing ? (
-                      <input
-                        type="text"
-                        defaultValue={userData.name}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    ) : (
-                      <p className="text-gray-900 dark:text-white">{userData.name}</p>
-                    )}
+                    <p className="text-gray-900 dark:text-white">{userData.first_name} {userData.last_name}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Email Address
                     </label>
-                    {editing ? (
-                      <input
-                        type="email"
-                        defaultValue={userData.email}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    ) : (
-                      <p className="text-gray-900 dark:text-white">{userData.email}</p>
-                    )}
+                    <p className="text-gray-900 dark:text-white">{userData.email}</p>
                   </div>
 
                   <div>
@@ -148,7 +257,8 @@ const Profile: React.FC = () => {
                     </label>
                     {editing ? (
                       <select
-                        defaultValue={userData.classLevel}
+                        value={formData.classLevel}
+                        onChange={(e) => setFormData({...formData, classLevel: parseInt(e.target.value)})}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       >
                         {[6, 7, 8, 9, 10, 11, 12].map(level => (
@@ -156,7 +266,7 @@ const Profile: React.FC = () => {
                         ))}
                       </select>
                     ) : (
-                      <p className="text-gray-900 dark:text-white">Class {userData.classLevel}</p>
+                      <p className="text-gray-900 dark:text-white">Class {userData.class_level}</p>
                     )}
                   </div>
 
@@ -178,33 +288,80 @@ const Profile: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Favorite Subjects
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                      {userData.favSubjects.map(subject => (
-                        <span key={subject} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
-                          {subject}
-                        </span>
-                      ))}
-                    </div>
+                    {editing ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        {subjects.map(subject => (
+                          <div key={subject} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`fav-${subject}`}
+                              checked={formData.favSubjects.includes(subject)}
+                              onChange={() => handleSubjectToggle(subject, 'fav')}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <label htmlFor={`fav-${subject}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                              {subject}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {userData.fav_subjects?.map((subject: string) => (
+                          <span key={subject} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
+                            {subject}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Disliked Subjects
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                      {userData.dislikedSubjects.map(subject => (
-                        <span key={subject} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
-                          {subject}
-                        </span>
-                      ))}
-                    </div>
+                    {editing ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        {subjects.map(subject => (
+                          <div key={subject} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`disliked-${subject}`}
+                              checked={formData.dislikedSubjects.includes(subject)}
+                              onChange={() => handleSubjectToggle(subject, 'disliked')}
+                              className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                            />
+                            <label htmlFor={`disliked-${subject}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                              {subject}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {userData.disliked_subjects?.map((subject: string) => (
+                          <span key={subject} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
+                            {subject}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {editing && (
-                  <div className="mt-6">
-                    <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition">
+                  <div className="mt-6 flex space-x-3">
+                    <button 
+                      onClick={handleSaveChanges}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition"
+                    >
                       Save Changes
+                    </button>
+                    <button 
+                      onClick={() => setEditing(false)}
+                      className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium rounded-md transition"
+                    >
+                      Cancel
                     </button>
                   </div>
                 )}

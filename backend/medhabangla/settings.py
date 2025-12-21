@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     'accounts',
     'quizzes',
@@ -107,12 +108,17 @@ else:
 # Allow all origins for development (restrict in production)
 CORS_ALLOW_ALL_ORIGINS = True
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 # WorkOS settings
-WORKOS_API_KEY = 'your_workos_api_key_here'
-WORKOS_CLIENT_ID = 'your_workos_client_id_here'
+WORKOS_API_KEY = os.getenv('WORKOS_API_KEY')
+WORKOS_CLIENT_ID = os.getenv('WORKOS_CLIENT_ID')
+WORKOS_REDIRECT_URI = os.getenv('WORKOS_REDIRECT_URI')
 
 # Google Gemini API settings
-GEMINI_API_KEY = 'your_gemini_api_key_here'
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
