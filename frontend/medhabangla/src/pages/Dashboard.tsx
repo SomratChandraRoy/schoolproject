@@ -1,35 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 const Dashboard: React.FC = () => {
-  const [darkMode] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState([
+    { name: "Total Points", value: 0 },
+    { name: "Quizzes Taken", value: 0 },
+    { name: "Games Played", value: 0 },
+    { name: "Books Read", value: 0 },
+  ]);
 
-  // Mock data for dashboard
-  const userData = {
-    name: "Ahmed Rahman",
-    class: 9,
-    points: 1250,
-    rank: 15,
-    favSubjects: ["Mathematics", "Physics"],
-    recentActivity: [
-      { activity: "Completed Math Quiz", points: "+50", time: "2 hours ago" },
-      { activity: "Played Memory Matrix", points: "+30", time: "1 day ago" },
-      { activity: "Read Physics Chapter 3", points: "+20", time: "2 days ago" },
-    ]
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // Redirect to login if no token
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch('/api/accounts/profile/', {
+        headers: {
+          'Authorization': `Token ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
+        localStorage.setItem('user', JSON.stringify(data));
+        
+        // Update stats with real data
+        setStats([
+          { name: "Total Points", value: data.total_points || 0 },
+          { name: "Quizzes Taken", value: 0 }, // TODO: Fetch from analytics
+          { name: "Games Played", value: 0 }, // TODO: Fetch from game sessions
+          { name: "Books Read", value: 0 }, // TODO: Fetch from books
+        ]);
+      } else {
+        // Token might be invalid, redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const stats = [
-    { name: "Total Points", value: userData.points },
-    { name: "Class Rank", value: `#${userData.rank}` },
-    { name: "Quizzes Taken", value: 24 },
-    { name: "Books Read", value: 5 },
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // const toggleDarkMode = () => {
-  //   setDarkMode(!darkMode);
-  //   // In a real app, you would save this preference to localStorage
-  // };
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <p className="text-red-500 dark:text-red-400">Failed to load user data</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -37,9 +88,11 @@ const Dashboard: React.FC = () => {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back, {userData.name}!</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Welcome back, {userData.first_name} {userData.last_name || ''}!
+          </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-300">
-            Ready to learn something new today? You're in Class {userData.class}.
+            Ready to learn something new today? {userData.class_level ? `You're in Class ${userData.class_level}.` : 'Complete your profile to get started.'}
           </p>
         </div>
 
@@ -60,21 +113,12 @@ const Dashboard: React.FC = () => {
               <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Recent Activity</h3>
               </div>
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {userData.recentActivity.map((activity, index) => (
-                  <li key={index} className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.activity}</p>
-                      <div className="flex items-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {activity.points}
-                        </span>
-                        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">{activity.time}</span>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <div className="px-6 py-8 text-center">
+                <p className="text-gray-500 dark:text-gray-400">No recent activity yet. Start taking quizzes to see your progress!</p>
+                <Link to="/quiz/select" className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition">
+                  Take Your First Quiz
+                </Link>
+              </div>
             </div>
 
             <div className="mt-8 bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
@@ -108,21 +152,29 @@ const Dashboard: React.FC = () => {
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center">
                   <div className="h-16 w-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
-                    AR
+                    {userData.first_name?.charAt(0)}{userData.last_name?.charAt(0) || userData.email?.charAt(0)}
                   </div>
                   <div className="ml-4">
-                    <h4 className="text-lg font-medium text-gray-900 dark:text-white">{userData.name}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Class {userData.class}</p>
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                      {userData.first_name} {userData.last_name || ''}
+                    </h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {userData.class_level ? `Class ${userData.class_level}` : 'No class set'}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-6">
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white">Favorite Subjects</h4>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {userData.favSubjects.map((subject) => (
-                      <span key={subject} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
-                        {subject}
-                      </span>
-                    ))}
+                    {userData.fav_subjects && userData.fav_subjects.length > 0 ? (
+                      userData.fav_subjects.map((subject: string) => (
+                        <span key={subject} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
+                          {subject}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No favorite subjects set</p>
+                    )}
                   </div>
                 </div>
                 <div className="mt-6">
@@ -150,10 +202,10 @@ const Dashboard: React.FC = () => {
                   <div className="text-2xl">📚</div>
                   <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Read Books</span>
                 </Link>
-                <button className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <div className="text-2xl">🤖</div>
-                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Ask AI</span>
-                </button>
+                <Link to="/notes" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-2xl">📝</div>
+                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Notes</span>
+                </Link>
               </div>
             </div>
           </div>

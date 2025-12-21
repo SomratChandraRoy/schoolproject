@@ -67,8 +67,10 @@ Please provide:
 Summarize the following content in a structured, easy-to-study format with bullet points and key concepts highlighted.
 Content: {message}"""
             else:
-                prompt = f"""You are an educational AI assistant for Bangladeshi students studying in Class {user.class_level}. 
+                class_info = f"Class {user.class_level}" if user.class_level else "Classes 6-12"
+                prompt = f"""You are an educational AI assistant for Bangladeshi students studying in {class_info}. 
 Be helpful, encouraging, and educational. Respond in Bangla when it helps with understanding.
+Follow the NCTB (National Curriculum and Textbook Board) standards for Bangladesh.
 Student: {message}"""
             
             response = client.models.generate_content(

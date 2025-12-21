@@ -70,6 +70,10 @@ const AIChat: React.FC = () => {
         }
       }
 
+      // Get user data for class-aware prompts
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      
       // Call backend API to get AI response
       const response = await fetch('http://localhost:8000/api/ai/chat/message/', {
         method: 'POST',

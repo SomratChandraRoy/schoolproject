@@ -4,10 +4,17 @@ import Navbar from '../components/Navbar';
 
 const Games: React.FC = () => {
   const navigate = useNavigate();
-  const [userPoints] = useState(25); // For testing, set to a value above threshold
+  const [userPoints, setUserPoints] = useState(0);
+  const [userClass, setUserClass] = useState<number | null>(null);
   const [requiredPoints] = useState(20);
   const [activeGame, setActiveGame] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [loading, setLoading] = useState(true);
+  const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
+  
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
   // Mock game data
   const games = [
@@ -49,35 +56,132 @@ const Games: React.FC = () => {
     }
   ];
 
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setUserPoints(user.total_points || 0);
+        setUserClass(user.class_level || null);
+      } else {
+        const response = await fetch('/api/accounts/profile/', {
+          headers: {
+            'Authorization': `Token ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserPoints(data.total_points || 0);
+          setUserClass(data.class_level || null);
+          localStorage.setItem('user', JSON.stringify(data));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Timer effect for active game
   useEffect(() => {
-    if (!activeGame || timeLeft <= 0) return;
+    if (!activeGame || timeLeft <= 0 || !gameStartTime) return;
     
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          // Time's up, end the game and redirect to dashboard
-          setActiveGame(null);
-          navigate('/dashboard');
-          return 0;
-        }
-        return prev - 1;
-      });
+      const elapsed = Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000);
+      const remaining = 600 - elapsed; // 10 minutes = 600 seconds
+      
+      if (remaining <= 0) {
+        // Time's up, end the game and redirect to dashboard
+        handleGameEnd(0); // Score 0 if time runs out
+        return;
+      }
+      setTimeLeft(remaining);
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [activeGame, timeLeft, navigate]);
+  }, [activeGame, gameStartTime, navigate]);
 
-  const startGame = (gameId: string) => {
-    if (userPoints >= requiredPoints) {
-      setActiveGame(gameId);
-      setTimeLeft(600); // Reset to 10 minutes
+  const startGame = async (gameId: string) => {
+    if (userPoints < requiredPoints) {
+      alert(`You need at least ${requiredPoints} points to play games. Take some quizzes to earn points!`);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/games/start/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({ game_id: gameId })
+      });
+
+      if (response.ok) {
+        setActiveGame(gameId);
+        setTimeLeft(600);
+        setGameStartTime(new Date());
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to start game');
+      }
+    } catch (error) {
+      console.error('Error starting game:', error);
+      alert('Failed to start game. Please try again.');
+    }
+  };
+
+  const handleGameEnd = async (score: number = 0) => {
+    if (!activeGame) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const duration = gameStartTime ? Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000) : 0;
+      
+      const response = await fetch('/api/games/end/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          game_id: activeGame,
+          score: score,
+          duration: duration
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update user points if awarded
+        if (data.points_awarded) {
+          setUserPoints(prev => prev + data.points_awarded);
+        }
+        // Refresh user data
+        await fetchUserData();
+      }
+    } catch (error) {
+      console.error('Error ending game:', error);
+    } finally {
+      setActiveGame(null);
+      setGameStartTime(null);
+      setTimeLeft(600);
+      
+      // Show alert and redirect after a short delay
+      setTimeout(() => {
+        alert('Time\'s up! Your game session has ended.');
+        navigate('/dashboard');
+      }, 100);
     }
   };
 
   const endGame = () => {
-    setActiveGame(null);
-    // In a real app, you would save the game results here
+    if (window.confirm('Are you sure you want to end the game early?')) {
+      handleGameEnd(0);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -85,6 +189,25 @@ const Games: React.FC = () => {
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Filter games by user's class level
+  const availableGames = games.filter(game => {
+    if (!userClass) return true;
+    return userClass >= game.minClass && userClass <= game.maxClass;
+  });
 
   // If a game is active, show the game screen
   if (activeGame) {
@@ -215,7 +338,7 @@ const Games: React.FC = () => {
 
         {/* Games Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {games.map(game => (
+          {availableGames.map(game => (
             <div key={game.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               <div className="p-6">
                 <div className="text-6xl text-center mb-4">{game.icon}</div>

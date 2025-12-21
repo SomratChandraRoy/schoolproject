@@ -17,28 +17,31 @@ import AuthCallback from './pages/AuthCallback';
 
 // Import components
 import AIChat from './components/AIChat';
+import { DarkModeProvider } from './contexts/DarkModeContext';
 
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/quiz/select" element={<QuizSelection />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/books" element={<Books />} />
-          <Route path="/games" element={<Games />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/notes" element={<Notes />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-        </Routes>
-        <AIChat />
-      </div>
-    </Router>
+    <DarkModeProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/quiz/select" element={<QuizSelection />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/books" element={<Books />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/notes" element={<Notes />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+          </Routes>
+          <AIChat />
+        </div>
+      </Router>
+    </DarkModeProvider>
   );
 }
 

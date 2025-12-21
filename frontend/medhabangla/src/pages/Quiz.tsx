@@ -10,6 +10,8 @@ const Quiz: React.FC = () => {
   const [mistakes, setMistakes] = useState<{[key: number]: boolean}>({});
   const [quizData, setQuizData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [aiRemediation, setAiRemediation] = useState<string | null>(null);
+  const [loadingRemediation, setLoadingRemediation] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -99,33 +101,12 @@ const Quiz: React.FC = () => {
     return () => clearInterval(timer);
   }, [timeLeft, quizFinished]);
 
-  const handleAnswerSelect = async (answer: string) => {
+  const handleAnswerSelect = (answer: string) => {
     setSelectedAnswers({
       ...selectedAnswers,
       [currentQuestion]: answer
     });
-    
-    // Send attempt to backend
-    try {
-      const token = localStorage.getItem('token');
-      
-      // Get the current quiz question ID
-      const currentQuizId = quizData.questions[currentQuestion].id;
-      
-      await fetch('/api/quizzes/attempt/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
-        },
-        body: JSON.stringify({
-          quiz_id: currentQuizId,
-          selected_answer: answer
-        })
-      });
-    } catch (error) {
-      console.error('Error submitting quiz attempt:', error);
-    }
+    // Don't submit to backend yet - wait until quiz is finished
   };
 
   const handleNextQuestion = () => {
@@ -146,10 +127,31 @@ const Quiz: React.FC = () => {
     // Calculate score before finishing
     const score = calculateScore();
     
-    // Send results to backend
+    // Submit all attempts to backend
     try {
       const token = localStorage.getItem('token');
       
+      // Submit individual attempts
+      const attemptPromises = quizData.questions.map(async (question: any, index: number) => {
+        const userAnswer = selectedAnswers[index] || '';
+        const isCorrect = userAnswer === question.correctAnswer;
+        
+        return fetch('/api/quizzes/attempt/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${token}`
+          },
+          body: JSON.stringify({
+            quiz_id: question.id,
+            selected_answer: userAnswer
+          })
+        });
+      });
+      
+      await Promise.all(attemptPromises);
+      
+      // Submit overall results
       await fetch('/api/quizzes/submit-results/', {
         method: 'POST',
         headers: {
@@ -161,11 +163,29 @@ const Quiz: React.FC = () => {
           mistakes: mistakes
         })
       });
+      
+      // Refresh user data to update points
+      const userResponse = await fetch('/api/accounts/profile/', {
+        headers: {
+          'Authorization': `Token ${token}`
+        }
+      });
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
     } catch (error) {
       console.error('Error submitting quiz results:', error);
     }
     
     setQuizFinished(true);
+  };
+
+  const handleExitQuiz = () => {
+    if (window.confirm('Are you sure you want to exit? Your progress will be saved.')) {
+      // Submit current progress before exiting
+      handleSubmitQuiz();
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -205,6 +225,13 @@ const Quiz: React.FC = () => {
       correctAnswer: quizData.questions[parseInt(index)].correctAnswer
     }));
     
+    if (wrongAnswers.length === 0) {
+      alert('Great job! You got all questions correct. No remediation needed.');
+      return;
+    }
+    
+    setLoadingRemediation(true);
+    
     // Send to backend for AI remediation
     try {
       const token = localStorage.getItem('token');
@@ -222,21 +249,15 @@ const Quiz: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        
-        // Show AI remediation in a modal or new page
-        alert(`AI Remediation Explanation:
-
-${data.explanation}`);
+        setAiRemediation(data.explanation);
       } else {
         throw new Error('Failed to get AI remediation');
       }
     } catch (error) {
       console.error('AI Remediation Error:', error);
-      alert(`AI Remediation Feature would explain:
-
-Conceptual gaps identified in: ${wrongAnswers.length} questions
-
-In Bangla: This feature would explain the concepts in Bangla and provide 3 check-for-understanding points.`);
+      setAiRemediation('Sorry, we encountered an error generating your personalized learning recommendations. Please try again later.');
+    } finally {
+      setLoadingRemediation(false);
     }
   };
 
@@ -352,6 +373,33 @@ In Bangla: This feature would explain the concepts in Bangla and provide 3 check
                   </div>
                 </div>
                 
+                {/* AI Remediation Section */}
+                {aiRemediation && (
+                  <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mt-8">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-xl font-bold text-blue-800 dark:text-blue-200 flex items-center">
+                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        AI Learning Recommendations
+                      </h3>
+                      <button
+                        onClick={() => setAiRemediation(null)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="prose dark:prose-invert max-w-none">
+                      <div className="whitespace-pre-wrap text-blue-900 dark:text-blue-100">
+                        {aiRemediation}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
                   <button 
                     onClick={() => {
@@ -359,6 +407,7 @@ In Bangla: This feature would explain the concepts in Bangla and provide 3 check
                       setSelectedAnswers({});
                       setQuizFinished(false);
                       setTimeLeft(300);
+                      setAiRemediation(null);
                     }}
                     className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
                   >
@@ -366,16 +415,23 @@ In Bangla: This feature would explain the concepts in Bangla and provide 3 check
                   </button>
                   <Link 
                     to="/dashboard" 
-                    className="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg transition"
+                    className="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg transition text-center"
                   >
                     Back to Dashboard
                   </Link>
-                  <button 
-                    onClick={handleImproveWithAI}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition"
-                  >
-                    Improve with AI
-                  </button>
+                  {Object.keys(mistakes).length > 0 && !aiRemediation && (
+                    <button 
+                      onClick={handleImproveWithAI}
+                      disabled={loadingRemediation}
+                      className={`px-6 py-3 font-medium rounded-lg transition ${
+                        loadingRemediation
+                          ? 'bg-gray-400 cursor-not-allowed text-white'
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      }`}
+                    >
+                      {loadingRemediation ? 'Loading...' : 'Improve with AI'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -496,12 +552,12 @@ In Bangla: This feature would explain the concepts in Bangla and provide 3 check
               )}
             </div>
             <div className="flex gap-3">
-              <Link 
-                to="/dashboard" 
+              <button
+                onClick={handleExitQuiz}
                 className="px-5 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
               >
                 Exit Quiz
-              </Link>
+              </button>
               {currentQuestion < quizData.questions.length - 1 ? (
                 <button
                   onClick={handleNextQuestion}
