@@ -2,8 +2,8 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-from .models import Book, Bookmark
-from .serializers import BookSerializer, BookmarkSerializer
+from .models import Book, Bookmark, Syllabus
+from .serializers import BookSerializer, BookmarkSerializer, SyllabusSerializer
 from accounts.models import User
 
 
@@ -63,3 +63,41 @@ class BookmarkView(APIView):
         bookmark = get_object_or_404(Bookmark, user=user, book_id=book_id)
         bookmark.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SyllabusListCreateView(generics.ListCreateAPIView):
+    serializer_class = SyllabusSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = Syllabus.objects.all()
+        class_level = self.request.query_params.get('class_level', None)
+        subject = self.request.query_params.get('subject', None)
+        
+        if class_level:
+            queryset = queryset.filter(class_level=class_level)
+        if subject:
+            queryset = queryset.filter(subject=subject)
+            
+        return queryset
+
+
+class SyllabusDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Syllabus.objects.all()
+    serializer_class = SyllabusSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    
+# View for getting syllabus for a specific user's class level
+class UserSyllabusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        if not user.class_level:
+            return Response({'error': 'User class level not set'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get syllabus for user's class level
+        syllabus = Syllabus.objects.filter(class_level=user.class_level)
+        serializer = SyllabusSerializer(syllabus, many=True)
+        return Response(serializer.data)

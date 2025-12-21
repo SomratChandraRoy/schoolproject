@@ -206,6 +206,18 @@ const Dashboard: React.FC = () => {
                   <div className="text-2xl">📝</div>
                   <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Notes</span>
                 </Link>
+                <Link to="/syllabus" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-2xl">📖</div>
+                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Syllabus</span>
+                </Link>
+                <Link to="/study-timer" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-2xl">⏱️</div>
+                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Study Timer</span>
+                </Link>
+                <Link to="/study-stats" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-2xl">📊</div>
+                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Study Stats</span>
+                </Link>
               </div>
             </div>
           </div>

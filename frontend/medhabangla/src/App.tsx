@@ -14,6 +14,9 @@ import Profile from './pages/Profile';
 import Notes from './pages/Notes';
 import AdminDashboard from './pages/AdminDashboard';
 import AuthCallback from './pages/AuthCallback';
+import Syllabus from './pages/Syllabus';
+import StudyTimer from './pages/StudyTimer';
+import StudyStats from './pages/StudyStats';
 
 // Import components
 import AIChat from './components/AIChat';
@@ -35,6 +38,9 @@ function App() {
             <Route path="/games" element={<Games />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/notes" element={<Notes />} />
+            <Route path="/syllabus" element={<Syllabus />} />
+            <Route path="/study-timer" element={<StudyTimer />} />
+            <Route path="/study-stats" element={<StudyStats />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>

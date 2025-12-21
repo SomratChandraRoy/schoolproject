@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Book, Bookmark
+from .models import Book, Bookmark, Syllabus
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -13,3 +13,9 @@ class BookmarkSerializer(serializers.ModelSerializer):
         model = Bookmark
         fields = '__all__'
         read_only_fields = ('user',)
+
+
+class SyllabusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Syllabus
+        fields = '__all__'

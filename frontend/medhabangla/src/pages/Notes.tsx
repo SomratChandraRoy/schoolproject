@@ -6,6 +6,7 @@ const Notes: React.FC = () => {
   const { notes, loading, addNote, deleteNote } = useOfflineNotes();
   const [isAdding, setIsAdding] = useState(false);
   const [newNote, setNewNote] = useState({ title: '', content: '' });
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleAddNote = async () => {
     if (!newNote.title.trim() || !newNote.content.trim()) return;
@@ -31,6 +32,51 @@ const Notes: React.FC = () => {
         console.error('Error deleting note:', error);
         alert('Failed to delete note. Please try again.');
       }
+    }
+  };
+
+  const handleGenerateAINotes = async () => {
+    const topic = prompt('Enter a topic for your AI-generated notes:');
+    if (!topic) return;
+    
+    setIsGenerating(true);
+    
+    try {
+      // Get auth token
+      const token = localStorage.getItem('token');
+      
+      // Call backend AI endpoint to generate notes
+      const response = await fetch('http://localhost:8000/api/ai/chat/message/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          message: `Generate detailed study notes on the topic: ${topic}. Provide structured content with headings, bullet points, and key concepts highlighted.`,
+          message_type: 'note_taking'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const aiContent = data.ai_message;
+        
+        // Add the AI-generated content as a new note
+        await addNote({
+          title: `AI Notes: ${topic}`,
+          content: aiContent
+        });
+        
+        alert('AI notes generated and saved successfully!');
+      } else {
+        throw new Error('Failed to generate AI notes');
+      }
+    } catch (error) {
+      console.error('AI Note Generation Error:', error);
+      alert('Failed to generate AI notes. Please try again.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -65,12 +111,25 @@ const Notes: React.FC = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Offline Notes</h1>
-            <button
-              onClick={() => setIsAdding(!isAdding)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
-            >
-              {isAdding ? 'Cancel' : 'Add Note'}
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleGenerateAINotes}
+                disabled={isGenerating}
+                className={`px-4 py-2 font-medium rounded-lg transition ${
+                  isGenerating 
+                    ? 'bg-gray-400 cursor-not-allowed text-white' 
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
+              >
+                {isGenerating ? 'Generating...' : 'AI Notes'}
+              </button>
+              <button
+                onClick={() => setIsAdding(!isAdding)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
+              >
+                {isAdding ? 'Cancel' : 'Add Note'}
+              </button>
+            </div>
           </div>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Your notes are saved locally and available offline. They will sync with the server when you're online.
@@ -132,12 +191,25 @@ const Notes: React.FC = () => {
             <p className="text-gray-500 dark:text-gray-400 mb-6">
               Create your first note to save important information for offline access.
             </p>
-            <button
-              onClick={() => setIsAdding(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
-            >
-              Create Note
-            </button>
+            <div className="flex justify-center space-x-3">
+              <button
+                onClick={handleGenerateAINotes}
+                disabled={isGenerating}
+                className={`px-4 py-2 font-medium rounded-lg transition ${
+                  isGenerating 
+                    ? 'bg-gray-400 cursor-not-allowed text-white' 
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
+              >
+                {isGenerating ? 'Generating...' : 'Generate AI Notes'}
+              </button>
+              <button
+                onClick={() => setIsAdding(true)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
+              >
+                Create Manual Note
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -21,7 +21,7 @@ const Login: React.FC = () => {
       // Generate the authorization URL directly
       const clientId = import.meta.env.VITE_WORKOS_CLIENT_ID || 'client_REDACTED';
       const redirectUri = import.meta.env.VITE_WORKOS_REDIRECT_URI || 'http://localhost:5173/auth/callback';
-      const authorizationUrl = `https://api.workos.com/user_management/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&provider=GoogleOAuth&response_type=code`;
+      const authorizationUrl = `https://api.workos.com/user_management/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&provider=Google&response_type=code`;
 
       // Redirect user to the authorization URL
       window.location.href = authorizationUrl;

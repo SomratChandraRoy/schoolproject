@@ -1,25 +1,121 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.authtoken.models import Token
-from django.conf import settings
-from workos import WorkOSClient
-from .models import User
-from .serializers import UserProfileSerializer
+from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import make_password
+from django.utils import timezone
+from django.db.models import Sum
+from datetime import timedelta
+from .models import User, StudySession
+from .serializers import UserSerializer, UserProfileSerializer, StudySessionSerializer
 from .permissions import IsAdmin
 
+class RegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            # Hash the password before saving
+            password = request.data.get('password')
+            if password:
+                serializer.validated_data['password'] = make_password(password)
+            
+            user = serializer.save()
+            # Set default roles
+            user.is_student = True
+            user.save()
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ProfileView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserProfileSerializer
+class ProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
-    def get_object(self):
-        return self.request.user
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
+    
+    def put(self, request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class StudySessionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        serializer = StudySessionSerializer(data=request.data)
+        if serializer.is_valid():
+            # Set the user automatically
+            study_session = serializer.save(user=user)
+            
+            # Update user's total study time
+            user.total_study_time += study_session.duration
+            
+            # Check if this is a new day for streak calculation
+            today = timezone.now().date()
+            yesterday = today - timedelta(days=1)
+            
+            # Get the last study session date
+            last_session = StudySession.objects.filter(user=user).exclude(id=study_session.id).order_by('-date').first()
+            
+            if not last_session or last_session.date < today:
+                # If no previous session or it was before today
+                if not last_session or last_session.date == yesterday:
+                    # Continued streak
+                    user.current_streak += 1
+                else:
+                    # Broken streak
+                    user.current_streak = 1
+                
+                # Update longest streak if needed
+                if user.current_streak > user.longest_streak:
+                    user.longest_streak = user.current_streak
+                    
+            user.save()
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get(self, request):
+        # Get study sessions for the current user
+        sessions = StudySession.objects.filter(user=request.user)
+        serializer = StudySessionSerializer(sessions, many=True)
+        return Response(serializer.data)
+
+class StudyStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        
+        # Get total study time for the current week
+        week_ago = timezone.now().date() - timedelta(days=7)
+        weekly_study_time = StudySession.objects.filter(
+            user=user, 
+            date__gte=week_ago
+        ).aggregate(total=Sum('duration'))['total'] or 0
+        
+        # Get subject breakdown
+        subject_breakdown = StudySession.objects.filter(user=user).values('subject').annotate(
+            total_duration=Sum('duration')
+        ).order_by('-total_duration')
+        
+        return Response({
+            'total_study_time': user.total_study_time,
+            'current_streak': user.current_streak,
+            'longest_streak': user.longest_streak,
+            'weekly_study_time': weekly_study_time,
+            'subject_breakdown': list(subject_breakdown)
+        })
 
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
-    serializer_class = UserProfileSerializer
+    serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
 
 

@@ -1,22 +1,14 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class User(AbstractUser):
-    CLASS_LEVEL_CHOICES = [
-        (6, 'Class 6'),
-        (7, 'Class 7'),
-        (8, 'Class 8'),
-        (9, 'Class 9'),
-        (10, 'Class 10'),
-        (11, 'Class 11'),
-        (12, 'Class 12'),
-    ]
+    CLASS_CHOICES = [(i, f'Class {i}') for i in range(6, 13)]
     
     # Override last_name to allow NULL values for OAuth users
     last_name = models.CharField(max_length=150, blank=True, null=True)
     
-    class_level = models.IntegerField(choices=CLASS_LEVEL_CHOICES, null=True, blank=True)
+    class_level = models.IntegerField(choices=CLASS_CHOICES, null=True, blank=True)
     fav_subjects = models.JSONField(default=list, blank=True)
     disliked_subjects = models.JSONField(default=list, blank=True)
     total_points = models.IntegerField(default=0)
@@ -27,7 +19,23 @@ class User(AbstractUser):
     google_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     profile_picture = models.URLField(max_length=500, null=True, blank=True)
     
+    # Study tracking fields
+    total_study_time = models.PositiveIntegerField(default=0)  # Total minutes studied
+    current_streak = models.PositiveIntegerField(default=0)    # Consecutive days studied
+    longest_streak = models.PositiveIntegerField(default=0)   # Longest study streak
+    
     def __str__(self):
-        if self.class_level:
-            return f"{self.username} - Class {self.class_level}"
-        return f"{self.username}"
+        return self.username
+
+class StudySession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=100)
+    duration = models.PositiveIntegerField(validators=[MinValueValidator(1)])  # in minutes
+    date = models.DateField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-date', '-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.subject} - {self.duration} minutes"

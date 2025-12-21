@@ -40,3 +40,33 @@ class Bookmark(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.book.title} - Page {self.page_number}"
+
+
+class Syllabus(models.Model):
+    CLASS_LEVEL_CHOICES = [(i, f'Class {i}') for i in range(6, 13)]
+    SUBJECT_CHOICES = [
+        ('math', 'Mathematics'),
+        ('physics', 'Physics'),
+        ('chemistry', 'Chemistry'),
+        ('biology', 'Biology'),
+        ('english', 'English'),
+        ('bangla', 'Bangla'),
+        ('ict', 'ICT'),
+        ('general_knowledge', 'General Knowledge'),
+    ]
+    
+    class_level = models.IntegerField(choices=CLASS_LEVEL_CHOICES)
+    subject = models.CharField(max_length=50, choices=SUBJECT_CHOICES)
+    chapter_title = models.CharField(max_length=200)
+    chapter_description = models.TextField(blank=True)
+    page_range = models.CharField(max_length=50, blank=True)  # e.g., "10-25"
+    estimated_hours = models.DecimalField(max_digits=3, decimal_places=1, default=1.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('class_level', 'subject', 'chapter_title')
+        ordering = ['class_level', 'subject', 'id']
+    
+    def __str__(self):
+        return f"Class {self.class_level} - {self.get_subject_display()} - {self.chapter_title}"

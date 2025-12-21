@@ -1,6 +1,5 @@
 import uuid
-import google.genai as genai
-from google.genai import types
+import google.generativeai as genai
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -49,7 +48,8 @@ class AIChatMessageView(APIView):
             )
             
             # Get AI response using Google Gemini
-            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-1.5-pro')
             
             # Customize prompt based on message type
             if message_type == 'remedial':
@@ -73,10 +73,7 @@ Be helpful, encouraging, and educational. Respond in Bangla when it helps with u
 Follow the NCTB (National Curriculum and Textbook Board) standards for Bangladesh.
 Student: {message}"""
             
-            response = client.models.generate_content(
-                model='gemini-1.5-pro',
-                contents=prompt
-            )
+            response = model.generate_content(prompt)
             ai_response = response.text
             
             # Save AI message
@@ -89,7 +86,7 @@ Student: {message}"""
             
             return Response({
                 'user_message': AIChatMessageSerializer(user_message).data,
-                'ai_message': ai_message.message
+                'ai_message': ai_response
             })
             
         except AIChatSession.DoesNotExist:
@@ -154,7 +151,8 @@ class RemedialLearningView(APIView):
                 return Response({'error': 'No mistakes found for analysis'}, status=status.HTTP_400_BAD_REQUEST)
             
             # Get AI explanation using Google Gemini
-            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-1.5-pro')
             
             prompt = f"""You are an expert educational AI tutor for Bangladeshi students. 
 Analyze the following mistakes made by a Class {user.class_level} student and provide remedial guidance.
@@ -170,10 +168,7 @@ Please provide in Bangla:
 
 Make your explanation clear, encouraging, and educational."""
             
-            response = client.models.generate_content(
-                model='gemini-1.5-pro',
-                contents=prompt
-            )
+            response = model.generate_content(prompt)
             explanation = response.text
             
             # Return the explanation
@@ -199,7 +194,8 @@ class GenerateQuizQuestionView(APIView):
         
         try:
             # Get AI response using Google Gemini
-            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-1.5-pro')
             
             # Create prompt for generating question
             prompt = f"""You are an expert educational content creator for the Bangladeshi education system.
@@ -223,10 +219,7 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks):
 
 For non-MCQ questions, set "options" to an empty object {{}}."""
             
-            response = client.models.generate_content(
-                model='gemini-1.5-pro',
-                contents=prompt
-            )
+            response = model.generate_content(prompt)
             response_text = response.text.strip()
             
             # Try to parse the response as JSON
