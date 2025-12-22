@@ -17,12 +17,17 @@ const OfflineIndicator: React.FC = () => {
     useEffect(() => {
         // Update unsynced count
         const updateUnsyncedCount = async () => {
-            const stats = await getDatabaseStats();
-            const total = stats.notes.unsynced +
-                stats.quizzes.unsyncedAttempts +
-                stats.studySessions.unsynced +
-                stats.books.unsyncedBookmarks;
-            setUnsyncedCount(total);
+            try {
+                const stats = await getDatabaseStats();
+                const total = stats.notes.unsynced +
+                    stats.quizzes.unsyncedAttempts +
+                    stats.studySessions.unsynced +
+                    stats.books.unsyncedBookmarks;
+                setUnsyncedCount(total);
+            } catch (error) {
+                console.error('Error updating unsynced count:', error);
+                setUnsyncedCount(0);
+            }
         };
 
         updateUnsyncedCount();

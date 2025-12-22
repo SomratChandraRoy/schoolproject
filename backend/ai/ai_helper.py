@@ -2,6 +2,9 @@
 AI Helper Module for MedhaBangla
 Provides AI-powered features across all sections of the application
 """
+import warnings
+# Suppress the deprecation warning for google.generativeai
+warnings.filterwarnings('ignore', category=FutureWarning, module='google.generativeai')
 import google.generativeai as genai
 from django.conf import settings
 from typing import Dict, List, Optional

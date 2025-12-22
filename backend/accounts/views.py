@@ -164,26 +164,41 @@ class WorkOSAuthURLView(APIView):
     permission_classes = [permissions.AllowAny]
     
     def get(self, request):
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
-            from workos import WorkOSClient
+            # Validate settings
+            if not settings.WORKOS_API_KEY or not settings.WORKOS_CLIENT_ID:
+                logger.error("WorkOS credentials not configured")
+                return Response({
+                    'error': 'WorkOS credentials not configured. Please check your environment variables.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-            workos = WorkOSClient(
-                api_key=settings.WORKOS_API_KEY,
-                client_id=settings.WORKOS_CLIENT_ID
-            )
+            # Build authorization URL manually (WorkOS User Management API)
+            from urllib.parse import urlencode
             
-            # Generate authorization URL using WorkOS User Management
-            authorization_url = workos.user_management.get_authorization_url(
-                provider='authkit',
-                redirect_uri=settings.WORKOS_REDIRECT_URI,
-                client_id=settings.WORKOS_CLIENT_ID
-            )
+            params = {
+                'client_id': settings.WORKOS_CLIENT_ID,
+                'redirect_uri': settings.WORKOS_REDIRECT_URI,
+                'response_type': 'code',
+                'provider': 'authkit'
+            }
+            
+            authorization_url = f"https://api.workos.com/user_management/authorize?{urlencode(params)}"
+            
+            logger.info(f"Authorization URL generated successfully")
             
             return Response({
                 'authorization_url': authorization_url
             })
-            
+        except ImportError as e:
+            logger.error(f"Import error: {e}")
+            return Response({
+                'error': f'Import error: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
+            logger.error(f"Failed to generate authorization URL: {str(e)}", exc_info=True)
             return Response({
                 'error': f'Failed to generate authorization URL: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -223,9 +238,9 @@ class WorkOSAuthView(APIView):
             logger.info(f"Attempting to exchange code with WorkOS...")
             
             # Exchange authorization code for user profile
+            # Note: client_id is already set in WorkOSClient initialization
             auth_response = workos.user_management.authenticate_with_code(
-                code=code,
-                client_id=settings.WORKOS_CLIENT_ID
+                code=code
             )
             
             logger.info(f"WorkOS authentication response received")

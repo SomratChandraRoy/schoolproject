@@ -1,4 +1,7 @@
 import uuid
+import warnings
+# Suppress the deprecation warning for google.generativeai
+warnings.filterwarnings('ignore', category=FutureWarning, module='google.generativeai')
 import google.generativeai as genai
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response

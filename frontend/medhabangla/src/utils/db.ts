@@ -122,7 +122,7 @@ export async function getAllNotes(): Promise<Note[]> {
  * Get unsynced notes
  */
 export async function getUnsyncedNotes(): Promise<Note[]> {
-    return await db.notes.where('synced').equals(false).toArray();
+    return await db.notes.where('synced').equals(0).or('synced').equals(false).toArray();
 }
 
 /**
@@ -187,7 +187,7 @@ export async function saveQuizAttemptOffline(attempt: Omit<QuizAttempt, 'id'>): 
  * Get unsynced quiz attempts
  */
 export async function getUnsyncedQuizAttempts(): Promise<QuizAttempt[]> {
-    return await db.quizAttempts.where('synced').equals(false).toArray();
+    return await db.quizAttempts.where('synced').equals(0).or('synced').equals(false).toArray();
 }
 
 /**
@@ -208,7 +208,7 @@ export async function saveStudySessionOffline(session: Omit<StudySession, 'id'>)
  * Get unsynced study sessions
  */
 export async function getUnsyncedStudySessions(): Promise<StudySession[]> {
-    return await db.studySessions.where('synced').equals(false).toArray();
+    return await db.studySessions.where('synced').equals(0).or('synced').equals(false).toArray();
 }
 
 /**
@@ -259,7 +259,7 @@ export async function getBookmarkForBook(bookId: number): Promise<Bookmark | und
  * Get unsynced bookmarks
  */
 export async function getUnsyncedBookmarks(): Promise<Bookmark[]> {
-    return await db.bookmarks.where('synced').equals(false).toArray();
+    return await db.bookmarks.where('synced').equals(0).or('synced').equals(false).toArray();
 }
 
 /**
@@ -308,41 +308,51 @@ export async function clearAllData(): Promise<void> {
  * Get database statistics
  */
 export async function getDatabaseStats() {
-    const [
-        notesCount,
-        unsyncedNotesCount,
-        cachedQuizzesCount,
-        unsyncedAttemptsCount,
-        unsyncedSessionsCount,
-        cachedBooksCount,
-        unsyncedBookmarksCount
-    ] = await Promise.all([
-        db.notes.count(),
-        db.notes.where('synced').equals(false).count(),
-        db.cachedQuizzes.count(),
-        db.quizAttempts.where('synced').equals(false).count(),
-        db.studySessions.where('synced').equals(false).count(),
-        db.cachedBooks.count(),
-        db.bookmarks.where('synced').equals(false).count()
-    ]);
+    try {
+        const [
+            notesCount,
+            unsyncedNotesCount,
+            cachedQuizzesCount,
+            unsyncedAttemptsCount,
+            unsyncedSessionsCount,
+            cachedBooksCount,
+            unsyncedBookmarksCount
+        ] = await Promise.all([
+            db.notes.count(),
+            db.notes.filter(n => !n.synced).count(),
+            db.cachedQuizzes.count(),
+            db.quizAttempts.filter(a => !a.synced).count(),
+            db.studySessions.filter(s => !s.synced).count(),
+            db.cachedBooks.count(),
+            db.bookmarks.filter(b => !b.synced).count()
+        ]);
 
-    return {
-        notes: {
-            total: notesCount,
-            unsynced: unsyncedNotesCount
-        },
-        quizzes: {
-            cached: cachedQuizzesCount,
-            unsyncedAttempts: unsyncedAttemptsCount
-        },
-        studySessions: {
-            unsynced: unsyncedSessionsCount
-        },
-        books: {
-            cached: cachedBooksCount,
-            unsyncedBookmarks: unsyncedBookmarksCount
-        }
-    };
+        return {
+            notes: {
+                total: notesCount,
+                unsynced: unsyncedNotesCount
+            },
+            quizzes: {
+                cached: cachedQuizzesCount,
+                unsyncedAttempts: unsyncedAttemptsCount
+            },
+            studySessions: {
+                unsynced: unsyncedSessionsCount
+            },
+            books: {
+                cached: cachedBooksCount,
+                unsyncedBookmarks: unsyncedBookmarksCount
+            }
+        };
+    } catch (error) {
+        console.error('Error getting database stats:', error);
+        return {
+            notes: { total: 0, unsynced: 0 },
+            quizzes: { cached: 0, unsyncedAttempts: 0 },
+            studySessions: { unsynced: 0 },
+            books: { cached: 0, unsyncedBookmarks: 0 }
+        };
+    }
 }
 
 /**
