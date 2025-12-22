@@ -23,9 +23,13 @@ import StudyStats from './pages/StudyStats';
 // Import components
 import AIChat from './components/AIChat';
 import ProtectedRoute from './components/ProtectedRoute';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
-import OfflineIndicator from './components/OfflineIndicator';
 import { DarkModeProvider } from './contexts/DarkModeContext';
+
+// Lazy load PWA components to prevent blocking
+import { lazy, Suspense } from 'react';
+
+const PWAInstallPrompt = lazy(() => import('./components/PWAInstallPrompt').catch(() => ({ default: () => null })));
+const OfflineIndicator = lazy(() => import('./components/OfflineIndicator').catch(() => ({ default: () => null })));
 
 function App() {
   const userStr = localStorage.getItem('user');
@@ -35,8 +39,10 @@ function App() {
     <DarkModeProvider>
       <Router>
         <div className="App">
-          {/* Offline/Online Indicator */}
-          <OfflineIndicator />
+          {/* Offline/Online Indicator - Lazy loaded */}
+          <Suspense fallback={null}>
+            <OfflineIndicator />
+          </Suspense>
 
           <Routes>
             <Route path="/" element={<Home />} />
@@ -73,8 +79,10 @@ function App() {
           {/* AI Chat Assistant */}
           <AIChat />
 
-          {/* PWA Install Prompt */}
-          <PWAInstallPrompt />
+          {/* PWA Install Prompt - Lazy loaded */}
+          <Suspense fallback={null}>
+            <PWAInstallPrompt />
+          </Suspense>
         </div>
       </Router>
     </DarkModeProvider>

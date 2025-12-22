@@ -159,7 +159,38 @@ class UserListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
 
 
+class WorkOSAuthURLView(APIView):
+    """Generate WorkOS authorization URL for Google OAuth"""
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request):
+        try:
+            from workos import WorkOSClient
+            
+            workos = WorkOSClient(
+                api_key=settings.WORKOS_API_KEY,
+                client_id=settings.WORKOS_CLIENT_ID
+            )
+            
+            # Generate authorization URL using WorkOS User Management
+            authorization_url = workos.user_management.get_authorization_url(
+                provider='authkit',
+                redirect_uri=settings.WORKOS_REDIRECT_URI,
+                client_id=settings.WORKOS_CLIENT_ID
+            )
+            
+            return Response({
+                'authorization_url': authorization_url
+            })
+            
+        except Exception as e:
+            return Response({
+                'error': f'Failed to generate authorization URL: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class WorkOSAuthView(APIView):
+    """Handle WorkOS OAuth callback and authenticate user"""
     permission_classes = [permissions.AllowAny]
     
     def post(self, request):
@@ -168,12 +199,6 @@ class WorkOSAuthView(APIView):
         
         # Log incoming request
         logger.info(f"WorkOS Auth Request - Data: {request.data}")
-        
-        # Initialize WorkOS
-        workos = WorkOSClient(
-            api_key=settings.WORKOS_API_KEY,
-            client_id=settings.WORKOS_CLIENT_ID
-        )
         
         # Get the authorization code from the request
         code = request.data.get('code')
@@ -187,43 +212,51 @@ class WorkOSAuthView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Exchange the authorization code for an access token
+            # Initialize WorkOS client
+            from workos import WorkOSClient
+            
+            workos = WorkOSClient(
+                api_key=settings.WORKOS_API_KEY,
+                client_id=settings.WORKOS_CLIENT_ID
+            )
+            
             logger.info(f"Attempting to exchange code with WorkOS...")
-            profile_and_token = workos.sso.get_profile_and_token(code)
             
-            logger.info(f"WorkOS response received: {type(profile_and_token)}")
+            # Exchange authorization code for user profile
+            auth_response = workos.user_management.authenticate_with_code(
+                code=code,
+                client_id=settings.WORKOS_CLIENT_ID
+            )
             
-            # Access profile as an attribute, not dictionary key
-            profile = profile_and_token.profile
+            logger.info(f"WorkOS authentication response received")
             
-            # Convert profile to dictionary using Pydantic's model_dump()
-            profile_dict = profile.model_dump()
-            
-            logger.info(f"Profile data: {profile_dict}")
-            
-            # Extract user information
-            email = profile_dict.get('email')
-            first_name = profile_dict.get('first_name') or None
-            last_name = profile_dict.get('last_name') or None
-            google_id = profile_dict.get('id', '')
-            profile_picture = profile_dict.get('profile_picture_url', '')
+            # Extract user information from auth_response
+            user_data = auth_response.user
+            email = user_data.email
+            first_name = user_data.first_name if hasattr(user_data, 'first_name') else ''
+            last_name = user_data.last_name if hasattr(user_data, 'last_name') else ''
+            google_id = user_data.id
+            profile_picture = user_data.profile_picture_url if hasattr(user_data, 'profile_picture_url') else ''
             
             if not email:
                 logger.error("No email in profile data")
                 return Response({
-                    'error': 'Email not provided by Google'
+                    'error': 'Email not provided by authentication provider'
                 }, status=status.HTTP_400_BAD_REQUEST)
+            
+            logger.info(f"Extracted email: {email}")
             
             # Create or get user by email
             user, created = User.objects.get_or_create(
                 email=email,
                 defaults={
                     'username': email.split('@')[0],
-                    'first_name': first_name,
-                    'last_name': last_name,
+                    'first_name': first_name or '',
+                    'last_name': last_name or '',
                     'class_level': 9,  # Default to class 9
                     'google_id': google_id,
                     'profile_picture': profile_picture,
+                    'is_student': True,  # Default role
                 }
             )
             
@@ -233,11 +266,13 @@ class WorkOSAuthView(APIView):
             if not created:
                 user.google_id = google_id
                 user.profile_picture = profile_picture
-                user.first_name = first_name or user.first_name
-                user.last_name = last_name or user.last_name
+                if first_name:
+                    user.first_name = first_name
+                if last_name:
+                    user.last_name = last_name
                 user.save()
             
-            # Create token for the user
+            # Create or get token for the user
             token, _ = Token.objects.get_or_create(user=user)
             
             logger.info(f"Authentication successful for {user.email}")
