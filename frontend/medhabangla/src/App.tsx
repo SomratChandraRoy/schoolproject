@@ -16,6 +16,7 @@ import Notes from './pages/Notes';
 import AdminDashboard from './pages/AdminDashboard';
 import QuizManagement from './pages/QuizManagement';
 import AuthCallback from './pages/AuthCallback';
+import ProfileSetup from './pages/ProfileSetup';
 import Syllabus from './pages/Syllabus';
 import StudyTimer from './pages/StudyTimer';
 import StudyStats from './pages/StudyStats';
@@ -49,6 +50,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/profile-setup" element={<ProfileSetup />} />
 
             {/* Protected Routes for Authenticated Users */}
             <Route element={<ProtectedRoute />}>

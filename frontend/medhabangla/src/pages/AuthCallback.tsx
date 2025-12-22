@@ -67,13 +67,15 @@ const AuthCallback: React.FC = () => {
           localStorage.setItem('profilePicture', data.user.profile_picture);
         }
 
-        // Set default class level if not present
+        // Check if profile is complete
         if (!data.user.class_level) {
-          // Default to class 9
-          localStorage.setItem('userClass', '9');
-        } else {
-          localStorage.setItem('userClass', data.user.class_level.toString());
+          console.log('Profile incomplete, redirecting to setup...');
+          navigate('/profile-setup');
+          return;
         }
+
+        // Set class level
+        localStorage.setItem('userClass', data.user.class_level.toString());
 
         console.log('Redirecting to dashboard...');
 
