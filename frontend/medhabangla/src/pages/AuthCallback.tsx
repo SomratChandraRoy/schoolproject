@@ -67,19 +67,14 @@ const AuthCallback: React.FC = () => {
           localStorage.setItem('profilePicture', data.user.profile_picture);
         }
 
-        // Check if profile is complete
-        if (!data.user.class_level) {
-          console.log('Profile incomplete, redirecting to setup...');
-          navigate('/profile-setup');
-          return;
+        // Set class level if available
+        if (data.user.class_level) {
+          localStorage.setItem('userClass', data.user.class_level.toString());
         }
-
-        // Set class level
-        localStorage.setItem('userClass', data.user.class_level.toString());
 
         console.log('Redirecting to dashboard...');
 
-        // Redirect to dashboard
+        // Always redirect to dashboard - it will show modal if profile incomplete
         navigate('/dashboard');
       } catch (error) {
         console.error('Authentication error:', error);

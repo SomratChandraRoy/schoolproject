@@ -459,6 +459,10 @@ class UpdateUserProfileView(APIView):
         if 'disliked_subjects' in request.data:
             user.disliked_subjects = request.data['disliked_subjects']
         
+        # Update interests if provided
+        if 'interests' in request.data:
+            user.interests = request.data['interests']
+        
         user.save()
         
         return Response({

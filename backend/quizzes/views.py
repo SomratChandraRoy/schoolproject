@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Quiz, QuizAttempt, Analytics, UserPerformance
-from .serializers import QuizSerializer, QuizAttemptSerializer, AnalyticsSerializer
+from .models import Quiz, QuizAttempt, Analytics, UserPerformance, Subject
+from .serializers import QuizSerializer, QuizAttemptSerializer, AnalyticsSerializer, SubjectSerializer
 from accounts.models import User
 from accounts.permissions import IsTeacher, IsTeacherOrAdmin
 
@@ -159,3 +159,27 @@ class SubmitQuizResultsView(APIView):
         
         serializer = AnalyticsSerializer(analytics)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class SubjectListView(APIView):
+    """Get subjects filtered by user's class level"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        class_level = request.query_params.get('class_level', user.class_level)
+        
+        if not class_level:
+            return Response(
+                {'error': 'Class level not found. Please complete your profile.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get all subjects for the user's class
+        subjects = Subject.objects.filter(class_level=class_level)
+        serializer = SubjectSerializer(subjects, many=True)
+        
+        return Response({
+            'class_level': class_level,
+            'subjects': serializer.data
+        })

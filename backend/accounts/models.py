@@ -11,6 +11,7 @@ class User(AbstractUser):
     class_level = models.IntegerField(choices=CLASS_CHOICES, null=True, blank=True)
     fav_subjects = models.JSONField(default=list, blank=True)
     disliked_subjects = models.JSONField(default=list, blank=True)
+    interests = models.JSONField(default=list, blank=True)  # User interests
     total_points = models.IntegerField(default=0)
     
     # Role fields

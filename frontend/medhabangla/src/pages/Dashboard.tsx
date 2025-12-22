@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import ProfileCompletionModal from '../components/ProfileCompletionModal';
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [stats, setStats] = useState([
     { name: "Total Points", value: 0 },
     { name: "Quizzes Taken", value: 0 },
@@ -38,9 +39,12 @@ const Dashboard: React.FC = () => {
         localStorage.setItem('user', JSON.stringify(data.user));
 
         // Check if profile is incomplete
-        if (!data.user.class_level) {
-          navigate('/profile-setup');
-          return;
+        const isProfileIncomplete = !data.user.class_level ||
+          !data.user.fav_subjects ||
+          data.user.fav_subjects.length === 0;
+
+        if (isProfileIncomplete) {
+          setShowProfileModal(true);
         }
 
         // Update stats with real data
@@ -61,6 +65,12 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleProfileComplete = () => {
+    setShowProfileModal(false);
+    // Refresh user data
+    fetchUserData();
   };
 
   if (loading) {
@@ -92,6 +102,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
+
+      {/* Profile Completion Modal */}
+      <ProfileCompletionModal
+        isOpen={showProfileModal}
+        onComplete={handleProfileComplete}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">

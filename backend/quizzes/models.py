@@ -2,16 +2,48 @@ from django.db import models
 from accounts.models import User
 
 
+class Subject(models.Model):
+    """Subject model to store class-specific subjects"""
+    name = models.CharField(max_length=100)
+    bengali_title = models.CharField(max_length=100, blank=True)
+    subject_code = models.CharField(max_length=50)  # e.g., 'bangla_1st', 'physics'
+    class_level = models.IntegerField(choices=[(i, f'Class {i}') for i in range(6, 13)])
+    stream = models.CharField(max_length=50, blank=True, null=True)  # Science, Humanities, Business
+    is_compulsory = models.BooleanField(default=True)
+    icon = models.CharField(max_length=10, default='📚')
+    color = models.CharField(max_length=50, default='bg-blue-100')
+    description = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['class_level', 'name']
+        unique_together = ['subject_code', 'class_level']
+    
+    def __str__(self):
+        return f"{self.name} - Class {self.class_level}"
+
+
 class Quiz(models.Model):
     SUBJECT_CHOICES = [
         ('physics', 'Physics'),
         ('chemistry', 'Chemistry'),
-        ('math', 'General Math'),
-        ('bangla', 'Bangla'),
-        ('english', 'English'),
+        ('math', 'Mathematics'),
+        ('higher_math', 'Higher Mathematics'),
+        ('bangla_1st', 'Bangla 1st Paper'),
+        ('bangla_2nd', 'Bangla 2nd Paper'),
+        ('english_1st', 'English 1st Paper'),
+        ('english_2nd', 'English 2nd Paper'),
         ('biology', 'Biology'),
         ('ict', 'ICT'),
-        ('general_knowledge', 'General Knowledge'),
+        ('science', 'Science'),
+        ('bangladesh_global', 'Bangladesh & Global Studies'),
+        ('history', 'History'),
+        ('geography', 'Geography'),
+        ('civics', 'Civics'),
+        ('accounting', 'Accounting'),
+        ('finance', 'Finance & Banking'),
+        ('business', 'Business Entrepreneurship'),
+        ('economics', 'Economics'),
+        ('general_science', 'General Science'),
     ]
     
     DIFFICULTY_CHOICES = [

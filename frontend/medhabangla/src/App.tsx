@@ -20,6 +20,7 @@ import ProfileSetup from './pages/ProfileSetup';
 import Syllabus from './pages/Syllabus';
 import StudyTimer from './pages/StudyTimer';
 import StudyStats from './pages/StudyStats';
+import SuperuserDashboard from './pages/SuperuserDashboard';
 
 //import pdfd for cheking pdf viewer ! 
 import Pdfd from './pages/Pdfd'
@@ -74,6 +75,7 @@ function App() {
             {/* Protected Routes for Admin */}
             <Route element={<ProtectedRoute isAllowed={!!user && user.is_admin} redirectPath="/dashboard" />}>
               <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/superuser" element={<SuperuserDashboard />} />
             </Route>
 
             {/* Protected Routes for Teachers and Admins */}

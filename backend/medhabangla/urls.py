@@ -26,6 +26,10 @@ urlpatterns = [
     path('api/books/', include('books.urls')),
     path('api/games/', include('games.urls')),
     path('api/ai/', include('ai.urls')),
+    # Admin API endpoints
+    path('api/superuser/accounts/', include('accounts.admin_urls')),
+    path('api/superuser/quizzes/', include('quizzes.admin_urls')),
+    path('api/superuser/books/', include('books.admin_urls')),
 ]
 
 # Serve media files in development
