@@ -259,33 +259,74 @@ class WorkOSAuthView(APIView):
                     'error': 'Email not provided by authentication provider'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            logger.info(f"Extracted email: {email}")
+            logger.info(f"Extracted email: {email}, google_id: {google_id}")
             
-            # Create or get user by email
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    'username': email.split('@')[0],
-                    'first_name': first_name or '',
-                    'last_name': last_name or '',
-                    'class_level': 9,  # Default to class 9
-                    'google_id': google_id,
-                    'profile_picture': profile_picture,
-                    'is_student': True,  # Default role
-                }
-            )
+            # First, try to find user by google_id (WorkOS user ID)
+            # This is the most reliable identifier
+            user = None
+            created = False
+            
+            try:
+                if google_id:
+                    user = User.objects.get(google_id=google_id)
+                    logger.info(f"Found existing user by google_id: {user.email}")
+                    created = False
+            except User.DoesNotExist:
+                logger.info(f"No user found with google_id: {google_id}")
+            except User.MultipleObjectsReturned:
+                # If multiple users with same google_id (shouldn't happen), get the first one
+                user = User.objects.filter(google_id=google_id).first()
+                logger.warning(f"Multiple users found with google_id: {google_id}, using first one")
+            
+            # If not found by google_id, try by email
+            if not user:
+                try:
+                    user = User.objects.get(email=email)
+                    logger.info(f"Found existing user by email: {user.email}")
+                    created = False
+                except User.DoesNotExist:
+                    logger.info(f"No user found with email: {email}, creating new user")
+                    # Create new user
+                    user = User.objects.create(
+                        email=email,
+                        username=email.split('@')[0],
+                        first_name=first_name or '',
+                        last_name=last_name or '',
+                        class_level=9,  # Default to class 9
+                        google_id=google_id,
+                        profile_picture=profile_picture,
+                        is_student=True,  # Default role
+                    )
+                    created = True
+                    logger.info(f"Created new user: {user.email}")
+                except User.MultipleObjectsReturned:
+                    # Handle duplicate users with same email
+                    logger.warning(f"Multiple users found with email: {email}")
+                    # Get all users with this email
+                    duplicate_users = User.objects.filter(email=email).order_by('date_joined')
+                    
+                    # Keep the first one (oldest), update it with google_id
+                    user = duplicate_users.first()
+                    logger.info(f"Using oldest user: {user.id} - {user.email}")
+                    
+                    # Delete the duplicates
+                    for dup_user in duplicate_users[1:]:
+                        logger.warning(f"Deleting duplicate user: {dup_user.id} - {dup_user.email}")
+                        dup_user.delete()
+                    
+                    created = False
             
             logger.info(f"User {'created' if created else 'found'}: {user.email}")
             
-            # Update Google OAuth fields if user already exists
-            if not created:
-                user.google_id = google_id
-                user.profile_picture = profile_picture
-                if first_name:
-                    user.first_name = first_name
-                if last_name:
-                    user.last_name = last_name
-                user.save()
+            # Update user fields with latest data from WorkOS
+            user.google_id = google_id
+            user.profile_picture = profile_picture
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            user.save()
+            logger.info(f"Updated user data for: {user.email}")
             
             # Create or get token for the user
             token, _ = Token.objects.get_or_create(user=user)
