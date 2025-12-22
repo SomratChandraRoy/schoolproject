@@ -55,10 +55,41 @@ class AIChatMessageView(APIView):
             
             # Get AI response using Google Gemini
             genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-1.5-pro')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             # Customize prompt based on message type
-            if message_type == 'remedial':
+            if message_type == 'homework_help':
+                class_info = f"Class {user.class_level}" if user.class_level else "Classes 6-12"
+                prompt = f"""আপনি একজন সহায়ক AI শিক্ষক যিনি {class_info} এর শিক্ষার্থীদের হোমওয়ার্কে সাহায্য করেন।
+
+নিয়ম:
+- সরাসরি উত্তর দেবেন না, বরং শিক্ষার্থীকে চিন্তা করতে সাহায্য করুন
+- ধাপে ধাপে গাইড করুন
+- উৎসাহব্যঞ্জক এবং ধৈর্যশীল হন
+- বাংলা এবং ইংরেজি উভয় ভাষায় সাহায্য করুন
+- NCTB পাঠ্যক্রম অনুসরণ করুন
+
+শিক্ষার্থীর প্রশ্ন: {message}
+
+আপনার উত্তর:"""
+            elif message_type == 'exam_prep':
+                class_info = f"Class {user.class_level}" if user.class_level else "Classes 6-12"
+                prompt = f"""You are an AI exam preparation tutor for {class_info} students in Bangladesh.
+
+Focus on:
+- Key concepts and topics for NCTB curriculum
+- Common exam patterns
+- Time management tips
+- Practice strategies
+- Stress management
+- Memory techniques
+
+Respond in Bangla for better understanding.
+
+Student's question: {message}
+
+Your response:"""
+            elif message_type == 'remedial':
                 prompt = f"""You are an expert educational AI tutor for Bangladeshi students. 
 The student is in Class {user.class_level}. 
 Provide a clear explanation in simple terms. Use Bangla when appropriate for better understanding.
@@ -72,15 +103,41 @@ Please provide:
                 prompt = f"""You are an AI note-taking assistant for students. 
 Summarize the following content in a structured, easy-to-study format with bullet points and key concepts highlighted.
 Content: {message}"""
-            else:
+            else:  # general
                 class_info = f"Class {user.class_level}" if user.class_level else "Classes 6-12"
-                prompt = f"""You are an educational AI assistant for Bangladeshi students studying in {class_info}. 
-Be helpful, encouraging, and educational. Respond in Bangla when it helps with understanding.
-Follow the NCTB (National Curriculum and Textbook Board) standards for Bangladesh.
-Student: {message}"""
+                prompt = f"""আপনি MedhaBangla এর AI শিক্ষা সহায়ক, যিনি {class_info} এর শিক্ষার্থীদের সাহায্য করেন।
+
+আপনি সাহায্য করতে পারেন:
+- পড়াশোনার প্রশ্নে
+- হোমওয়ার্কে
+- পরীক্ষার প্রস্তুতিতে
+- বই এবং অধ্যায় বুঝতে
+- পড়ার পরিকল্পনা তৈরিতে
+
+সবসময় উৎসাহব্যঞ্জক, সহায়ক এবং শিক্ষামূলক হন। NCTB পাঠ্যক্রম অনুসরণ করুন।
+
+শিক্ষার্থী: {message}
+
+AI:"""
             
-            response = model.generate_content(prompt)
-            ai_response = response.text
+            # Generate AI response with better error handling
+            try:
+                response = model.generate_content(prompt)
+                ai_response = response.text
+            except Exception as gemini_error:
+                # Log the specific Gemini error
+                print(f"Gemini API Error: {str(gemini_error)}")
+                
+                # Check if it's an API key error
+                error_str = str(gemini_error).lower()
+                if 'api key' in error_str or 'api_key' in error_str:
+                    raise Exception("Gemini API key is invalid or expired. Please check your API key configuration.")
+                elif 'quota' in error_str:
+                    raise Exception("Gemini API quota exceeded. Please try again later.")
+                elif 'permission' in error_str:
+                    raise Exception("Gemini API permission denied. Please check your API key permissions.")
+                else:
+                    raise Exception(f"Gemini API error: {str(gemini_error)}")
             
             # Save AI message
             ai_message = AIChatMessage.objects.create(
@@ -158,7 +215,7 @@ class RemedialLearningView(APIView):
             
             # Get AI explanation using Google Gemini
             genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-1.5-pro')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             prompt = f"""You are an expert educational AI tutor for Bangladeshi students. 
 Analyze the following mistakes made by a Class {user.class_level} student and provide remedial guidance.
@@ -201,7 +258,7 @@ class GenerateQuizQuestionView(APIView):
         try:
             # Get AI response using Google Gemini
             genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-1.5-pro')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             # Create prompt for generating question
             prompt = f"""You are an expert educational content creator for the Bangladeshi education system.

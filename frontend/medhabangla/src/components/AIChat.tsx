@@ -5,22 +5,18 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+  type?: 'text' | 'code' | 'error' | 'success';
 }
 
 const AIChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m your AI learning assistant. How can I help you today?',
-      isUser: false,
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<'general' | 'homework_help' | 'exam_prep'>('general');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,15 +26,29 @@ const AIChat: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      // Add welcome message when chat opens
+      const welcomeMessage: Message = {
+        id: '1',
+        text: 'নমস্কার! আমি আপনার AI শিক্ষা সহায়ক। আমি আপনাকে সাহায্য করতে পারি:\n\n📚 পড়াশোনার প্রশ্নে\n✏️ হোমওয়ার্কে\n📝 পরীক্ষার প্রস্তুতিতে\n💡 যেকোনো বিষয় বুঝতে\n\nকিভাবে সাহায্য করতে পারি?',
+        isUser: false,
+        timestamp: new Date(),
+        type: 'text'
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [isOpen]);
+
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
 
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputValue,
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
+      type: 'text'
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -46,14 +56,22 @@ const AIChat: React.FC = () => {
     setInputValue('');
     setIsLoading(true);
 
+    // Auto-resize textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+
     try {
-      // Get auth token
       const token = localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('Please login to use AI chat');
+      }
 
       // Create session if not exists
       let currentSessionId = sessionId;
       if (!currentSessionId) {
-        const sessionResponse = await fetch('http://localhost:8000/api/ai/chat/start/', {
+        const sessionResponse = await fetch('/api/ai/chat/start/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -70,12 +88,8 @@ const AIChat: React.FC = () => {
         }
       }
 
-      // Get user data for class-aware prompts
-      const userStr = localStorage.getItem('user');
-      const user = userStr ? JSON.parse(userStr) : null;
-      
       // Call backend API to get AI response
-      const response = await fetch('http://localhost:8000/api/ai/chat/message/', {
+      const response = await fetch('/api/ai/chat/message/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,32 +98,35 @@ const AIChat: React.FC = () => {
         body: JSON.stringify({
           session_id: currentSessionId,
           message: currentMessage,
-          message_type: 'general'
+          message_type: messageType
         })
       });
 
       if (response.ok) {
         const data = await response.json();
+        const aiText = data.ai_message?.message || data.ai_message || 'No response received';
 
-        // Add AI response
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: data.ai_message.message || data.ai_message,
+          text: aiText,
           isUser: false,
-          timestamp: new Date()
+          timestamp: new Date(),
+          type: 'text'
         };
 
         setMessages(prev => [...prev, aiMessage]);
       } else {
-        throw new Error('Failed to get response from AI');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get response from AI');
       }
     } catch (error) {
       console.error('AI Chat Error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Sorry, I encountered an error. Please try again.',
+        text: `দুঃখিত, একটি সমস্যা হয়েছে। ${error instanceof Error ? error.message : 'অনুগ্রহ করে আবার চেষ্টা করুন।'}`,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        type: 'error'
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -117,31 +134,50 @@ const AIChat: React.FC = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
+  const clearChat = () => {
+    if (window.confirm('আপনি কি চ্যাট ইতিহাস মুছে ফেলতে চান?')) {
+      setMessages([]);
+      setSessionId(null);
+      setIsOpen(false);
+    }
+  };
+
   const saveConversationToNotes = async () => {
-    if (messages.length <= 1) return; // Don't save if only the welcome message
+    if (messages.length <= 1) {
+      const infoMessage: Message = {
+        id: Date.now().toString(),
+        text: 'কথোপকথন সংরক্ষণ করার জন্য কিছু বার্তা প্রয়োজন।',
+        isUser: false,
+        timestamp: new Date(),
+        type: 'error'
+      };
+      setMessages(prev => [...prev, infoMessage]);
+      return;
+    }
 
     try {
-      // Format conversation as note content
       let noteContent = '# AI Chat Conversation\n\n';
+      noteContent += `Date: ${new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })}\n\n---\n\n`;
 
       messages.forEach(message => {
-        const role = message.isUser ? 'You' : 'AI Assistant';
+        const role = message.isUser ? '👤 You' : '🤖 AI Assistant';
         const timestamp = message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        noteContent += `**${role} (${timestamp}):**\n${message.text}\n\n`;
+        noteContent += `**${role}** _(${timestamp})_\n\n${message.text}\n\n---\n\n`;
       });
 
-      // Get auth token
       const token = localStorage.getItem('token');
-
-      // Save to backend
-      const response = await fetch('http://localhost:8000/api/ai/notes/save/', {
+      const response = await fetch('/api/ai/notes/save/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,14 +190,13 @@ const AIChat: React.FC = () => {
       });
 
       if (response.ok) {
-        // Show success message
         const successMessage: Message = {
           id: Date.now().toString(),
-          text: 'Conversation saved to your notes!',
+          text: '✅ কথোপকথন আপনার নোটে সংরক্ষিত হয়েছে!',
           isUser: false,
-          timestamp: new Date()
+          timestamp: new Date(),
+          type: 'success'
         };
-
         setMessages(prev => [...prev, successMessage]);
       } else {
         throw new Error('Failed to save conversation');
@@ -170,11 +205,27 @@ const AIChat: React.FC = () => {
       console.error('Error saving conversation:', error);
       const errorMessage: Message = {
         id: Date.now().toString(),
-        text: 'Failed to save conversation to notes.',
+        text: '❌ কথোপকথন সংরক্ষণ করতে ব্যর্থ হয়েছে।',
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        type: 'error'
       };
       setMessages(prev => [...prev, errorMessage]);
+    }
+  };
+
+  const quickPrompts = [
+    { text: 'গণিত সমস্যা সমাধান', icon: '🔢', type: 'homework_help' as const },
+    { text: 'বিজ্ঞান ব্যাখ্যা', icon: '🔬', type: 'general' as const },
+    { text: 'পরীক্ষার টিপস', icon: '📝', type: 'exam_prep' as const },
+    { text: 'ইংরেজি গ্রামার', icon: '📖', type: 'homework_help' as const }
+  ];
+
+  const handleQuickPrompt = (prompt: string, type: 'general' | 'homework_help' | 'exam_prep') => {
+    setMessageType(type);
+    setInputValue(prompt);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
     }
   };
 
@@ -184,72 +235,172 @@ const AIChat: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition-all transform hover:scale-110 z-50"
+          className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full p-4 shadow-2xl hover:shadow-blue-500/50 transition-all transform hover:scale-110 z-50 animate-pulse"
           aria-label="Open AI Chat"
         >
-          <div className="text-2xl">🤖</div>
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            AI
+          </span>
         </button>
       )}
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-full max-w-md h-[500px] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col z-50 border border-gray-200 dark:border-gray-700">
+        <div className="fixed bottom-6 right-6 w-full max-w-lg h-[600px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 dark:border-gray-700 overflow-hidden">
           {/* Chat header */}
-          <div className="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
-            <div className="flex items-center">
-              <div className="text-2xl mr-2">🤖</div>
-              <h3 className="font-semibold">AI Learning Assistant</h3>
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">AI শিক্ষা সহায়ক</h3>
+                <p className="text-xs text-white/80">সবসময় সাহায্য করতে প্রস্তুত</p>
+              </div>
             </div>
             <div className="flex space-x-2">
               <button
                 onClick={saveConversationToNotes}
-                className="text-white hover:text-gray-200"
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
                 aria-label="Save to notes"
-                title="Save conversation to notes"
+                title="নোটে সংরক্ষণ করুন"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+              </button>
+              <button
+                onClick={clearChat}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                aria-label="Clear chat"
+                title="চ্যাট মুছুন"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-white hover:text-gray-200"
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
                 aria-label="Close chat"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
           </div>
 
+          {/* Message type selector */}
+          <div className="bg-gray-50 dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex space-x-2 overflow-x-auto">
+              <button
+                onClick={() => setMessageType('general')}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${messageType === 'general'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+              >
+                সাধারণ
+              </button>
+              <button
+                onClick={() => setMessageType('homework_help')}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${messageType === 'homework_help'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+              >
+                হোমওয়ার্ক
+              </button>
+              <button
+                onClick={() => setMessageType('exam_prep')}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${messageType === 'exam_prep'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+              >
+                পরীক্ষা প্রস্তুতি
+              </button>
+            </div>
+          </div>
+
           {/* Messages container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+            {messages.length === 0 && (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">🤖</div>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                  আমাকে কিছু জিজ্ঞাসা করুন...
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {quickPrompts.map((prompt, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuickPrompt(prompt.text, prompt.type)}
+                      className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-colors text-left"
+                    >
+                      <div className="text-2xl mb-1">{prompt.icon}</div>
+                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {prompt.text}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} animate-fadeIn`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.isUser
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'
+                  className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-sm ${message.isUser
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-br-none'
+                      : message.type === 'error'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-bl-none'
+                        : message.type === 'success'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-bl-none'
+                          : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-bl-none border border-gray-200 dark:border-gray-700'
                     }`}
                 >
-                  <p className="text-sm">{message.text}</p>
-                  <p className={`text-xs mt-1 ${message.isUser ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                  <p
+                    className={`text-xs mt-2 ${message.isUser
+                        ? 'text-white/70'
+                        : 'text-gray-500 dark:text-gray-400'
+                      }`}
+                  >
+                    {message.timestamp.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                   </p>
                 </div>
               </div>
             ))}
+
             {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg">
+              <div className="flex justify-start animate-fadeIn">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 rounded-2xl rounded-bl-none shadow-sm">
                   <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.4s' }}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -258,34 +409,63 @@ const AIChat: React.FC = () => {
           </div>
 
           {/* Input area */}
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+            <div className="flex items-end space-x-2">
               <textarea
+                ref={textareaRef}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask me anything..."
-                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none"
-                rows={2}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  // Auto-resize
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="আপনার প্রশ্ন লিখুন..."
+                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none max-h-32"
+                rows={1}
                 disabled={isLoading}
               />
               <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isLoading}
-                className={`bg-blue-600 text-white px-4 py-2 rounded-r-lg font-medium ${!inputValue.trim() || isLoading
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:bg-blue-700'
+                className={`p-3 rounded-xl font-medium transition-all ${!inputValue.trim() || isLoading
+                    ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg hover:scale-105'
                   }`}
               >
-                Send
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
               </button>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-              Powered by Google Gemini AI
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                ⚡ Powered by Google Gemini AI
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Shift + Enter for new line
+              </p>
+            </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </>
   );
 };

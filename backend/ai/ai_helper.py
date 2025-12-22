@@ -21,7 +21,7 @@ class AIHelper:
     def __init__(self):
         """Initialize Gemini AI"""
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-pro')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
     
     def generate_remedial_explanation(
         self, 

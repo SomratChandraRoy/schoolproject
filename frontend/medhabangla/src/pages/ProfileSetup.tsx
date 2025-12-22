@@ -11,27 +11,36 @@ const ProfileSetup: React.FC = () => {
     const [loading, setLoading] = useState(false);
 
     const subjects = [
-        'Bangla', 'English', 'Mathematics', 'Science', 'Physics',
-        'Chemistry', 'Biology', 'ICT', 'History', 'Geography',
-        'Religion', 'Agriculture'
+        { id: 'bangla', name: 'বাংলা (Bangla)' },
+        { id: 'english', name: 'ইংরেজি (English)' },
+        { id: 'math', name: 'গণিত (Mathematics)' },
+        { id: 'science', name: 'বিজ্ঞান (Science)' },
+        { id: 'physics', name: 'পদার্থবিজ্ঞান (Physics)' },
+        { id: 'chemistry', name: 'রসায়ন (Chemistry)' },
+        { id: 'biology', name: 'জীববিজ্ঞান (Biology)' },
+        { id: 'ict', name: 'আইসিটি (ICT)' },
+        { id: 'history', name: 'ইতিহাস (History)' },
+        { id: 'geography', name: 'ভূগোল (Geography)' },
+        { id: 'religion', name: 'ধর্ম (Religion)' },
+        { id: 'agriculture', name: 'কৃষি (Agriculture)' }
     ];
 
-    const handleSubjectToggle = (subject: string, type: 'fav' | 'disliked') => {
+    const handleSubjectToggle = (subjectId: string, type: 'fav' | 'disliked') => {
         if (type === 'fav') {
             setFormData(prev => ({
                 ...prev,
-                fav_subjects: prev.fav_subjects.includes(subject)
-                    ? prev.fav_subjects.filter(s => s !== subject)
-                    : [...prev.fav_subjects, subject],
-                disliked_subjects: prev.disliked_subjects.filter(s => s !== subject)
+                fav_subjects: prev.fav_subjects.includes(subjectId)
+                    ? prev.fav_subjects.filter(s => s !== subjectId)
+                    : [...prev.fav_subjects, subjectId],
+                disliked_subjects: prev.disliked_subjects.filter(s => s !== subjectId)
             }));
         } else {
             setFormData(prev => ({
                 ...prev,
-                disliked_subjects: prev.disliked_subjects.includes(subject)
-                    ? prev.disliked_subjects.filter(s => s !== subject)
-                    : [...prev.disliked_subjects, subject],
-                fav_subjects: prev.fav_subjects.filter(s => s !== subject)
+                disliked_subjects: prev.disliked_subjects.includes(subjectId)
+                    ? prev.disliked_subjects.filter(s => s !== subjectId)
+                    : [...prev.disliked_subjects, subjectId],
+                fav_subjects: prev.fav_subjects.filter(s => s !== subjectId)
             }));
         }
     };
@@ -71,17 +80,19 @@ const ProfileSetup: React.FC = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
             <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2 text-center">
-                    Complete Your Profile
+                    আপনার প্রোফাইল সম্পূর্ণ করুন<br />
+                    <span className="text-xl">Complete Your Profile</span>
                 </h1>
                 <p className="text-gray-600 dark:text-gray-300 mb-8 text-center">
-                    Help us personalize your learning experience
+                    আপনার শেখার অভিজ্ঞতা ব্যক্তিগতকৃত করতে সাহায্য করুন<br />
+                    <span className="text-sm">Help us personalize your learning experience</span>
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Class Selection */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                            Select Your Class *
+                            আপনার শ্রেণী নির্বাচন করুন * (Select Your Class)
                         </label>
                         <div className="grid grid-cols-4 gap-3">
                             {[6, 7, 8, 9, 10, 11, 12].map(cls => (
@@ -90,11 +101,12 @@ const ProfileSetup: React.FC = () => {
                                     type="button"
                                     onClick={() => setFormData(prev => ({ ...prev, class_level: cls.toString() }))}
                                     className={`py-3 px-4 rounded-lg font-medium transition-all ${formData.class_level === cls.toString()
-                                            ? 'bg-blue-600 text-white shadow-lg scale-105'
-                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                        ? 'bg-blue-600 text-white shadow-lg scale-105'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                         }`}
                                 >
-                                    Class {cls}
+                                    শ্রেণী {cls}<br />
+                                    <span className="text-xs">Class {cls}</span>
                                 </button>
                             ))}
                         </div>
@@ -103,20 +115,20 @@ const ProfileSetup: React.FC = () => {
                     {/* Favorite Subjects */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                            Favorite Subjects (Select multiple)
+                            প্রিয় বিষয় (Favorite Subjects) - একাধিক নির্বাচন করুন
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {subjects.map(subject => (
                                 <button
-                                    key={subject}
+                                    key={subject.id}
                                     type="button"
-                                    onClick={() => handleSubjectToggle(subject, 'fav')}
-                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.fav_subjects.includes(subject)
-                                            ? 'bg-green-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    onClick={() => handleSubjectToggle(subject.id, 'fav')}
+                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.fav_subjects.includes(subject.id)
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                         }`}
                                 >
-                                    {subject}
+                                    {subject.name}
                                 </button>
                             ))}
                         </div>
@@ -125,20 +137,20 @@ const ProfileSetup: React.FC = () => {
                     {/* Disliked Subjects */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                            Subjects You Find Challenging (Optional)
+                            চ্যালেঞ্জিং বিষয় (Challenging Subjects) - ঐচ্ছিক
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {subjects.map(subject => (
                                 <button
-                                    key={subject}
+                                    key={subject.id}
                                     type="button"
-                                    onClick={() => handleSubjectToggle(subject, 'disliked')}
-                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.disliked_subjects.includes(subject)
-                                            ? 'bg-red-600 text-white'
-                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    onClick={() => handleSubjectToggle(subject.id, 'disliked')}
+                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.disliked_subjects.includes(subject.id)
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                         }`}
                                 >
-                                    {subject}
+                                    {subject.name}
                                 </button>
                             ))}
                         </div>
@@ -149,7 +161,7 @@ const ProfileSetup: React.FC = () => {
                         disabled={loading || !formData.class_level}
                         className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                     >
-                        {loading ? 'Saving...' : 'Complete Setup'}
+                        {loading ? 'সংরক্ষণ করা হচ্ছে... (Saving...)' : 'সেটআপ সম্পূর্ণ করুন (Complete Setup)'}
                     </button>
                 </form>
             </div>

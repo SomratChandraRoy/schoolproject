@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([
@@ -35,6 +36,12 @@ const Dashboard: React.FC = () => {
         const data = await response.json();
         setUserData(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Check if profile is incomplete
+        if (!data.user.class_level) {
+          navigate('/profile-setup');
+          return;
+        }
 
         // Update stats with real data
         setStats([

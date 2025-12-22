@@ -8,7 +8,7 @@ const QuizManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showAiModal, setShowAiModal] = useState(false);
-    
+
     // Form state
     const [formData, setFormData] = useState({
         subject: 'math',
@@ -45,6 +45,8 @@ const QuizManagement: React.FC = () => {
             if (response.ok) {
                 const data = await response.json();
                 setQuizzes(data);
+            } else {
+                console.error('Failed to fetch quizzes');
             }
         } catch (error) {
             console.error('Error fetching quizzes:', error);
@@ -65,7 +67,7 @@ const QuizManagement: React.FC = () => {
                 },
                 body: JSON.stringify(formData)
             });
-            
+
             if (response.ok) {
                 setShowCreateModal(false);
                 fetchQuizzes();
@@ -90,7 +92,7 @@ const QuizManagement: React.FC = () => {
 
     const handleDeleteQuiz = async (id: number) => {
         if (!window.confirm('Are you sure you want to delete this quiz?')) return;
-        
+
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/quizzes/${id}/`, {
@@ -99,7 +101,7 @@ const QuizManagement: React.FC = () => {
                     'Authorization': `Token ${token}`
                 }
             });
-            
+
             if (response.ok) {
                 setQuizzes(quizzes.filter(q => q.id !== id));
             } else {
@@ -122,7 +124,7 @@ const QuizManagement: React.FC = () => {
                 },
                 body: JSON.stringify(aiParams)
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 // Populate form with generated data
@@ -172,27 +174,61 @@ const QuizManagement: React.FC = () => {
                 </div>
 
                 {loading ? (
-                    <div className="text-center py-8">Loading...</div>
+                    <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                        <p className="mt-4 text-gray-600 dark:text-gray-300">Loading quizzes...</p>
+                    </div>
+                ) : quizzes.length === 0 ? (
+                    <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
+                        <p className="text-gray-500 dark:text-gray-400 text-lg">No quizzes found</p>
+                        <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Create your first quiz or generate one with AI</p>
+                    </div>
                 ) : (
                     <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+                        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                                Total Questions: <span className="font-bold">{quizzes.length}</span>
+                            </p>
+                        </div>
                         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                             {quizzes.map((quiz) => (
-                                <li key={quiz.id} className="px-6 py-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                                            {quiz.question_text.substring(0, 100)}...
-                                        </h3>
-                                        <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                            {quiz.subject} • Class {quiz.class_target} • {quiz.difficulty}
+                                <li key={quiz.id} className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                                {quiz.question_text.length > 150
+                                                    ? quiz.question_text.substring(0, 150) + '...'
+                                                    : quiz.question_text}
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                                    {quiz.subject}
+                                                </span>
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                    Class {quiz.class_target}
+                                                </span>
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                                    {quiz.difficulty}
+                                                </span>
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                                    {quiz.question_type}
+                                                </span>
+                                            </div>
+                                            {quiz.correct_answer && (
+                                                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                                    <span className="font-medium">Answer:</span> {quiz.correct_answer.substring(0, 100)}
+                                                    {quiz.correct_answer.length > 100 && '...'}
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={() => handleDeleteQuiz(quiz.id)}
-                                            className="text-red-600 hover:text-red-800"
-                                        >
-                                            Delete
-                                        </button>
+                                        <div className="flex space-x-2 ml-4">
+                                            <button
+                                                onClick={() => handleDeleteQuiz(quiz.id)}
+                                                className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </li>
                             ))}
@@ -211,7 +247,7 @@ const QuizManagement: React.FC = () => {
                                         <label className="block text-sm font-medium dark:text-gray-300">Subject</label>
                                         <select
                                             value={formData.subject}
-                                            onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                                            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                                             className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         >
                                             <option value="math">Math</option>
@@ -228,7 +264,7 @@ const QuizManagement: React.FC = () => {
                                         <label className="block text-sm font-medium dark:text-gray-300">Class</label>
                                         <select
                                             value={formData.class_target}
-                                            onChange={(e) => setFormData({...formData, class_target: parseInt(e.target.value)})}
+                                            onChange={(e) => setFormData({ ...formData, class_target: parseInt(e.target.value) })}
                                             className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         >
                                             {[6, 7, 8, 9, 10, 11, 12].map(c => (
@@ -242,7 +278,7 @@ const QuizManagement: React.FC = () => {
                                     <label className="block text-sm font-medium dark:text-gray-300">Question Text</label>
                                     <textarea
                                         value={formData.question_text}
-                                        onChange={(e) => setFormData({...formData, question_text: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
                                         className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         rows={3}
                                         required
@@ -254,7 +290,7 @@ const QuizManagement: React.FC = () => {
                                     <input
                                         type="text"
                                         value={formData.correct_answer}
-                                        onChange={(e) => setFormData({...formData, correct_answer: e.target.value})}
+                                        onChange={(e) => setFormData({ ...formData, correct_answer: e.target.value })}
                                         className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         required
                                     />
@@ -290,7 +326,7 @@ const QuizManagement: React.FC = () => {
                                     <label className="block text-sm font-medium dark:text-gray-300">Subject</label>
                                     <select
                                         value={aiParams.subject}
-                                        onChange={(e) => setAiParams({...aiParams, subject: e.target.value})}
+                                        onChange={(e) => setAiParams({ ...aiParams, subject: e.target.value })}
                                         className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     >
                                         <option value="math">Math</option>
@@ -307,7 +343,7 @@ const QuizManagement: React.FC = () => {
                                     <label className="block text-sm font-medium dark:text-gray-300">Class</label>
                                     <select
                                         value={aiParams.class_level}
-                                        onChange={(e) => setAiParams({...aiParams, class_level: parseInt(e.target.value)})}
+                                        onChange={(e) => setAiParams({ ...aiParams, class_level: parseInt(e.target.value) })}
                                         className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     >
                                         {[6, 7, 8, 9, 10, 11, 12].map(c => (
@@ -315,7 +351,7 @@ const QuizManagement: React.FC = () => {
                                         ))}
                                     </select>
                                 </div>
-                                
+
                                 <div className="flex justify-end space-x-3 mt-6">
                                     <button
                                         onClick={() => setShowAiModal(false)}

@@ -21,6 +21,8 @@ import Syllabus from './pages/Syllabus';
 import StudyTimer from './pages/StudyTimer';
 import StudyStats from './pages/StudyStats';
 
+//import pdfd for cheking pdf viewer ! 
+import Pdfd from './pages/Pdfd'
 // Import components
 import AIChat from './components/AIChat';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -58,6 +60,8 @@ function App() {
               <Route path="/quiz/select" element={<QuizSelection />} />
               <Route path="/quiz" element={<Quiz />} />
               <Route path="/books" element={<Books />} />
+              <Route path="/pdfd" element={<Pdfd />} />
+
               <Route path="/games" element={<Games />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/profile" element={<Profile />} />
