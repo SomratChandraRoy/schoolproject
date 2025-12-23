@@ -1,0 +1,1862 @@
+[
+    {
+        "subject_info": {
+            "subject_name": "Bangla 1st Paper",
+            "subject_code": "101",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Compulsory"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "B1_SET1",
+                "topic": "Prose - Oporichita (The Stranger)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "In the story Oporichita, what was the name of Anupam’s friend who acted as the matchmaker?",
+                        "options": [
+                            "Binod",
+                            "Harish",
+                            "Ramesh",
+                            "Suresh"
+                        ],
+                        "correct_answer": "Harish",
+                        "ai_insight": "Harish is a pivotal character (The Catalyst) in the story. Without his intervention as the 'ghatok' (matchmaker), the plot regarding the dowry rejection would not have unfolded."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Explain the metaphorical significance of the term 'Makal Phol' as used by Anupam to describe himself.",
+                        "answer": "Anupam uses 'Makal Phol' (a fruit that looks beautiful outside but is useless inside) to describe his own lack of personality and excessive dependence on his uncle, despite his good looks and education.",
+                        "ai_insight": "This metaphor highlights the theme of 'masculinity vs. puppetry' prevalent in Tagore's critique of the patriarchal family structure."
+                    },
+                    {
+                        "id": "cq_1",
+                        "type": "Creative Question (CQ)",
+                        "stem": "Mr. Raihan refuses to marry his daughter to a family that demands a car as a 'gift' before the wedding. He states, 'Dignity is more valuable than a groom.'",
+                        "question": "Compare Mr. Raihan’s stance with Shambhunath Babu’s reaction in Oporichita. How does this reflect the author’s critique of the dowry system?",
+                        "ai_insight": "Focus on the 'Dignity of the Bride's Father'. Shambhunath Babu breaking the engagement serves as a historic literary moment where the bride's side rejects the groom's side, reversing the power dynamic."
+                    }
+                ]
+            },
+            {
+                "module_id": "B1_SET2",
+                "topic": "Prose - Bayannor Dingulo (The Days of 52)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "On which date did the hunger strike mentioned in Bayannor Dingulo commence?",
+                        "options": [
+                            "21st February",
+                            "16th February",
+                            "26th March",
+                            "14th December"
+                        ],
+                        "correct_answer": "16th February",
+                        "ai_insight": "Students often confuse this with 21st Feb. The hunger strike started on the 16th as a precursor to the tragic events of the 21st."
+                    },
+                    {
+                        "id": "sq_2",
+                        "type": "Short Question",
+                        "question": "Why did Sheikh Mujibur Rahman refuse to be released on parole during the movement?",
+                        "answer": "He refused parole because he believed accepting it would compromise the integrity of the movement and signal weakness to the oppressive regime.",
+                        "ai_insight": "This demonstrates 'Uncompromising Leadership', a key trait assessed in the 'Application' (Proyog) level of CQ."
+                    }
+                ]
+            },
+            {
+                "module_id": "B1_SET3",
+                "topic": "Poetry - Sonar Tori (The Golden Boat)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "What season is depicted in the poem Sonar Tori?",
+                        "options": [
+                            "Spring",
+                            "Winter",
+                            "Monsoon",
+                            "Autumn"
+                        ],
+                        "correct_answer": "Monsoon",
+                        "ai_insight": "The 'Monsoon' (Barsha) symbolizes the destructive yet fertile nature of time. The rising water represents the impending end of life."
+                    },
+                    {
+                        "id": "sq_3",
+                        "type": "Short Question",
+                        "question": "Interpret the line 'Thaire nai thaire nai choto she tori' (There is no room in that small boat).",
+                        "answer": "It means the boat of time (history) only carries human achievements (the golden paddy), but has no room for the mortal individual (the farmer).",
+                        "ai_insight": "Key Concept: 'Art vs. Artist'. The creation survives, the creator perishes."
+                    }
+                ]
+            },
+            {
+                "module_id": "B1_SET4",
+                "topic": "Poetry - Bidrohi (The Rebel)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Which mythological figure does the poet identify with when he says 'I am Bhrigu'?",
+                        "options": [
+                            "Greek",
+                            "Indian",
+                            "Roman",
+                            "Persian"
+                        ],
+                        "correct_answer": "Indian",
+                        "ai_insight": "Bhrigu is a sage in Hindu mythology who kicked Vishnu in the chest. Nazrul uses this to symbolize challenging the highest authority."
+                    }
+                ]
+            },
+            {
+                "module_id": "B1_SET5",
+                "topic": "Prose - Bilasi",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "Who is the narrator of the story Bilasi?",
+                        "options": [
+                            "Mrityunjay",
+                            "Bilasi",
+                            "Nyara",
+                            "The Village Elder"
+                        ],
+                        "correct_answer": "Nyara",
+                        "ai_insight": "Nyara is widely considered to be a fictional representation of the author Sarat Chandra Chattopadhyay himself in his youth."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Bangla 2nd Paper",
+            "subject_code": "102",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Compulsory"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "B2_SET1",
+                "topic": "Pronunciation (Ucharon)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "Which is the correct pronunciation rule for the inherent 'A' (অ) in Bangla?",
+                        "options": [
+                            "Always open",
+                            "Always closed",
+                            "Varies by position",
+                            "Silent"
+                        ],
+                        "correct_answer": "Varies by position",
+                        "ai_insight": "The 'A' (অ) sound is 'O' like (Closed) if followed by 'i' or 'u' sounds (e.g., 'Oti' not 'Ati')."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Write the correct pronunciation of the following words: Atma (Soul), Padma (Lotus).",
+                        "answer": "Atma -> Ãt-tã (আত্মা -> আঁৎতা), Padma -> Poddõ (পদ্মা -> পোদ্​দো)."
+                    }
+                ]
+            },
+            {
+                "module_id": "B2_SET2",
+                "topic": "Spelling (Banan)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "According to the Bangla Academy, which spelling is correct?",
+                        "options": [
+                            "শ্রেণী",
+                            "শ্রেণি",
+                            "শ্রেনী",
+                            "শ্রেনি"
+                        ],
+                        "correct_answer": "শ্রেণি",
+                        "ai_insight": "Modern Standard Bangla rules prefer 'i-kar' (ি) over 'ee-kar' (ী) for most Sanskrit-derived words ending in -in."
+                    }
+                ]
+            },
+            {
+                "module_id": "B2_SET3",
+                "topic": "Grammar (Bakaron)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "What type of compound (Samas) is 'Singhasan'?",
+                        "options": [
+                            "Tatpurush",
+                            "Karmadharaya",
+                            "Bahubrihi",
+                            "Dwandwa"
+                        ],
+                        "correct_answer": "Karmadharaya",
+                        "ai_insight": "Singhasan = Singha (Lion) markito (marked) ason (seat). This is 'Moddho-pod-lopi Karmadharaya' (Middle-term deleting compound)."
+                    }
+                ]
+            },
+            {
+                "module_id": "B2_SET4",
+                "topic": "Translation (Anubad)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "The English proverb 'A little learning is a dangerous thing' translates to:",
+                        "options": [
+                            "অল্প বিদ্যা ভয়ংকরী",
+                            "নাই মামার চেয়ে কানা মামা ভালো",
+                            "অতি লোভে তাঁতি নষ্ট",
+                            "চোরে চোরে মাসতুতো ভাই"
+                        ],
+                        "correct_answer": "অল্প বিদ্যা ভয়ংকরী",
+                        "ai_insight": "Translation requires cultural equivalence, not just literal translation."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "English 1st Paper",
+            "subject_code": "107",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Compulsory"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "E1_SET1",
+                "topic": "Reading Comprehension (Nelson Mandela)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "The word 'emancipation' in Mandela's speech means:",
+                        "options": [
+                            "Liberation",
+                            "Slavery",
+                            "Participation",
+                            "Constitution"
+                        ],
+                        "correct_answer": "Liberation",
+                        "ai_insight": "Synonyms for Emancipation: Freedom, Liberty, Deliverance. Antonyms: Enslavement, Subjugation."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "What does Mandela mean by 'the healing of the wounds'?",
+                        "answer": "He refers to the reconciliation process and the mending of the psychological and physical trauma caused by the Apartheid regime."
+                    }
+                ]
+            },
+            {
+                "module_id": "E1_SET2",
+                "topic": "Reading Comprehension (Adolescence)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "Adolescence is a period of transition from:",
+                        "options": [
+                            "Birth to childhood",
+                            "Childhood to adulthood",
+                            "Adulthood to old age",
+                            "Infancy to youth"
+                        ],
+                        "correct_answer": "Childhood to adulthood",
+                        "ai_insight": "According to WHO, adolescence covers the age range of 10-19 years."
+                    },
+                    {
+                        "id": "sq_2",
+                        "type": "Short Question",
+                        "question": "Identify two major health risks for adolescent girls in Bangladesh mentioned in the text.",
+                        "answer": "1. Malnutrition/Anemia. 2. Complications related to early pregnancy and childbirth."
+                    }
+                ]
+            },
+            {
+                "module_id": "E1_SET3",
+                "topic": "Cloze Test (With Clues)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "In the sentence 'Education aims to _______ our mind,' the missing word is:",
+                        "options": [
+                            "narrow",
+                            "enlighten",
+                            "darken",
+                            "confuse"
+                        ],
+                        "correct_answer": "enlighten",
+                        "ai_insight": "Collocations: 'Enlighten the mind', 'Broaden horizons', 'Enrich knowledge'."
+                    }
+                ]
+            },
+            {
+                "module_id": "E1_SET4",
+                "topic": "Rearrangement",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Which event happened first in Dr. Yunus's life?",
+                        "options": [
+                            "Nobel Prize",
+                            "Ph.D. in Economics",
+                            "Founding Grameen Bank",
+                            "Birth in Chittagong"
+                        ],
+                        "correct_answer": "Birth in Chittagong",
+                        "ai_insight": "Chronology Strategy: Always look for Birth/Early Life -> Education -> Career -> Achievements -> Awards."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "English 2nd Paper",
+            "subject_code": "108",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Compulsory"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "E2_SET1",
+                "topic": "Right Form of Verbs",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "If I had seen him, I ______ him.",
+                        "options": [
+                            "will tell",
+                            "would tell",
+                            "would have told",
+                            "told"
+                        ],
+                        "correct_answer": "would have told",
+                        "ai_insight": "This is a 'Third Conditional' sentence structure: If + Past Perfect -> would have + Past Participle."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Correct the verb: 'The police (to be) looking for the criminal.'",
+                        "answer": "The police *are* looking for the criminal. (Police is a collective noun usually treated as plural)."
+                    }
+                ]
+            },
+            {
+                "module_id": "E2_SET2",
+                "topic": "Modifiers",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "'He runs fast.' The word 'fast' is a:",
+                        "options": [
+                            "Noun",
+                            "Adjective",
+                            "Adverb",
+                            "Verb"
+                        ],
+                        "correct_answer": "Adverb",
+                        "ai_insight": "Here 'fast' modifies the verb 'runs', making it an adverb. In 'He is a fast runner', 'fast' is an adjective."
+                    }
+                ]
+            },
+            {
+                "module_id": "E2_SET3",
+                "topic": "Sentence Connectors",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "Which connector expresses contrast?",
+                        "options": [
+                            "Therefore",
+                            "However",
+                            "Moreover",
+                            "Furthermore"
+                        ],
+                        "correct_answer": "However",
+                        "ai_insight": "Contrast Connectors: However, On the other hand, Nevertheless, Although."
+                    }
+                ]
+            },
+            {
+                "module_id": "E2_SET4",
+                "topic": "Narration",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Indirect speech of \"He said, 'I am busy'\" is:",
+                        "options": [
+                            "He said that he is busy.",
+                            "He said that he was busy.",
+                            "He says he was busy.",
+                            "He said he is being busy."
+                        ],
+                        "correct_answer": "He said that he was busy.",
+                        "ai_insight": "Rule: If the reporting verb is past (said), the present tense within quotes becomes past tense."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Information and Communication Technology",
+            "subject_code": "275",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Compulsory"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "ICT_SET1",
+                "topic": "Number Systems (Chapter 3)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "What is the 2's complement of the binary number 1011?",
+                        "options": [
+                            "0100",
+                            "0101",
+                            "1100",
+                            "0011"
+                        ],
+                        "correct_answer": "0101",
+                        "ai_insight": "Steps: 1. Invert digits (1's complement) -> 0100. 2. Add 1 -> 0101."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Why is the hexadecimal system used in computer memory addressing?",
+                        "answer": "Hexadecimal is used because it is a compact way to represent binary data. One hex digit represents 4 binary bits, making long binary addresses readable for humans.",
+                        "ai_insight": "Example: Binary 1111 1111 is just FF in Hex."
+                    }
+                ]
+            },
+            {
+                "module_id": "ICT_SET2",
+                "topic": "Digital Devices (Chapter 3)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "Which gate is known as a Universal Gate?",
+                        "options": [
+                            "AND",
+                            "OR",
+                            "NAND",
+                            "XOR"
+                        ],
+                        "correct_answer": "NAND",
+                        "ai_insight": "NAND and NOR are universal gates because any other logic gate (AND, OR, NOT) can be constructed using only them."
+                    }
+                ]
+            },
+            {
+                "module_id": "ICT_SET3",
+                "topic": "HTML (Chapter 4)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "Which tag is used to insert an image in HTML?",
+                        "options": [
+                            "<img>",
+                            "<pic>",
+                            "<image>",
+                            "<src>"
+                        ],
+                        "correct_answer": "<img>",
+                        "ai_insight": "Common mistake: The <img> tag is self-closing and does not have a closing tag like </img>."
+                    }
+                ]
+            },
+            {
+                "module_id": "ICT_SET4",
+                "topic": "Programming (Chapter 5)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Which symbol is used for logical AND in C programming?",
+                        "options": [
+                            "&",
+                            "&&",
+                            "||",
+                            "!"
+                        ],
+                        "correct_answer": "&&",
+                        "ai_insight": "Distinction: '&' is Bitwise AND, while '&&' is Logical AND used in conditions."
+                    }
+                ]
+            },
+            {
+                "module_id": "ICT_SET5",
+                "topic": "Database (Chapter 6)",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "Which key uniquely identifies a record in a database table?",
+                        "options": [
+                            "Foreign Key",
+                            "Primary Key",
+                            "Secondary Key",
+                            "Null Key"
+                        ],
+                        "correct_answer": "Primary Key",
+                        "ai_insight": "A Primary Key must contain unique values and cannot contain NULL values."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Physics 1st Paper",
+            "subject_code": "174",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Science"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "PHY1_SET1",
+                "topic": "Vector (Chapter 2)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "If the scalar product of two vectors is zero, the angle between them is:",
+                        "options": [
+                            "0°",
+                            "45°",
+                            "90°",
+                            "180°"
+                        ],
+                        "correct_answer": "90°",
+                        "ai_insight": "Scalar Product (Dot Product) formula: A.B = |A||B|cosθ. If cosθ = 0, then θ = 90°. This means the vectors are perpendicular."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Define 'Null Vector'.",
+                        "answer": "A vector whose magnitude is zero and has no specific direction is called a Null Vector."
+                    },
+                    {
+                        "id": "cq_1",
+                        "type": "Creative Question (CQ)",
+                        "stem": "A swimmer attempts to cross a 2km wide river flowing at 3 km/h. He can swim at 5 km/h.",
+                        "question": "Calculate the direction he must swim to reach exactly the opposite bank (Shortest Path).",
+                        "ai_insight": "To reach the exact opposite point, the horizontal component of the swimmer's velocity must cancel out the river's current: 5cos(theta) = -3."
+                    }
+                ]
+            },
+            {
+                "module_id": "PHY1_SET2",
+                "topic": "Dynamics (Chapter 3)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "The maximum range of a projectile is obtained at an angle of:",
+                        "options": [
+                            "30°",
+                            "45°",
+                            "60°",
+                            "90°"
+                        ],
+                        "correct_answer": "45°",
+                        "ai_insight": "Range R = (v^2 sin 2θ) / g. R is max when sin 2θ = 1, which means 2θ = 90°, so θ = 45°."
+                    },
+                    {
+                        "id": "sq_2",
+                        "type": "Short Question",
+                        "question": "Why are roads banked at curves?",
+                        "answer": "Roads are banked to provide the necessary centripetal force from the horizontal component of the normal reaction, reducing reliance on friction and preventing skidding."
+                    }
+                ]
+            },
+            {
+                "module_id": "PHY1_SET3",
+                "topic": "Periodic Motion (Chapter 8)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "In Simple Harmonic Motion, acceleration is proportional to:",
+                        "options": [
+                            "Velocity",
+                            "Displacement",
+                            "Time",
+                            "Mass"
+                        ],
+                        "correct_answer": "Displacement",
+                        "ai_insight": "The defining equation of SHM is a = -ω^2x, meaning acceleration (a) is directly proportional to displacement (x) but in the opposite direction."
+                    }
+                ]
+            },
+            {
+                "module_id": "PHY1_SET4",
+                "topic": "Work, Energy, Power (Chapter 5)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "1 Horsepower (HP) is equal to:",
+                        "options": [
+                            "746 Watts",
+                            "550 Watts",
+                            "1000 Watts",
+                            "764 Watts"
+                        ],
+                        "correct_answer": "746 Watts",
+                        "ai_insight": "This is a standard conversion unit often tested in MCQs. Remember: 1 HP = 0.746 kW."
+                    }
+                ]
+            },
+            {
+                "module_id": "PHY1_SET5",
+                "topic": "Ideal Gas (Chapter 10)",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "Which law relates volume and temperature at constant pressure?",
+                        "options": [
+                            "Boyle's Law",
+                            "Charles's Law",
+                            "Avogadro's Law",
+                            "Dalton's Law"
+                        ],
+                        "correct_answer": "Charles's Law",
+                        "ai_insight": "Boyle's Law = P-V (Temp constant). Charles's Law = V-T (Pressure constant). Pressure Law = P-T (Volume constant)."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Physics 2nd Paper",
+            "subject_code": "175",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Science"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "PHY2_SET1",
+                "topic": "Thermodynamics (Chapter 1)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "The efficiency of a Carnot engine depends on:",
+                        "options": [
+                            "Working substance",
+                            "Temperature of source and sink",
+                            "Fuel",
+                            "Size"
+                        ],
+                        "correct_answer": "Temperature of source and sink",
+                        "ai_insight": "Efficiency η = 1 - (T2/T1). It is independent of the working substance."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "What is Entropy?",
+                        "answer": "Entropy is a measure of the disorder or randomness in a system. It represents the unavailability of a system's thermal energy for conversion into mechanical work."
+                    }
+                ]
+            },
+            {
+                "module_id": "PHY2_SET2",
+                "topic": "Current Electricity (Chapter 3)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "The unit of specific resistance (Resistivity) is:",
+                        "options": [
+                            "Ohm",
+                            "Ohm-meter",
+                            "Siemens",
+                            "Ampere"
+                        ],
+                        "correct_answer": "Ohm-meter",
+                        "ai_insight": "Resistance R = ρ(L/A). So ρ = RA/L = (Ohm * m^2) / m = Ohm-meter."
+                    },
+                    {
+                        "id": "sq_2",
+                        "type": "Short Question",
+                        "question": "State Kirchhoff's Voltage Law (KVL).",
+                        "answer": "The algebraic sum of all potential differences (voltages) around any closed loop in a circuit is zero."
+                    }
+                ]
+            },
+            {
+                "module_id": "PHY2_SET3",
+                "topic": "Modern Physics (Chapter 8)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "The rest mass of a photon is:",
+                        "options": [
+                            "Infinite",
+                            "Zero",
+                            "1.6×10^-19 kg",
+                            "1 kg"
+                        ],
+                        "correct_answer": "Zero",
+                        "ai_insight": "Photons always travel at the speed of light 'c'. According to relativity, any particle with mass traveling at 'c' would have infinite energy, which is impossible. Thus, rest mass must be zero."
+                    }
+                ]
+            },
+            {
+                "module_id": "PHY2_SET4",
+                "topic": "Physical Optics (Chapter 7)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Wavefronts from a point source are:",
+                        "options": [
+                            "Cylindrical",
+                            "Spherical",
+                            "Plane",
+                            "Elliptical"
+                        ],
+                        "correct_answer": "Spherical",
+                        "ai_insight": "Light spreads out in all directions from a single point, forming a sphere."
+                    }
+                ]
+            },
+            {
+                "module_id": "PHY2_SET5",
+                "topic": "Semiconductor (Chapter 10)",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "In an n-type semiconductor, the majority charge carriers are:",
+                        "options": [
+                            "Holes",
+                            "Electrons",
+                            "Protons",
+                            "Neutrons"
+                        ],
+                        "correct_answer": "Electrons",
+                        "ai_insight": "N-type stands for Negative. The majority carriers are electrons (negative charge), while holes are minority carriers."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Chemistry 1st Paper",
+            "subject_code": "176",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Science"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "CHEM1_SET1",
+                "topic": "Qualitative Chemistry (Solubility)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "Which quantum number describes the shape of the orbital?",
+                        "options": [
+                            "Principal",
+                            "Azimuthal",
+                            "Magnetic",
+                            "Spin"
+                        ],
+                        "correct_answer": "Azimuthal",
+                        "ai_insight": "Principal (n) = Size. Azimuthal (l) = Shape. Magnetic (m) = Orientation. Spin (s) = Rotation."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Define Solubility Product (Ksp).",
+                        "answer": "It is the product of the molar concentrations of the constituent ions of a sparingly soluble salt in its saturated solution at a given temperature."
+                    }
+                ]
+            },
+            {
+                "module_id": "CHEM1_SET2",
+                "topic": "Periodic Properties (Hybridization)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "The bond angle in a water (H2O) molecule is:",
+                        "options": [
+                            "109.5°",
+                            "120°",
+                            "104.5°",
+                            "180°"
+                        ],
+                        "correct_answer": "104.5°",
+                        "ai_insight": "Although sp3 hybridized (ideal 109.5°), the presence of two lone pairs on Oxygen repels the bond pairs, reducing the angle to 104.5°."
+                    }
+                ]
+            },
+            {
+                "module_id": "CHEM1_SET3",
+                "topic": "Chemical Changes (Equilibrium)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "For the reaction H2 + I2 ⇌ 2HI, the relationship between Kp and Kc is:",
+                        "options": [
+                            "Kp = Kc",
+                            "Kp > Kc",
+                            "Kp < Kc",
+                            "Kp = Kc(RT)"
+                        ],
+                        "correct_answer": "Kp = Kc",
+                        "ai_insight": "Relationship: Kp = Kc(RT)^Δn. Here, Δn (moles of product - moles of reactant) = 2 - 2 = 0. Anything to the power of 0 is 1."
+                    }
+                ]
+            },
+            {
+                "module_id": "CHEM1_SET4",
+                "topic": "Chemical Changes (pH)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "What is the pH of 0.01M HCl?",
+                        "options": [
+                            "1",
+                            "2",
+                            "3",
+                            "12"
+                        ],
+                        "correct_answer": "2",
+                        "ai_insight": "pH = -log[H+]. pH = -log(0.01) = -log(10^-2) = 2."
+                    }
+                ]
+            },
+            {
+                "module_id": "CHEM1_SET5",
+                "topic": "Laboratory Safety (Chapter 1)",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "Which apparatus is used for precise volume measurement?",
+                        "options": [
+                            "Beaker",
+                            "Burette",
+                            "Test tube",
+                            "Flask"
+                        ],
+                        "correct_answer": "Burette",
+                        "ai_insight": "Beakers are for mixing/heating. Burettes and Pipettes are for precise quantitative measurement (Titration)."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Chemistry 2nd Paper",
+            "subject_code": "177",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Science"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "CHEM2_SET1",
+                "topic": "Environmental Chemistry (Chapter 1)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "Which gas is primarily responsible for the Greenhouse Effect?",
+                        "options": [
+                            "O2",
+                            "N2",
+                            "CO2",
+                            "H2"
+                        ],
+                        "correct_answer": "CO2",
+                        "ai_insight": "While Methane is more potent, CO2 is more abundant and the primary driver of anthropogenic global warming."
+                    }
+                ]
+            },
+            {
+                "module_id": "CHEM2_SET2",
+                "topic": "Organic Chemistry (Chapter 2) - Aliphatic",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "Which test identifies an alkene (unsaturation)?",
+                        "options": [
+                            "Biuret test",
+                            "Bromine water test",
+                            "Lucas test",
+                            "Tollen's test"
+                        ],
+                        "correct_answer": "Bromine water test",
+                        "ai_insight": "Reddish-brown Bromine water becomes colorless when added to an alkene/alkyne."
+                    },
+                    {
+                        "id": "sq_2",
+                        "type": "Short Question",
+                        "question": "What is Markonikov’s Rule?",
+                        "answer": "When an asymmetric reagent adds to an asymmetric alkene, the negative part of the reagent attaches to the carbon atom having fewer hydrogen atoms."
+                    }
+                ]
+            },
+            {
+                "module_id": "CHEM2_SET3",
+                "topic": "Organic Chemistry (Chapter 2) - Aromatic",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "Benzene undergoes which type of reaction?",
+                        "options": [
+                            "Electrophilic Substitution",
+                            "Nucleophilic Substitution",
+                            "Elimination",
+                            "Addition"
+                        ],
+                        "correct_answer": "Electrophilic Substitution",
+                        "ai_insight": "Benzene's ring structure is very stable. It resists addition reactions (which break the ring) and prefers substitution (which preserves the ring)."
+                    }
+                ]
+            },
+            {
+                "module_id": "CHEM2_SET4",
+                "topic": "Quantitative Chemistry (Chapter 3)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Which indicator is suitable for a Strong Acid-Strong Base titration?",
+                        "options": [
+                            "Phenolphthalein",
+                            "Methyl Orange",
+                            "Any indicator",
+                            "Litmus only"
+                        ],
+                        "correct_answer": "Any indicator",
+                        "ai_insight": "For SA-SB titration, the pH jump is large (3 to 10), covering the range of almost all indicators."
+                    }
+                ]
+            },
+            {
+                "module_id": "CHEM2_SET5",
+                "topic": "Electrochemistry (Chapter 4)",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "In a Galvanic cell, the anode is:",
+                        "options": [
+                            "Positive",
+                            "Negative",
+                            "Neutral",
+                            "Magnetic"
+                        ],
+                        "correct_answer": "Negative",
+                        "ai_insight": "Trick: In Electrolytic cells, Anode is Positive (P-A-N-I-C). In Galvanic cells, it is reversed -> Anode is Negative."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Higher Math 1st Paper",
+            "subject_code": "265",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Science"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "HM1_SET1",
+                "topic": "Matrices (Chapter 1)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "If a matrix A has order 2x3 and B has order 3x2, the order of AB is:",
+                        "options": [
+                            "2x2",
+                            "3x3",
+                            "2x3",
+                            "3x2"
+                        ],
+                        "correct_answer": "2x2",
+                        "ai_insight": "Matrix multiplication rule: (m x n) * (n x p) = (m x p). Here: (2x3) * (3x2) = (2x2)."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Define a Singular Matrix.",
+                        "answer": "A square matrix is Singular if its determinant is equal to zero. It has no inverse."
+                    }
+                ]
+            },
+            {
+                "module_id": "HM1_SET2",
+                "topic": "Straight Lines (Chapter 3)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "The slope of the line 2x + 3y - 5 = 0 is:",
+                        "options": [
+                            "2/3",
+                            "-2/3",
+                            "3/2",
+                            "-3/2"
+                        ],
+                        "correct_answer": "-2/3",
+                        "ai_insight": "Slope m = -(coefficient of x / coefficient of y) = -(2/3)."
+                    }
+                ]
+            },
+            {
+                "module_id": "HM1_SET3",
+                "topic": "Differentiation (Chapter 9)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "d/dx(sin x) is:",
+                        "options": [
+                            "cos x",
+                            "-cos x",
+                            "tan x",
+                            "sec x"
+                        ],
+                        "correct_answer": "cos x",
+                        "ai_insight": "Basic derivative. Note that d/dx(cos x) would be -sin x."
+                    }
+                ]
+            },
+            {
+                "module_id": "HM1_SET4",
+                "topic": "Integration (Chapter 10)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Integral of (1/x) dx is:",
+                        "options": [
+                            "ln x + c",
+                            "x^2/2",
+                            "e^x",
+                            "1/x^2"
+                        ],
+                        "correct_answer": "ln x + c",
+                        "ai_insight": "This is a fundamental integration formula. x^-1 is the only power rule exception."
+                    }
+                ]
+            },
+            {
+                "module_id": "HM1_SET5",
+                "topic": "Trigonometry (Chapter 7)",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "sin^2(theta) + cos^2(theta) = ?",
+                        "options": [
+                            "0",
+                            "1",
+                            "2",
+                            "-1"
+                        ],
+                        "correct_answer": "1",
+                        "ai_insight": "The fundamental Pythagorean identity."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Higher Math 2nd Paper",
+            "subject_code": "266",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Science"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "HM2_SET1",
+                "topic": "Complex Numbers (Chapter 3)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "The modulus of 3+4i is:",
+                        "options": [
+                            "3",
+                            "4",
+                            "5",
+                            "7"
+                        ],
+                        "correct_answer": "5",
+                        "ai_insight": "Modulus r = sqrt(a^2 + b^2) = sqrt(3^2 + 4^2) = sqrt(9+16) = sqrt(25) = 5."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Find the square root of -16i.",
+                        "answer": "Let sqrt(-16i) = x. Using algebra or polar form, the roots are ±(2√2 - 2√2i)."
+                    }
+                ]
+            },
+            {
+                "module_id": "HM2_SET2",
+                "topic": "Polynomials (Chapter 4)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "If roots of ax^2 + bx + c = 0 are equal, then:",
+                        "options": [
+                            "b^2 - 4ac > 0",
+                            "b^2 - 4ac = 0",
+                            "b^2 - 4ac < 0",
+                            "b = 0"
+                        ],
+                        "correct_answer": "b^2 - 4ac = 0",
+                        "ai_insight": "The discriminant (D) determines the nature of roots. D=0 implies real and equal roots."
+                    }
+                ]
+            },
+            {
+                "module_id": "HM2_SET3",
+                "topic": "Conics (Chapter 6)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "The eccentricity of a parabola is:",
+                        "options": [
+                            "0",
+                            "1",
+                            "< 1",
+                            "> 1"
+                        ],
+                        "correct_answer": "1",
+                        "ai_insight": "Ellipse: e < 1. Parabola: e = 1. Hyperbola: e > 1. Circle: e = 0."
+                    }
+                ]
+            },
+            {
+                "module_id": "HM2_SET4",
+                "topic": "Statics (Chapter 8)",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "The resultant of two equal forces P acting at 90° is:",
+                        "options": [
+                            "P",
+                            "2P",
+                            "√2 P",
+                            "P/2"
+                        ],
+                        "correct_answer": "√2 P",
+                        "ai_insight": "R = sqrt(P^2 + Q^2 + 2PQcos90). Since cos90=0 and Q=P, R = sqrt(2P^2) = P√2."
+                    }
+                ]
+            },
+            {
+                "module_id": "HM2_SET5",
+                "topic": "Probability (Chapter 10)",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "Probability of getting a head in a coin toss is:",
+                        "options": [
+                            "1",
+                            "0",
+                            "0.5",
+                            "0.25"
+                        ],
+                        "correct_answer": "0.5",
+                        "ai_insight": "Basic probability: Desired Outcome (1 Head) / Total Outcomes (Head, Tail) = 1/2."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Accounting 1st Paper",
+            "subject_code": "253",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Business Studies"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "ACC1_SET1",
+                "topic": "Accounting Equation",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "The owner’s withdrawal of cash affects:",
+                        "options": [
+                            "Assets and Liabilities",
+                            "Assets and Equity",
+                            "Liabilities only",
+                            "Equity only"
+                        ],
+                        "correct_answer": "Assets and Equity",
+                        "ai_insight": "Withdrawals reduce Cash (Asset) and Owner's Capital (Equity). A = L + (OE - D)."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "What is the fundamental accounting equation?",
+                        "answer": "Assets = Liabilities + Owner's Equity (A = L + OE)."
+                    }
+                ]
+            },
+            {
+                "module_id": "ACC1_SET2",
+                "topic": "Bank Reconciliation",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "A credit balance in the Passbook indicates:",
+                        "options": [
+                            "Overdraft",
+                            "Favorable balance",
+                            "Loan",
+                            "Loss"
+                        ],
+                        "correct_answer": "Favorable balance",
+                        "ai_insight": "Bank perspective: Your money is a liability to them. So, a Credit balance means they owe you money (Deposit)."
+                    }
+                ]
+            },
+            {
+                "module_id": "ACC1_SET3",
+                "topic": "Depreciation",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "Which method charges constant depreciation every year?",
+                        "options": [
+                            "Straight Line",
+                            "Diminishing Balance",
+                            "Units of Production",
+                            "Sum of years"
+                        ],
+                        "correct_answer": "Straight Line",
+                        "ai_insight": "Straight Line Method = (Cost - Salvage Value) / Useful Life. The amount remains fixed."
+                    }
+                ]
+            },
+            {
+                "module_id": "ACC1_SET4",
+                "topic": "Financial Statements",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Closing stock is valued at:",
+                        "options": [
+                            "Cost price",
+                            "Market price",
+                            "Lower of Cost or Market",
+                            "Higher of Cost or Market"
+                        ],
+                        "correct_answer": "Lower of Cost or Market",
+                        "ai_insight": "This is based on the 'Prudence Concept' or Conservatism principle in accounting."
+                    }
+                ]
+            },
+            {
+                "module_id": "ACC1_SET5",
+                "topic": "Worksheet",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "A worksheet is a:",
+                        "options": [
+                            "Permanent record",
+                            "Rough working paper",
+                            "Financial Statement",
+                            "Journal"
+                        ],
+                        "correct_answer": "Rough working paper",
+                        "ai_insight": "A worksheet is an optional tool used to facilitate the preparation of financial statements; it is not part of the permanent ledger."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Accounting 2nd Paper",
+            "subject_code": "254",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Business Studies"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "ACC2_SET1",
+                "topic": "Partnership",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "In the absence of an agreement, profit is shared:",
+                        "options": [
+                            "Equally",
+                            "Capital Ratio",
+                            "Seniority",
+                            "2:1"
+                        ],
+                        "correct_answer": "Equally",
+                        "ai_insight": "According to the Partnership Act 1932, if the deed is silent, profits/losses are shared equally regardless of capital contribution."
+                    }
+                ]
+            },
+            {
+                "module_id": "ACC2_SET2",
+                "topic": "Company Accounts (Shares)",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "Premium on issue of shares is a:",
+                        "options": [
+                            "Revenue Profit",
+                            "Capital Profit",
+                            "Liability",
+                            "Asset"
+                        ],
+                        "correct_answer": "Capital Profit",
+                        "ai_insight": "Share Premium is recorded in the Balance Sheet under Reserves & Surplus."
+                    }
+                ]
+            },
+            {
+                "module_id": "ACC2_SET3",
+                "topic": "Financial Statement Analysis (Ratios)",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "Ideal Current Ratio is:",
+                        "options": [
+                            "1:1",
+                            "2:1",
+                            "1:2",
+                            "3:1"
+                        ],
+                        "correct_answer": "2:1",
+                        "ai_insight": "This indicates the company has twice as many current assets as current liabilities, signifying good liquidity."
+                    }
+                ]
+            },
+            {
+                "module_id": "ACC2_SET4",
+                "topic": "Cost Accounting",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Prime Cost = ?",
+                        "options": [
+                            "Direct Material + Direct Labor",
+                            "Total Cost + Profit",
+                            "Fixed Cost",
+                            "Variable Cost"
+                        ],
+                        "correct_answer": "Direct Material + Direct Labor",
+                        "ai_insight": "Prime Cost includes all direct costs (Direct Material + Direct Labor + Direct Expenses)."
+                    }
+                ]
+            },
+            {
+                "module_id": "ACC2_SET5",
+                "topic": "Management Accounting (CVP Analysis)",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "Break-Even Point is where:",
+                        "options": [
+                            "Profit is max",
+                            "Loss is max",
+                            "No Profit No Loss",
+                            "Sales are zero"
+                        ],
+                        "correct_answer": "No Profit No Loss",
+                        "ai_insight": "At BEP, Total Revenue = Total Cost."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Business Organization & Management 1st Paper",
+            "subject_code": "277",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Business Studies"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "MGMT1_SET1",
+                "topic": "Sole Proprietorship",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "Who bears the risk in a sole proprietorship?",
+                        "options": [
+                            "Owner",
+                            "Government",
+                            "Employees",
+                            "Partners"
+                        ],
+                        "correct_answer": "Owner",
+                        "ai_insight": "Key Feature: Unlimited Liability. The owner is personally responsible for all debts."
+                    }
+                ]
+            },
+            {
+                "module_id": "MGMT1_SET2",
+                "topic": "Partnership",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "Minimum partners in a banking business:",
+                        "options": [
+                            "2",
+                            "7",
+                            "10",
+                            "20"
+                        ],
+                        "correct_answer": "2",
+                        "ai_insight": "General partnership max is 20, but for Banking, the max is 10."
+                    }
+                ]
+            },
+            {
+                "module_id": "MGMT1_SET3",
+                "topic": "Joint Stock Company",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "The charter of a company is:",
+                        "options": [
+                            "Prospectus",
+                            "Memorandum of Association",
+                            "Articles of Association",
+                            "Certificate"
+                        ],
+                        "correct_answer": "Memorandum of Association",
+                        "ai_insight": "The Memorandum defines the company's relationship with the outside world and its scope."
+                    }
+                ]
+            },
+            {
+                "module_id": "MGMT1_SET4",
+                "topic": "Cooperative Society",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Voting right in a cooperative is:",
+                        "options": [
+                            "One man one vote",
+                            "Based on shares",
+                            "Based on seniority",
+                            "Based on age"
+                        ],
+                        "correct_answer": "One man one vote",
+                        "ai_insight": "Democratic management is a core principle of Cooperatives, regardless of how many shares a member holds."
+                    }
+                ]
+            },
+            {
+                "module_id": "MGMT1_SET5",
+                "topic": "Business Environment",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "Which is a macro-environment factor?",
+                        "options": [
+                            "Customers",
+                            "Competitors",
+                            "Political Stability",
+                            "Suppliers"
+                        ],
+                        "correct_answer": "Political Stability",
+                        "ai_insight": "PESTLE Analysis (Political, Economic, Social, Technological, Legal, Environmental) defines Macro factors."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Business Organization & Management 2nd Paper",
+            "subject_code": "278",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Business Studies"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "MGMT2_SET1",
+                "topic": "Planning",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "Planning is the:",
+                        "options": [
+                            "First function",
+                            "Last function",
+                            "Middle function",
+                            "Optional function"
+                        ],
+                        "correct_answer": "First function",
+                        "ai_insight": "Planning is the primary function of management; all other functions (Organizing, Staffing, etc.) follow it."
+                    }
+                ]
+            },
+            {
+                "module_id": "MGMT2_SET2",
+                "topic": "Organizing",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "Which structure creates dual command?",
+                        "options": [
+                            "Line",
+                            "Functional",
+                            "Matrix",
+                            "Committee"
+                        ],
+                        "correct_answer": "Matrix",
+                        "ai_insight": "In a Matrix structure, an employee reports to two bosses (Functional Manager + Project Manager), violating Unity of Command."
+                    }
+                ]
+            },
+            {
+                "module_id": "MGMT2_SET3",
+                "topic": "Staffing",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "Which is an internal source of recruitment?",
+                        "options": [
+                            "Advertisement",
+                            "Promotion",
+                            "Agencies",
+                            "Campus recruitment"
+                        ],
+                        "correct_answer": "Promotion",
+                        "ai_insight": "Promotion motivates existing employees and is cheaper than external recruitment."
+                    }
+                ]
+            },
+            {
+                "module_id": "MGMT2_SET4",
+                "topic": "Leadership",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "Who proposed the 'X and Y' theory?",
+                        "options": [
+                            "Maslow",
+                            "McGregor",
+                            "Taylor",
+                            "Fayol"
+                        ],
+                        "correct_answer": "McGregor",
+                        "ai_insight": "Theory X assumes employees are lazy. Theory Y assumes employees are self-motivated."
+                    }
+                ]
+            },
+            {
+                "module_id": "MGMT2_SET5",
+                "topic": "Controlling",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "The last step of management is:",
+                        "options": [
+                            "Planning",
+                            "Leading",
+                            "Controlling",
+                            "Staffing"
+                        ],
+                        "correct_answer": "Controlling",
+                        "ai_insight": "Controlling involves comparing actual performance with standards and taking corrective action."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Economics 1st Paper",
+            "subject_code": "109",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Humanities"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "ECO1_SET1",
+                "topic": "Utility",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "When TU (Total Utility) is maximum, MU (Marginal Utility) is:",
+                        "options": [
+                            "Positive",
+                            "Negative",
+                            "Zero",
+                            "Maximum"
+                        ],
+                        "correct_answer": "Zero",
+                        "ai_insight": "This is the saturation point. After this, if consumption continues, MU becomes negative and TU starts declining."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "Define Marginal Utility.",
+                        "answer": "Marginal Utility is the additional utility derived from consuming one extra unit of a commodity."
+                    }
+                ]
+            },
+            {
+                "module_id": "ECO1_SET2",
+                "topic": "Demand",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "Demand curve generally slopes:",
+                        "options": [
+                            "Upward",
+                            "Downward",
+                            "Horizontal",
+                            "Vertical"
+                        ],
+                        "correct_answer": "Downward",
+                        "ai_insight": "It slopes downward from left to right due to the Law of Demand (inverse relationship between Price and Quantity)."
+                    }
+                ]
+            },
+            {
+                "module_id": "ECO1_SET3",
+                "topic": "Production",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "Which factor of production is geographically immobile?",
+                        "options": [
+                            "Land",
+                            "Labor",
+                            "Capital",
+                            "Organization"
+                        ],
+                        "correct_answer": "Land",
+                        "ai_insight": "Land is fixed in nature and cannot be moved from one place to another."
+                    }
+                ]
+            },
+            {
+                "module_id": "ECO1_SET4",
+                "topic": "Market",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "In Perfect Competition, the firm is a:",
+                        "options": [
+                            "Price Maker",
+                            "Price Taker",
+                            "Monopolist",
+                            "Oligopolist"
+                        ],
+                        "correct_answer": "Price Taker",
+                        "ai_insight": "Due to homogeneous products and many sellers, a single firm cannot influence the market price."
+                    }
+                ]
+            },
+            {
+                "module_id": "ECO1_SET5",
+                "topic": "Money & Banking",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "Which is the Central Bank of Bangladesh?",
+                        "options": [
+                            "Sonali Bank",
+                            "Bangladesh Bank",
+                            "BRAC Bank",
+                            "Grameen Bank"
+                        ],
+                        "correct_answer": "Bangladesh Bank",
+                        "ai_insight": "Established in 1971, it controls the monetary policy and currency of the country."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_info": {
+            "subject_name": "Civics & Good Governance 2nd Paper",
+            "subject_code": "270",
+            "curriculum_version": "NCTB 2025 Full Syllabus",
+            "group": "Humanities"
+        },
+        "assessment_modules": [
+            {
+                "module_id": "CIV2_SET1",
+                "topic": "History (Language Movement)",
+                "questions": [
+                    {
+                        "id": "mcq_1",
+                        "type": "MCQ",
+                        "question": "The language movement took place in:",
+                        "options": [
+                            "1947",
+                            "1952",
+                            "1969",
+                            "1971"
+                        ],
+                        "correct_answer": "1952",
+                        "ai_insight": "Specifically on 21st February 1952 (8th Falgun, 1358 BS)."
+                    },
+                    {
+                        "id": "sq_1",
+                        "type": "Short Question",
+                        "question": "What is the significance of 21st February?",
+                        "answer": "It is celebrated as International Mother Language Day to honor the martyrs who sacrificed their lives for the recognition of Bangla."
+                    }
+                ]
+            },
+            {
+                "module_id": "CIV2_SET2",
+                "topic": "1966 Six Points",
+                "questions": [
+                    {
+                        "id": "mcq_2",
+                        "type": "MCQ",
+                        "question": "Who presented the 6-point demand?",
+                        "options": [
+                            "Bangabandhu Sheikh Mujib",
+                            "Mawlana Bhashani",
+                            "Tajuddin Ahmad",
+                            "Ziaur Rahman"
+                        ],
+                        "correct_answer": "Bangabandhu Sheikh Mujib",
+                        "ai_insight": "The 6-point demand is known as the 'Magna Carta' of Bengali emancipation."
+                    }
+                ]
+            },
+            {
+                "module_id": "CIV2_SET3",
+                "topic": "1971 Liberation War",
+                "questions": [
+                    {
+                        "id": "mcq_3",
+                        "type": "MCQ",
+                        "question": "Independence Day of Bangladesh is:",
+                        "options": [
+                            "16 Dec",
+                            "26 March",
+                            "21 Feb",
+                            "14 Dec"
+                        ],
+                        "correct_answer": "26 March",
+                        "ai_insight": "16 Dec is Victory Day. 26 March is when Independence was declared."
+                    }
+                ]
+            },
+            {
+                "module_id": "CIV2_SET4",
+                "topic": "Constitution",
+                "questions": [
+                    {
+                        "id": "mcq_4",
+                        "type": "MCQ",
+                        "question": "The Constitution of Bangladesh was adopted in:",
+                        "options": [
+                            "1971",
+                            "1972",
+                            "1975",
+                            "1990"
+                        ],
+                        "correct_answer": "1972",
+                        "ai_insight": "It was adopted on November 4, 1972, and came into effect on December 16, 1972."
+                    }
+                ]
+            },
+            {
+                "module_id": "CIV2_SET5",
+                "topic": "Foreign Policy",
+                "questions": [
+                    {
+                        "id": "mcq_5",
+                        "type": "MCQ",
+                        "question": "'Friendship to all, malice towards none' is the policy of:",
+                        "options": [
+                            "USA",
+                            "India",
+                            "Bangladesh",
+                            "China"
+                        ],
+                        "correct_answer": "Bangladesh",
+                        "ai_insight": "This guiding principle was set by Bangabandhu Sheikh Mujibur Rahman."
+                    }
+                ]
+            }
+        ]
+    }
+]

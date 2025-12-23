@@ -18,6 +18,9 @@ workos>=5.37.0
 # AI integration
 google-generativeai>=0.8.6
 
+# PDF processing
+PyPDF2>=3.0.0
+
 # Image processing
 Pillow>=12.0.0
 

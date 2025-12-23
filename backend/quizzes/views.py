@@ -19,24 +19,31 @@ class QuizListCreateView(generics.ListCreateAPIView):
         subject = self.request.query_params.get('subject', None)
         difficulty = self.request.query_params.get('difficulty', None)
         class_level = self.request.query_params.get('class_level', None)
+        question_types = self.request.query_params.get('question_types', None)
         
         # Filter by subject if provided
         if subject:
             queryset = queryset.filter(subject=subject)
             
-        # Filter by difficulty if provided
-        if difficulty:
-            queryset = queryset.filter(difficulty=difficulty)
-            
         # Filter by class level if provided
         if class_level:
             queryset = queryset.filter(class_target=class_level)
         
-        # If no filters provided, filter by user's class level
-        if not subject and not difficulty and not class_level and user.class_level:
-            queryset = queryset.filter(class_target=user.class_level)
+        # Filter by question types if provided (comma-separated: mcq,short,long)
+        if question_types:
+            types_list = [t.strip() for t in question_types.split(',')]
+            queryset = queryset.filter(question_type__in=types_list)
         
-        return queryset
+        # DON'T filter by difficulty - all questions are medium level
+        # This ensures students always get questions regardless of difficulty selection
+        # if difficulty:
+        #     queryset = queryset.filter(difficulty=difficulty)
+        
+        # For quiz management page, teachers/admins should see ALL questions
+        # Don't apply default class filter for teachers/admins
+        # Students will still get filtered by their class in the quiz selection page
+        
+        return queryset.order_by('-created_at')  # Show newest first
     
     def perform_create(self, serializer):
         # Only teachers and admins can create quizzes

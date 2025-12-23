@@ -1,0 +1,2148 @@
+[
+    {
+        "meta": {
+            "class": "7",
+            "curriculum": "NCTB 2025",
+            "part": "1 of 3",
+            "subjects_included": [
+                "Bangla",
+                "English",
+                "Mathematics"
+            ]
+        },
+        "data": [
+            {
+                "subject": "Bangla (বাংলা)",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "যোগাযোগের ক্ষেত্রে কোনটি সবচেয়ে গুরুত্বপূর্ণ?",
+                                "options": [
+                                    "উচ্চস্বরে কথা বলা",
+                                    "ইশারা করা",
+                                    "প্রসঙ্গ ও উদ্দেশ্য বোঝা",
+                                    "কঠিন শব্দ ব্যবহার করা"
+                                ],
+                                "answer": "প্রসঙ্গ ও উদ্দেশ্য বোঝা"
+                            },
+                            {
+                                "id": 2,
+                                "question": "মর্যাদা অনুযায়ী সর্বনাম কত প্রকার?",
+                                "options": [
+                                    "২ প্রকার",
+                                    "৩ প্রকার",
+                                    "৪ প্রকার",
+                                    "৫ প্রকার"
+                                ],
+                                "answer": "৩ প্রকার"
+                            },
+                            {
+                                "id": 3,
+                                "question": "আপনি যখন প্রধান শিক্ষকের সাথে কথা বলবেন, তখন কোন ধরনের সর্বনাম ব্যবহার করবেন?",
+                                "options": [
+                                    "সাধারণ সর্বনাম",
+                                    "মানী সর্বনাম",
+                                    "ঘনিষ্ঠ সর্বনাম",
+                                    "তুচ্ছার্থক সর্বনাম"
+                                ],
+                                "answer": "মানী সর্বনাম"
+                            },
+                            {
+                                "id": 4,
+                                "question": "‘তুই’ কোন ধরনের সর্বনাম?",
+                                "options": [
+                                    "সাধারণ",
+                                    "মানী",
+                                    "ঘনিষ্ঠ/তুচ্ছার্থক",
+                                    "দূরত্ববাচক"
+                                ],
+                                "answer": "ঘনিষ্ঠ/তুচ্ছার্থক"
+                            },
+                            {
+                                "id": 5,
+                                "question": "যোগাযোগের সময় ‘শ্রোতা’ কে?",
+                                "options": [
+                                    "যে কথা বলে",
+                                    "যে কথা শোনে",
+                                    "যার সম্পর্কে কথা বলা হয়",
+                                    "যে প্রসঙ্গ তৈরি করে"
+                                ],
+                                "answer": "যে কথা শোনে"
+                            },
+                            {
+                                "id": 6,
+                                "question": "ভাষার মূল রূপ কয়টি?",
+                                "options": [
+                                    "১টি",
+                                    "২টি (মৌখিক ও লৈখিক)",
+                                    "৩টি",
+                                    "৪টি"
+                                ],
+                                "answer": "২টি"
+                            },
+                            {
+                                "id": 7,
+                                "question": "অঞ্চলের মানুষের মুখের ভাষাকে কী বলে?",
+                                "options": [
+                                    "প্রমিত ভাষা",
+                                    "আঞ্চলিক ভাষা",
+                                    "সাধু ভাষা",
+                                    "লিখিত ভাষা"
+                                ],
+                                "answer": "আঞ্চলিক ভাষা"
+                            },
+                            {
+                                "id": 8,
+                                "question": "‘খাইছি’ শব্দটির প্রমিত রূপ কী?",
+                                "options": [
+                                    "খেয়েছি",
+                                    "খাইলাম",
+                                    "ভক্ষণ করেছি",
+                                    "খেয়েছি"
+                                ],
+                                "answer": "খেয়েছি"
+                            },
+                            {
+                                "id": 9,
+                                "question": "সংবাদ পাঠে কোন ভাষা ব্যবহার করা হয়?",
+                                "options": [
+                                    "আঞ্চলিক",
+                                    "সাধু",
+                                    "প্রমিত",
+                                    "মিশ্র"
+                                ],
+                                "answer": "প্রমিত"
+                            },
+                            {
+                                "id": 10,
+                                "question": "উচ্চারণের বিভ্রান্তি দূর করতে কোনটি জানা জরুরি?",
+                                "options": [
+                                    "ব্যাকরণ",
+                                    "ধ্বনি ও উচ্চারণ বিধি",
+                                    "ছন্দ",
+                                    "অলংকার"
+                                ],
+                                "answer": "ধ্বনি ও উচ্চারণ বিধি"
+                            },
+                            {
+                                "id": 11,
+                                "question": "বিশেষ্য পদের অপর নাম কী?",
+                                "options": [
+                                    "অ্যাকশন",
+                                    "নাম পদ",
+                                    "গুণ পদ",
+                                    "যোগসূচক"
+                                ],
+                                "answer": "নাম পদ"
+                            },
+                            {
+                                "id": 12,
+                                "question": "‘জনতা’ কোন ধরনের বিশেষ্য?",
+                                "options": [
+                                    "সংজ্ঞাবাচক",
+                                    "সমষ্টিবাচক",
+                                    "বস্তুবাচক",
+                                    "গুণবাচক"
+                                ],
+                                "answer": "সমষ্টিবাচক"
+                            },
+                            {
+                                "id": 13,
+                                "question": "কোনটি গুণবাচক বিশেষণের উদাহরণ?",
+                                "options": [
+                                    "দশ টাকা",
+                                    "নীল আকাশ",
+                                    "এই কলম",
+                                    "দ্রুত চল"
+                                ],
+                                "answer": "নীল আকাশ"
+                            },
+                            {
+                                "id": 14,
+                                "question": "‘কাটা’ শব্দের সমার্থক শব্দ কোনটি?",
+                                "options": [
+                                    "বিদ্ধ",
+                                    "কর্তন",
+                                    "ক্ষত",
+                                    "সবকটি"
+                                ],
+                                "answer": "সবকটি"
+                            },
+                            {
+                                "id": 15,
+                                "question": "‘অম্বু’ শব্দের অর্থ কী?",
+                                "options": [
+                                    "আকাশ",
+                                    "পানি",
+                                    "আগুন",
+                                    "মাটি"
+                                ],
+                                "answer": "পানি"
+                            },
+                            {
+                                "id": 21,
+                                "question": "‘নোলক’ কবিতাটি কার লেখা?",
+                                "options": [
+                                    "জসীম উদ্‌দীন",
+                                    "আল মাহমুদ",
+                                    "সুফিয়া কামাল",
+                                    "শামসুর রাহমান"
+                                ],
+                                "answer": "আল মাহমুদ"
+                            },
+                            {
+                                "id": 22,
+                                "question": "‘নোলক’ কবিতায় মায়ের নোলক কোথায় হারিয়ে গেছে?",
+                                "options": [
+                                    "ঘরে",
+                                    "নদীর কাছে/বালুচরে",
+                                    "বাগানে",
+                                    "পুকুরে"
+                                ],
+                                "answer": "নদীর কাছে/বালুচরে"
+                            },
+                            {
+                                "id": 24,
+                                "question": "‘কতদিকে কত কারিগর’ রচনায় কাদের কথা বলা হয়েছে?",
+                                "options": [
+                                    "কামারদের",
+                                    "কুমোরদের (পালমশাই)",
+                                    "তাঁতিদের",
+                                    "জেলেদের"
+                                ],
+                                "answer": "কুমোরদের (পালমশাই)"
+                            },
+                            {
+                                "id": 25,
+                                "question": "জয়নুল আবেদিন কেন বিখ্যাত?",
+                                "options": [
+                                    "গান গাওয়ার জন্য",
+                                    "চিত্রশিল্পের জন্য",
+                                    "কবিতার জন্য",
+                                    "নাটকের জন্য"
+                                ],
+                                "answer": "চিত্রশিল্পের জন্য"
+                            },
+                            {
+                                "id": 29,
+                                "question": "বিশ্লেষণমূলক লেখায় কী থাকে?",
+                                "options": [
+                                    "শুধু তথ্য",
+                                    "কল্পনা",
+                                    "তথ্য ও যুক্তিনির্ভর মতামত",
+                                    "আবেগ"
+                                ],
+                                "answer": "তথ্য ও যুক্তিনির্ভর মতামত"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "প্রমিত ভাষা কাকে বলে?",
+                                "answer": "কোনো ভাষার যে মার্জিত ও সর্বজনগ্রাহ্য রূপটি শিক্ষা, দাপ্তরিক কাজ ও সাহিত্যে ব্যবহৃত হয়, তাকে প্রমিত ভাষা বলে।"
+                            },
+                            {
+                                "question": "মানী সর্বনামের দুটি উদাহরণ দাও।",
+                                "answer": "আপনি, আপনারা, তাঁকে।"
+                            },
+                            {
+                                "question": "আঞ্চলিক ভাষা ও প্রমিত ভাষার একটি পার্থক্য লেখ।",
+                                "answer": "আঞ্চলিক ভাষা অঞ্চলভেদে পরিবর্তিত হয়, কিন্তু প্রমিত ভাষা সব অঞ্চলে একই থাকে।"
+                            },
+                            {
+                                "question": "বিশেষণ পদ কাকে বলে?",
+                                "answer": "যে পদ অন্য পদের দোষ, গুণ, অবস্থা, সংখ্যা বা পরিমাণ বোঝায়, তাকে বিশেষণ পদ বলে।"
+                            },
+                            {
+                                "question": "বিরাম চিহ্ন কেন ব্যবহার করা হয়?",
+                                "answer": "বাক্যের অর্থ স্পষ্টভাবে বোঝাতে এবং শ্বাসবিরতির জন্য।"
+                            },
+                            {
+                                "question": "‘নোলক’ কবিতায় কবি কী খুঁজে ফিরছেন?",
+                                "answer": "মায়ের হারিয়ে যাওয়া নোলক বা ঐতিহ্য।"
+                            },
+                            {
+                                "question": "জয়নুল আবেদিন কে ছিলেন?",
+                                "answer": "বাংলাদেশের বিখ্যাত চিত্রশিল্পী, যাকে শিল্পাচার্য বলা হয়।"
+                            },
+                            {
+                                "question": "‘লখার একুশে’ গল্পে লখা কেন ফুল সংগ্রহ করেছিল?",
+                                "answer": "শহিদ মিনারে শ্রদ্ধা জানানোর জন্য।"
+                            },
+                            {
+                                "question": "নোটিশ বা বিজ্ঞপ্তি কেন দেওয়া হয়?",
+                                "answer": "সর্বসাধারণকে কোনো নির্দিষ্ট তথ্য বা নির্দেশ জানানোর জন্য।"
+                            },
+                            {
+                                "question": "দিনলিপি (Diary) লেখার একটি সুবিধা লেখ।",
+                                "answer": "নিজের দৈনন্দিন কাজ ও অনুভূতির রেকর্ড থাকে যা পরে স্মৃতিচারণ বা আত্মসমালোচানায় সাহায্য করে।"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Creative/Long Question",
+                        "questions": [
+                            {
+                                "type": "Scenario",
+                                "prompt": "তুমি তোমার স্কুলের বার্ষিক ক্রীড়া প্রতিযোগিতার ধারাভাষ্যকার। মাইক্রোফোনে ঘোষণা করার জন্য একটি প্রমিত ভাষায় লিখিত স্ক্রিপ্ট তৈরি কর (১০০ শব্দ)।"
+                            },
+                            {
+                                "type": "Scenario",
+                                "prompt": "তোমার বন্ধু ঢাকার বাইরে থেকে এসেছে এবং সে আঞ্চলিক ভাষায় কথা বলে। কিন্তু ক্লাসের সবাই তা বুঝতে পারছে না। বন্ধুকে প্রমিত ভাষার গুরুত্ব বুঝিয়ে বলার জন্য একটি সংলাপ রচনা কর।"
+                            },
+                            {
+                                "type": "Letter",
+                                "prompt": "তোমার এলাকার রাস্তাঘাট বর্ষাকালে চলাচলের অযোগ্য হয়ে পড়ে। এই সমস্যা সমাধানের জন্য স্থানীয় ইউনিয়ন পরিষদ চেয়ারম্যান বা পৌর মেয়র বরাবর একটি আবেদনপত্র লেখ।"
+                            },
+                            {
+                                "type": "Analytical",
+                                "prompt": "‘নোলক’ কবিতার মূলভাব বিশ্লেষণ কর। এই কবিতার মাধ্যমে গ্রামীণ জীবনের কোন চিত্র ফুটে উঠেছে তা আলোচনা কর।"
+                            },
+                            {
+                                "type": "Analytical",
+                                "prompt": "‘কতদিকে কত কারিগর’ রচনায় পালমশাইর শিল্পীসত্তার পরিচয় দাও। বাংলাদেশের লোকশিল্প রক্ষায় তাদের ভূমিকা কী?"
+                            },
+                            {
+                                "type": "Writing Skill",
+                                "prompt": "ভাবসম্প্রসারণ: 'স্বদেশের উপকারে নাই যার মন, কে বলে মানুষ তারে পশু সেই জন।'"
+                            },
+                            {
+                                "type": "Writing Skill",
+                                "prompt": "প্রতিবেদন তৈরি: তোমার বিদ্যালয়ে পালিত ‘আন্তর্জাতিক মাতৃভাষা দিবস’ উপলক্ষে একটি সংবাদ প্রতিবেদন তৈরি কর।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject": "English",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "What is the meaning of the word 'Available'?",
+                                "options": [
+                                    "Rare",
+                                    "Ready for use",
+                                    "Costly",
+                                    "Difficult"
+                                ],
+                                "answer": "Ready for use"
+                            },
+                            {
+                                "id": 2,
+                                "question": "Which facility makes a school a 'Dream School' for a student?",
+                                "options": [
+                                    "No exams",
+                                    "Clean classrooms and a library",
+                                    "Only games period",
+                                    "Expensive canteen"
+                                ],
+                                "answer": "Clean classrooms and a library"
+                            },
+                            {
+                                "id": 3,
+                                "question": "'Tiny' means:",
+                                "options": [
+                                    "Huge",
+                                    "Very small",
+                                    "Moderate",
+                                    "Strong"
+                                ],
+                                "answer": "Very small"
+                            },
+                            {
+                                "id": 6,
+                                "question": "Which of the following is a Suffix?",
+                                "options": [
+                                    "Un-",
+                                    "Re-",
+                                    "-tion",
+                                    "Pre-"
+                                ],
+                                "answer": "-tion"
+                            },
+                            {
+                                "id": 7,
+                                "question": "Choose the correct Prefix to make the opposite of 'Happy':",
+                                "options": [
+                                    "Dis-",
+                                    "Un-",
+                                    "Im-",
+                                    "Non-"
+                                ],
+                                "answer": "Un-"
+                            },
+                            {
+                                "id": 11,
+                                "question": "The poem 'If' is written by:",
+                                "options": [
+                                    "Robert Frost",
+                                    "Rudyard Kipling",
+                                    "William Wordsworth",
+                                    "Kazi Nazrul Islam"
+                                ],
+                                "answer": "Rudyard Kipling"
+                            },
+                            {
+                                "id": 12,
+                                "question": "In the poem, 'make dreams your master' means:",
+                                "options": [
+                                    "Sleep all day",
+                                    "Don't let dreams control your life",
+                                    "Always dream",
+                                    "Stop dreaming"
+                                ],
+                                "answer": "Don't let dreams control your life"
+                            },
+                            {
+                                "id": 16,
+                                "question": "Why did the Frog puff himself up?",
+                                "options": [
+                                    "To fly",
+                                    "To match the size of the Ox",
+                                    "To swim faster",
+                                    "To scare the Ox"
+                                ],
+                                "answer": "To match the size of the Ox"
+                            },
+                            {
+                                "id": 18,
+                                "question": "The moral of 'The Frog and the Ox' is:",
+                                "options": [
+                                    "Try to be someone else",
+                                    "Don't try to be what you are not",
+                                    "Eat more food",
+                                    "Make friends with everyone"
+                                ],
+                                "answer": "Don't try to be what you are not"
+                            },
+                            {
+                                "id": 21,
+                                "question": "The 'Bucket' in the story represents:",
+                                "options": [
+                                    "A water container",
+                                    "Emotional self/Mental health",
+                                    "A dustbin",
+                                    "A toy"
+                                ],
+                                "answer": "Emotional self/Mental health"
+                            },
+                            {
+                                "id": 22,
+                                "question": "A 'Bucket Filler' is someone who:",
+                                "options": [
+                                    "Carries water",
+                                    "Does acts of kindness",
+                                    "Bullies others",
+                                    "Cleans the floor"
+                                ],
+                                "answer": "Does acts of kindness"
+                            },
+                            {
+                                "id": 26,
+                                "question": "Which one is a Transitive Verb?",
+                                "options": [
+                                    "Sleep",
+                                    "Go",
+                                    "Play (football)",
+                                    "Cry"
+                                ],
+                                "answer": "Play (football)"
+                            },
+                            {
+                                "id": 33,
+                                "question": "Passive voice of 'I eat rice':",
+                                "options": [
+                                    "Rice I eat.",
+                                    "Rice is eaten by me.",
+                                    "Rice was eaten by me.",
+                                    "Rice is eating me."
+                                ],
+                                "answer": "Rice is eaten by me."
+                            },
+                            {
+                                "id": 36,
+                                "question": "Which punctuation marks end a question?",
+                                "options": [
+                                    "Full stop",
+                                    "Comma",
+                                    "Question mark",
+                                    "Exclamation mark"
+                                ],
+                                "answer": "Question mark"
+                            },
+                            {
+                                "id": 49,
+                                "question": "Who is the 'Captain' in the poem 'Be the Best...'?",
+                                "options": [
+                                    "Everyone",
+                                    "Only a few",
+                                    "No one",
+                                    "The poet"
+                                ],
+                                "answer": "Only a few"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "What are the two main things you want in your dream school?",
+                                "answer": "I want a big playground and a library full of storybooks."
+                            },
+                            {
+                                "question": "Why shouldn't we be like the Frog in the story?",
+                                "answer": "Because being arrogant and trying to be something we are not can lead to self-destruction."
+                            },
+                            {
+                                "question": "What happens when you dip into someone's bucket?",
+                                "answer": "I make them feel bad, and I also empty my own bucket."
+                            },
+                            {
+                                "question": "Name three things that are 'Impostors' according to Kipling.",
+                                "answer": "Triumph (success) and Disaster (failure)."
+                            },
+                            {
+                                "question": "What is a 'Root word'?",
+                                "answer": "The most basic part of a word that carries meaning, without any prefixes or suffixes."
+                            },
+                            {
+                                "question": "Define 'Adjective' with an example.",
+                                "answer": "An adjective modifies a noun or pronoun. Example: Red flower."
+                            },
+                            {
+                                "question": "Change the voice: 'He plays cricket.'",
+                                "answer": "Cricket is played by him."
+                            },
+                            {
+                                "question": "How do you greet a teacher in the morning?",
+                                "answer": "Good morning, Teacher/Sir/Madam."
+                            },
+                            {
+                                "question": "What is 'Cyber Etiquette'?",
+                                "answer": "Good behavior/manners while using the internet."
+                            },
+                            {
+                                "question": "What implies 'Freedom of Choice'?",
+                                "answer": "The ability to make decisions for oneself without force."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Competency/Long Question",
+                        "questions": [
+                            {
+                                "type": "Dialogue",
+                                "prompt": "Write a dialogue between two friends discussing the importance of learning English. (100 words)"
+                            },
+                            {
+                                "type": "Email",
+                                "prompt": "Write an email to your Head Teacher asking for leave of absence for two days due to illness."
+                            },
+                            {
+                                "type": "Paragraph",
+                                "prompt": "Write a paragraph on 'My Dream School'. Describe the facilities you want there."
+                            },
+                            {
+                                "type": "Story Writing",
+                                "prompt": "Complete the story: 'Once two friends were walking through a forest. Suddenly they saw a bear...'"
+                            },
+                            {
+                                "type": "Poem Analysis",
+                                "prompt": "Read the poem 'If' again. Summarize the advice the father gives to his son in your own words."
+                            },
+                            {
+                                "type": "Reflection",
+                                "prompt": "From the lesson 'Have You Filled a Bucket Today?', explain how filling someone else's bucket makes you happy. Give a real-life example."
+                            },
+                            {
+                                "type": "Instruction",
+                                "prompt": "Write a set of 5 instructions on 'How to make a cup of tea'."
+                            },
+                            {
+                                "type": "Application",
+                                "prompt": "Write an application to the Head Teacher for setting up a Debating Club."
+                            },
+                            {
+                                "type": "Project",
+                                "prompt": "Write a short review of a storybook you have recently read (Title, Character, Plot, Why you liked it)."
+                            },
+                            {
+                                "type": "Future Plan",
+                                "prompt": "Write a paragraph on 'What I want to be when I grow up and Why'."
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject": "Mathematics (গণিত)",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "১০^৩ এর মান কত?",
+                                "options": [
+                                    "১০০",
+                                    "১০০০",
+                                    "৩০",
+                                    "১০"
+                                ],
+                                "answer": "১০০০"
+                            },
+                            {
+                                "id": 2,
+                                "question": "কোনো সংখ্যার ওপর ঘাত (power) ০ হলে তার মান কত হয়? (যেমন a^0)",
+                                "options": [
+                                    "০",
+                                    "১",
+                                    "a",
+                                    "অসংজ্ঞায়িত"
+                                ],
+                                "answer": "১"
+                            },
+                            {
+                                "id": 6,
+                                "question": "নিচের কোনটি অমূলদ সংখ্যা?",
+                                "options": [
+                                    "√৪",
+                                    "√২",
+                                    "৫",
+                                    "১.৫"
+                                ],
+                                "answer": "√২"
+                            },
+                            {
+                                "id": 7,
+                                "question": "শূন্য (০) কী ধরনের সংখ্যা?",
+                                "options": [
+                                    "ধনাত্মক",
+                                    "ঋণাত্মক",
+                                    "মূলদ",
+                                    "অমূলদ"
+                                ],
+                                "answer": "মূলদ"
+                            },
+                            {
+                                "id": 11,
+                                "question": "বাইনারি সংখ্যা পদ্ধতিতে কয়টি অঙ্ক ব্যবহৃত হয়?",
+                                "options": [
+                                    "১০টি",
+                                    "১টি",
+                                    "২টি (০ ও ১)",
+                                    "৮টি"
+                                ],
+                                "answer": "২টি (০ ও ১)"
+                            },
+                            {
+                                "id": 12,
+                                "question": "দশমিক সংখ্যা ৩ এর বাইনারি রূপ কোনটি?",
+                                "options": [
+                                    "১০",
+                                    "১১",
+                                    "১০০",
+                                    "০১"
+                                ],
+                                "answer": "১১"
+                            },
+                            {
+                                "id": 16,
+                                "question": "ত্রিভুজের তিন কোণের সমষ্টি কত?",
+                                "options": [
+                                    "৯০°",
+                                    "১৮০°",
+                                    "৩৬০°",
+                                    "২৭০°"
+                                ],
+                                "answer": "১৮০°"
+                            },
+                            {
+                                "id": 18,
+                                "question": "পাই (π) এর আসন্ন মান কত?",
+                                "options": [
+                                    "৩.১৪",
+                                    "৩.১৪১৬",
+                                    "২২/৭",
+                                    "সবকটি সঠিক"
+                                ],
+                                "answer": "সবকটি সঠিক"
+                            },
+                            {
+                                "id": 19,
+                                "question": "বৃত্তের পরিধির সূত্র কোনটি?",
+                                "options": [
+                                    "πr^2",
+                                    "2πr",
+                                    "2πd",
+                                    "πr"
+                                ],
+                                "answer": "2πr"
+                            },
+                            {
+                                "id": 24,
+                                "question": "আয়তক্ষেত্রের ক্ষেত্রফল নির্ণয়ের সূত্র কী?",
+                                "options": [
+                                    "দৈর্ঘ্য + প্রস্থ",
+                                    "দৈর্ঘ্য × প্রস্থ",
+                                    "২(দৈর্ঘ্য + প্রস্থ)",
+                                    "বাহু × বাহু"
+                                ],
+                                "answer": "দৈর্ঘ্য × প্রস্থ"
+                            },
+                            {
+                                "id": 26,
+                                "question": "চলক (Variable) বলতে কী বোঝায়?",
+                                "options": [
+                                    "যার মান নির্দিষ্ট",
+                                    "যার মান পরিবর্তনশীল",
+                                    "একটি ধ্রুবক",
+                                    "জ্যামিতিক চিত্র"
+                                ],
+                                "answer": "যার মান পরিবর্তনশীল"
+                            },
+                            {
+                                "id": 27,
+                                "question": "x + ৫ = ১০ সমীকরণে x এর মান কত?",
+                                "options": [
+                                    "১৫",
+                                    "৫",
+                                    "২",
+                                    "৫০"
+                                ],
+                                "answer": "৫"
+                            },
+                            {
+                                "id": 31,
+                                "question": "গড় নির্ণয়ের সূত্র কোনটি?",
+                                "options": [
+                                    "রাশিগুলোর সমষ্টি × রাশির সংখ্যা",
+                                    "রাশিগুলোর সমষ্টি ÷ রাশির সংখ্যা",
+                                    "সর্বোচ্চ মান - সর্বনিম্ন মান",
+                                    "মধ্যক × ২"
+                                ],
+                                "answer": "রাশিগুলোর সমষ্টি ÷ রাশির সংখ্যা"
+                            },
+                            {
+                                "id": 32,
+                                "question": "প্রচুরক কোনটি? উপাত্ত: ২, ৩, ৫, ৩, ৭, ৩",
+                                "options": [
+                                    "২",
+                                    "৫",
+                                    "৩",
+                                    "৭"
+                                ],
+                                "answer": "৩"
+                            },
+                            {
+                                "id": 36,
+                                "question": "লাভ নির্ণয়ের সূত্র কী?",
+                                "options": [
+                                    "ক্রয়মূল্য - বিক্রয়মূল্য",
+                                    "বিক্রয়মূল্য - ক্রয়মূল্য",
+                                    "ক্রয়মূল্য + বিক্রয়মূল্য",
+                                    "আসল × মুনাফা"
+                                ],
+                                "answer": "বিক্রয়মূল্য - ক্রয়মূল্য"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "সূচক কাকে বলে?",
+                                "answer": "কোনো সংখ্যাকে বারবার গুণ করলে যতবার গুণ করা হয় সেই সংখ্যাটিকে ভিত্তি এবং যতবার গুণ করা হয়েছে তাকে সূচক বলে।"
+                            },
+                            {
+                                "question": "মূলদ সংখ্যা কাকে বলে?",
+                                "answer": "যে সংখ্যাকে p/q আকারে প্রকাশ করা যায় (যেখানে p ও q পূর্ণসংখ্যা এবং q ≠ ০)।"
+                            },
+                            {
+                                "question": "বাইনারি সিস্টেমে 'বিটি' (Bit) কী?",
+                                "answer": "বাইনারি ডিজিট ০ এবং ১ কে সংক্ষেপে বিট বলা হয়।"
+                            },
+                            {
+                                "question": "প্রবৃদ্ধ কোণ কাকে বলে?",
+                                "answer": "যে কোণের মান ১৮০° এর চেয়ে বড় কিন্তু ৩৬০° এর চেয়ে ছোট।"
+                            },
+                            {
+                                "question": "সদৃশ কোণী ত্রিভুজ কাকে বলে?",
+                                "answer": "যদি দুটি ত্রিভুজের কোণগুলো পরস্পর সমান হয়, তবে তাদের সদৃশ কোণী ত্রিভুজ বলে।"
+                            },
+                            {
+                                "question": "বর্গমূল কাকে বলে?",
+                                "answer": "কোনো সংখ্যাকে সেই সংখ্যা দ্বারা গুণ করলে যে গুণফল পাওয়া যায়, তা ঐ সংখ্যার বর্গ এবং সংখ্যাটি গুণফলের বর্গমূল।"
+                            },
+                            {
+                                "question": "৫^৪ কে গুণ আকারে লেখ।",
+                                "answer": "৫ × ৫ × ৫ × ৫।"
+                            },
+                            {
+                                "question": "১২ এর বাইনারি মান কত?",
+                                "answer": "১১০০।"
+                            },
+                            {
+                                "question": "একটি বর্গের বাহু ৪ সে.মি. হলে তার ক্ষেত্রফল কত?",
+                                "answer": "১৬ বর্গ সে.মি.।"
+                            },
+                            {
+                                "question": "১ থেকে ১০ এর মধ্যে মৌলিক সংখ্যাগুলো লেখ।",
+                                "answer": "২, ৩, ৫, ৭।"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Creative/Long Question",
+                        "questions": [
+                            {
+                                "type": "Scenario (Exponents)",
+                                "prompt": "আবির একটি গোপন সংকেত পাঠাতে চায়। সে ঠিক করল ১ কে ২ এর সূচক দিয়ে প্রকাশ করবে। ক) ২^০, ২^১, ২^২, ২^৩, ২^৪ এর মানগুলো বের কর। খ) আবির যদি ৫ দিন ধরে প্রতি দিন আগের দিনের দ্বিগুণ টাকা জমায় এবং প্রথম দিন ১ টাকা জমায়, তবে ৫ম দিনে তার কত টাকা হবে? সূচকের মাধ্যমে দেখাও।"
+                            },
+                            {
+                                "type": "Scenario (Binary)",
+                                "prompt": "একটি লাইট বাল্বের সুইচ অন থাকলে ১ এবং অফ থাকলে ০ ধরা হয়। ক) ৪টি বাল্ব পাশাপাশি আছে। এদের অবস্থা: অন, অফ, অন, অন। একে বাইনারি সংখ্যায় লেখ। খ) প্রাপ্ত বাইনারি সংখ্যাটিকে দশমিক সংখ্যায় রূপান্তর কর।"
+                            },
+                            {
+                                "type": "Scenario (Ratio & Profit)",
+                                "prompt": "মিনা ও রাজু একটি ব্যবসা শুরু করল। মিনা দিল ৫০০০ টাকা এবং রাজু দিল ৩০০০ টাকা। ক) তাদের মূলধনের অনুপাত নির্ণয় কর। খ) এক বছর পর তাদের ৮০০ টাকা লাভ হলো। কে কত টাকা লভ্যাংশ পাবে?"
+                            },
+                            {
+                                "type": "Scenario (Algebra)",
+                                "prompt": "একটি আয়তাকার বাগানের দৈর্ঘ্য প্রস্থের দ্বিগুণ অপেক্ষা ৩ মিটার বেশি। ক) প্রস্থকে 'x' ধরে বাগানের দৈর্ঘ্য ও পরিসীমার বীজগণিতীয় রাশি তৈরি কর। খ) যদি পরিসীমা ৬০ মিটার হয়, তবে বাগানটির দৈর্ঘ্য ও প্রস্থ নির্ণয় কর।"
+                            },
+                            {
+                                "type": "Scenario (Geometry)",
+                                "prompt": "একটি বৃত্তাকার পার্কের ব্যাস ৪০ মিটার। ক) পার্কটির ব্যাসার্ধ কত? খ) পার্কটির সীমানা বা পরিধি কত? (π = ৩.১৪ ধরো)। গ) পার্কটির ভেতরে ৫ টাকা দরে ঘাস লাগাতে মোট কত খরচ হবে?"
+                            },
+                            {
+                                "type": "Scenario (Statistics)",
+                                "prompt": "তোমার ক্লাসের ২০ জন শিক্ষার্থীর গণিতে প্রাপ্ত নম্বর নিচে দেওয়া হলো: ৬০, ৭০, ৮০, ৬৫, ৭৫, ৬০, ৭০, ৮৫, ৯০, ৮০, ৬৫, ৭০, ৭৫, ৬০, ৮০, ৯০, ৯৫, ৭০, ৬০, ৬৫। ক) উপাত্তগুলোকে মানের ক্রমানুসারে সাজাও। খ) উপাত্তগুলোর গড়, মধ্যক ও প্রচুরক নির্ণয় কর।"
+                            },
+                            {
+                                "type": "Project",
+                                "prompt": "কাগজ কেটে প্রমাণ: ত্রিভুজের তিন কোণের সমষ্টি ১৮০° - এটি কাগজ কেটে প্রমাণ কর।"
+                            },
+                            {
+                                "type": "Scenario (Measurement)",
+                                "prompt": "তোমার পড়ার টেবিলের দৈর্ঘ্য ও প্রস্থ মেপে ক্ষেত্রফল বের কর (ফিতা বা স্কেল দিয়ে)।"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "meta": {
+            "class": "7",
+            "curriculum": "NCTB 2025",
+            "part": "2 of 3",
+            "subjects_included": [
+                "Science",
+                "History and Social Science",
+                "Digital Technology"
+            ]
+        },
+        "data": [
+            {
+                "subject": "Science (বিজ্ঞান)",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "জীবজগৎকে মোট কয়টি রাজ্যে ভাগ করা হয়েছে?",
+                                "options": [
+                                    "৪টি",
+                                    "৫টি",
+                                    "৩টি",
+                                    "৬টি"
+                                ],
+                                "answer": "৫টি"
+                            },
+                            {
+                                "id": 2,
+                                "question": "নিচের কোনটি ফাঞ্জাই (Fungi) রাজ্যের অন্তর্ভুক্ত?",
+                                "options": [
+                                    "অ্যামিবা",
+                                    "মাশরুম/ছত্রাক",
+                                    "ব্যাকটেরিয়া",
+                                    "মানুষ"
+                                ],
+                                "answer": "মাশরুম/ছত্রাক"
+                            },
+                            {
+                                "id": 4,
+                                "question": "‘দ্বিপদ নামকরণ’ পদ্ধতির প্রবর্তক কে?",
+                                "options": [
+                                    "অ্যারিস্টটল",
+                                    "আইজ্যাক নিউটন",
+                                    "ক্যারোলাস লিনিয়াস",
+                                    "ডারউইন"
+                                ],
+                                "answer": "ক্যারোলাস লিনিয়াস"
+                            },
+                            {
+                                "id": 11,
+                                "question": "পদার্থের ক্ষুদ্রতম কণার নাম কী যা স্বাধীনভাবে থাকতে পারে না?",
+                                "options": [
+                                    "অণু",
+                                    "পরমাণু",
+                                    "যৌগ",
+                                    "মিশ্রণ"
+                                ],
+                                "answer": "পরমাণু"
+                            },
+                            {
+                                "id": 14,
+                                "question": "পানির রাসায়নিক সংকেত কোনটি?",
+                                "options": [
+                                    "CO2",
+                                    "H2O",
+                                    "O2",
+                                    "NaCl"
+                                ],
+                                "answer": "H2O"
+                            },
+                            {
+                                "id": 21,
+                                "question": "কোষের ‘পাওয়ার হাউস’ বা শক্তিঘর কাকে বলা হয়?",
+                                "options": [
+                                    "নিউক্লিয়াস",
+                                    "মাইটোকন্ড্রিয়া",
+                                    "প্লাস্টিড",
+                                    "রাইবোজোম"
+                                ],
+                                "answer": "মাইটোকন্ড্রিয়া"
+                            },
+                            {
+                                "id": 26,
+                                "question": "তাপমাত্রার এসআই (SI) একক কী?",
+                                "options": [
+                                    "সেলসিয়াস",
+                                    "ফারেনহাইট",
+                                    "কেলভিন",
+                                    "জুল"
+                                ],
+                                "answer": "কেলভিন"
+                            },
+                            {
+                                "id": 28,
+                                "question": "তাপ সঞ্চালনের দ্রুততম পদ্ধতি কোনটি?",
+                                "options": [
+                                    "পরিবহন",
+                                    "পরিচলন",
+                                    "বিকিরণ",
+                                    "সবগুলো সমান"
+                                ],
+                                "answer": "বিকিরণ"
+                            },
+                            {
+                                "id": 36,
+                                "question": "পৃথিবীর সবচেয়ে বাইরের স্তরকে কী বলে?",
+                                "options": [
+                                    "গুরুমণ্ডল",
+                                    "অশ্বমণ্ডল",
+                                    "ভূ-ত্বক",
+                                    "কেন্দ্রবলয়"
+                                ],
+                                "answer": "ভূ-ত্বক"
+                            },
+                            {
+                                "id": 39,
+                                "question": "ঋতু পরিবর্তনের মূল কারণ কী?",
+                                "options": [
+                                    "পৃথিবীর আহ্নিক গতি",
+                                    "পৃথিবীর বার্ষিক গতি ও অক্ষের হেলানো অবস্থান",
+                                    "চাঁদের ঘূর্ণন",
+                                    "সূর্যের তাপ কম-বেশি হওয়া"
+                                ],
+                                "answer": "পৃথিবীর বার্ষিক গতি ও অক্ষের হেলানো অবস্থান"
+                            },
+                            {
+                                "id": 41,
+                                "question": "শব্দ সঞ্চালনের জন্য কী প্রয়োজন?",
+                                "options": [
+                                    "শূন্যস্থান",
+                                    "মাধ্যম (কঠিন, তরল বা বায়বীয়)",
+                                    "আলো",
+                                    "তাপ"
+                                ],
+                                "answer": "মাধ্যম (কঠিন, তরল বা বায়বীয়)"
+                            },
+                            {
+                                "id": 44,
+                                "question": "অম্ল বা অ্যাসিডের স্বাদ কেমন?",
+                                "options": [
+                                    "মিষ্টি",
+                                    "লোনা",
+                                    "টক",
+                                    "তেতো"
+                                ],
+                                "answer": "টক"
+                            },
+                            {
+                                "id": 47,
+                                "question": "পানির স্ফুটনাঙ্ক কত?",
+                                "options": [
+                                    "০° সেলসিয়াস",
+                                    "১০০° সেলসিয়াস",
+                                    "৫০° সেলসিয়াস",
+                                    "১০০০° সেলসিয়াস"
+                                ],
+                                "answer": "১০০° সেলসিয়াস"
+                            },
+                            {
+                                "id": 49,
+                                "question": "নিচের কোনটি গ্রিনহাউস গ্যাস?",
+                                "options": [
+                                    "অক্সিজেন",
+                                    "নাইট্রোজেন",
+                                    "কার্বন ডাই-অক্সাইড",
+                                    "হিলিয়াম"
+                                ],
+                                "answer": "কার্বন ডাই-অক্সাইড"
+                            },
+                            {
+                                "id": 50,
+                                "question": "বৈজ্ঞানিক অনুসন্ধান প্রক্রিয়ার প্রথম ধাপ কোনটি?",
+                                "options": [
+                                    "পরীক্ষণ",
+                                    "প্রশ্ন বা সমস্যা চিহ্নিতকরণ",
+                                    "উপাত্ত বিশ্লেষণ",
+                                    "ফলাফল প্রকাশ"
+                                ],
+                                "answer": "প্রশ্ন বা সমস্যা চিহ্নিতকরণ"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "কোষ কাকে বলে?",
+                                "answer": "জীবদেহের গঠন ও কাজের একককে কোষ বলে।"
+                            },
+                            {
+                                "question": "সালোকসংশ্লেষণ কী?",
+                                "answer": "সবুজ উদ্ভিদের সূর্যালোকের উপস্থিতিতে কার্বন ডাই-অক্সাইড ও পানি ব্যবহার করে শর্করা জাতীয় খাদ্য তৈরির প্রক্রিয়া।"
+                            },
+                            {
+                                "question": "মৌলিক ও যৌগিক পদার্থের পার্থক্য কী?",
+                                "answer": "মৌলিক পদার্থ ভাঙলে ওই পদার্থ ছাড়া আর কিছু পাওয়া যায় না, যৌগিক পদার্থ ভাঙলে একাধিক মৌলিক পদার্থ পাওয়া যায়।"
+                            },
+                            {
+                                "question": "উর্ধ্বপাতন কাকে বলে?",
+                                "answer": "কোনো কঠিন পদার্থকে তাপ দিলে তা তরলে পরিণত না হয়ে সরাসরি বাষ্পে পরিণত হওয়া (যেমন: কর্পূর)।"
+                            },
+                            {
+                                "question": "তাপ ও তাপমাত্রার দুটি পার্থক্য লেখ।",
+                                "answer": "তাপ এক প্রকার শক্তি, তাপমাত্রা হলো বস্তুর তাপীয় অবস্থা।"
+                            },
+                            {
+                                "question": "ফসিল বা জীবাশ্ম কী?",
+                                "answer": "পাললিক শিলায় আটকে পড়া প্রাচীন উদ্ভিদ বা প্রাণীর মৃতদেহের ছাপ বা অবশেষ।"
+                            },
+                            {
+                                "question": "সৌরজগৎ কাকে বলে?",
+                                "answer": "সূর্য এবং একে কেন্দ্র করে ঘূর্ণায়মান গ্রহ, উপগ্রহ, ধুমকেতু নিয়ে গঠিত জগত।"
+                            },
+                            {
+                                "question": "‘ফসলের ডাক’ অধ্যায়ে আমরা কী শিখি?",
+                                "answer": "বিভিন্ন ঋতুতে কী কী ফসল ফলে এবং মাটির উর্বরতা সম্পর্কে।"
+                            },
+                            {
+                                "question": "সুষম খাদ্য কাকে বলে?",
+                                "answer": "যে খাদ্যে শরীরের প্রয়োজনীয় ৬টি উপাদানই সঠিক পরিমাণে থাকে।"
+                            },
+                            {
+                                "question": "গ্রিনহাউস ইফেক্ট এর ফলে কী হচ্ছে?",
+                                "answer": "বৈশ্বিক উষ্ণতা বৃদ্ধি পাচ্ছে বা পৃথিবী গরম হয়ে যাচ্ছে।"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Creative/Long Question",
+                        "questions": [
+                            {
+                                "type": "Scenario (Agriculture)",
+                                "prompt": "দৃশ্যপট: রাশেদ তার গ্রামের বাড়িতে দেখল, একই জমিতে বারবার ধান চাষ করার ফলে ফলন কমে যাচ্ছে। ক) মাটির উর্বরতা নষ্ট হওয়ার কারণ কী? খ) ফসল আবর্তন (Crop Rotation) পদ্ধতিটি ব্যাখ্যা কর এবং এর সুবিধা লেখ। গ) রাসায়নিক সারের বদলে জৈব সার ব্যবহারের ৩টি সুবিধা উল্লেখ কর।"
+                            },
+                            {
+                                "type": "Experiment (Chemistry)",
+                                "prompt": "পরীক্ষণ: তোমাকে একটি গ্লাসে লবন-পানি এবং কিছু বালু মেশানো মিশ্রণ দেওয়া হলো। ক) বালু ও পানির মিশ্রণ থেকে বালু আলাদা করার পদ্ধতি (থিতানো/ছাঁকন) বর্ণনা কর। খ) লবন-পানি থেকে লবন ফিরে পাওয়ার পদ্ধতি (বাষ্পীভবন/কেলাসন) পরীক্ষার ধাপসহ লেখ।"
+                            },
+                            {
+                                "type": "Diagram (Biology)",
+                                "prompt": "চিত্রাঙ্কন: একটি আদর্শ উদ্ভিদ কোষ এবং একটি প্রাণী কোষের চিহ্নিত চিত্র আঁক। এদের মধ্যে প্রধান ৩টি পার্থক্য ছক আকারে লেখ। "
+                            },
+                            {
+                                "type": "Scenario (Microbiology)",
+                                "prompt": "দৃশ্যপট: বর্ষাকালে ভেজা কাপড়ে বা বাসি রুটিতে সাদা/কালো আস্তরণ পড়ে। ক) এটি কোন ধরনের জীব এবং কোন রাজ্যের অন্তর্গত? (ছত্রাক)। খ) ছত্রাক ও ব্যাকটেরিয়ার মধ্যে ৩টি পার্থক্য লেখ। গ) আমাদের জীবনে অণুজীবের (ব্যাকটেরিয়া/ছত্রাক) ৩টি উপকারিতা এবং ৩টি অপকারিতা লেখ।"
+                            },
+                            {
+                                "type": "Scenario (Physics)",
+                                "prompt": "দৃশ্যপট: শীতকালে তুমি একটি লোহার রড এবং একটি কাঠের টুকরো স্পর্শ করলে লোহার রডটি বেশি ঠান্ডা মনে হয়। ক) তাপ ও তাপমাত্রার সংজ্ঞা দাও। খ) লোহার রড বেশি ঠান্ডা লাগার বৈজ্ঞানিক কারণ (তাপ পরিবহন) ব্যাখ্যা কর। গ) থার্মোফ্লাস্কে চা দীর্ঘক্ষণ গরম থাকে কেন? এর গঠন ও কার্যপ্রণালী ব্যাখ্যা কর।"
+                            },
+                            {
+                                "type": "Model (Geology)",
+                                "prompt": "মডেল: পৃথিবীর অভ্যন্তরীণ গঠনের একটি চিহ্নিত চিত্র আঁক এবং ভূ-ত্বক, গুরুমণ্ডল ও কেন্দ্রমণ্ডলের সংক্ষিপ্ত বর্ণনা দাও। "
+                            },
+                            {
+                                "type": "Scenario (Energy)",
+                                "prompt": "দৃশ্যপট: একটি ঢিল দালানের ছাদ থেকে নিচে ফেলে দেওয়া হলো। ক) ছাদের ওপর ঢিলটিতে কোন শক্তি জমা ছিল? (বিভব শক্তি)। খ) নিচে পড়ার সময় শক্তির রূপান্তর কীভাবে ঘটে? (বিভব -> গতি)। গ) শক্তির সংরক্ষণশীলতা নীতিটি উদাহরণসহ বুঝিয়ে লেখ।"
+                            },
+                            {
+                                "type": "Project (Optics)",
+                                "prompt": "প্রজেক্ট: পিনহোল ক্যামেরা তৈরির পদ্ধতি বর্ণনা কর। এর মাধ্যমে কীভাবে উল্টো প্রতিবিম্ব গঠিত হয় চিত্রসহ দেখাও।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject": "History and Social Science (ইতিহাস ও সামাজিক বিজ্ঞান)",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "যৌক্তিক সিদ্ধান্ত নেওয়ার প্রথম ধাপ কোনটি?",
+                                "options": [
+                                    "তথ্য বিশ্লেষণ",
+                                    "সমস্যা চিহ্নিতকরণ",
+                                    "সমাধান নির্ধারণ",
+                                    "তথ্য সংগ্রহ"
+                                ],
+                                "answer": "সমস্যা চিহ্নিতকরণ"
+                            },
+                            {
+                                "id": 6,
+                                "question": "সম্প্রদায় (Community) গঠনের প্রধান শর্ত কোনটি?",
+                                "options": [
+                                    "একই পেশা",
+                                    "একই আয়",
+                                    "একই এলাকায় বসবাস ও পারস্পরিক সম্পর্ক",
+                                    "একই রাজনৈতিক দল"
+                                ],
+                                "answer": "একই এলাকায় বসবাস ও পারস্পরিক সম্পর্ক"
+                            },
+                            {
+                                "id": 11,
+                                "question": "বাংলাদেশের স্বাধীনতা দিবস কবে?",
+                                "options": [
+                                    "২১ ফেব্রুয়ারি",
+                                    "১৬ ডিসেম্বর",
+                                    "২৬ মার্চ",
+                                    "১৭ এপ্রিল"
+                                ],
+                                "answer": "২৬ মার্চ"
+                            },
+                            {
+                                "id": 13,
+                                "question": "বঙ্গবন্ধু শেখ মুজিবুর রহমান ঐতিহাসিক ৭ই মার্চের ভাষণ কোথায় দিয়েছিলেন?",
+                                "options": [
+                                    "পল্টন ময়দানে",
+                                    "রেসকোর্স ময়দানে (সোহরাওয়ার্দী উদ্যান)",
+                                    "জাতীয় সংসদ ভবনে",
+                                    "ঢাকা বিশ্ববিদ্যালয়ে"
+                                ],
+                                "answer": "রেসকোর্স ময়দানে (সোহরাওয়ার্দী উদ্যান)"
+                            },
+                            {
+                                "id": 14,
+                                "question": "মুজিবনগর সরকার কবে গঠিত হয়?",
+                                "options": [
+                                    "২৬ মার্চ ১৯৭১",
+                                    "১০ এপ্রিল ১৯৭১",
+                                    "১৭ এপ্রিল ১৯৭১",
+                                    "১৬ ডিসেম্বর ১৯৭১"
+                                ],
+                                "answer": "১০ এপ্রিল ১৯৭১"
+                            },
+                            {
+                                "id": 21,
+                                "question": "প্রাচীন বাংলার জনপদগুলোর নাম কীসের ভিত্তিতে ছিল?",
+                                "options": [
+                                    "নদীর নামে",
+                                    "অঞ্চল বা গোষ্ঠীর নামে",
+                                    "রাজাদের নামে",
+                                    "ফলের নামে"
+                                ],
+                                "answer": "অঞ্চল বা গোষ্ঠীর নামে"
+                            },
+                            {
+                                "id": 22,
+                                "question": "প্রাচীনতম জনপদ কোনটি?",
+                                "options": [
+                                    "বঙ্গ",
+                                    "পুন্ড্র (মহাস্থানগড়)",
+                                    "সমতট",
+                                    "হরিকেল"
+                                ],
+                                "answer": "পুন্ড্র (মহাস্থানগড়)"
+                            },
+                            {
+                                "id": 26,
+                                "question": "কোনো নির্দিষ্ট স্থানের স্বল্প সময়ের বায়ুমণ্ডলের অবস্থাকে কী বলে?",
+                                "options": [
+                                    "জলবায়ু",
+                                    "আবহাওয়া",
+                                    "ঋতু",
+                                    "পরিবেশ"
+                                ],
+                                "answer": "আবহাওয়া"
+                            },
+                            {
+                                "id": 27,
+                                "question": "বাংলাদেশের জলবায়ু প্রধানত কেমন?",
+                                "options": [
+                                    "চরমভাবাপন্ন",
+                                    "শীতপ্রধান",
+                                    "ক্রান্তীয় মৌসুমী",
+                                    "মরুদেশীয়"
+                                ],
+                                "answer": "ক্রান্তীয় মৌসুমী"
+                            },
+                            {
+                                "id": 36,
+                                "question": "‘সামাজিকীকরণ’ প্রক্রিয়াটি কোথা থেকে শুরু হয়?",
+                                "options": [
+                                    "পরিবার থেকে",
+                                    "স্কুল থেকে",
+                                    "সমাজ থেকে",
+                                    "বন্ধুদের থেকে"
+                                ],
+                                "answer": "পরিবার থেকে"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "ইতিহাস কাকে বলে?",
+                                "answer": "অতীতের ঘটনাপ্রবাহের সত্যনিষ্ঠ বিবরণকে ইতিহাস বলে।"
+                            },
+                            {
+                                "question": "প্রত্নতাত্ত্বিক নিদর্শন কী?",
+                                "answer": "প্রাচীনকালের মানুষের তৈরি বা ব্যবহৃত দালান, মুদ্রা, শিলালিপি বা হাতিয়ার যা মাটির নিচে বা উপরে পাওয়া যায়।"
+                            },
+                            {
+                                "question": "ওয়ারী-বটেশ্বর কোথায় অবস্থিত?",
+                                "answer": "নরসিংদী জেলায়।"
+                            },
+                            {
+                                "question": "শশাঙ্ক কে ছিলেন?",
+                                "answer": "প্রাচীন বাংলার প্রথম স্বাধীন সার্বভৌম রাজা।"
+                            },
+                            {
+                                "question": "ভাষা আন্দোলন কত সালে হয়েছিল?",
+                                "answer": "১৯৫২ সালে।"
+                            },
+                            {
+                                "question": "সমাজ বলতে কী বোঝায়?",
+                                "answer": "মিলেমিশে বসবাসকারী মানুষের সংঘবদ্ধ দলকে সমাজ বলে।"
+                            },
+                            {
+                                "question": "সংস্কৃতি কী?",
+                                "answer": "মানুষের জীবনযাপনের ধরণ, আচার-আচরণ, বিশ্বাস, শিল্পকলা ইত্যাদির সমষ্টি।"
+                            },
+                            {
+                                "question": "রাষ্ট্রের উপাদান কয়টি ও কী কী?",
+                                "answer": "৪টি—জনসমষ্টি, নির্দিষ্ট ভূখণ্ড, সরকার ও সার্বভৌমত্ব।"
+                            },
+                            {
+                                "question": "সক্রিয় নাগরিক (Active Citizen) কারা?",
+                                "answer": "যারা রাষ্ট্রের নিয়ম মেনে চলে এবং সমাজের উন্নয়নে ভূমিকা রাখে।"
+                            },
+                            {
+                                "question": "মানচিত্র কী?",
+                                "answer": "পৃথিবীর বা এর কোনো অংশের সমতল কাগজের ওপর অঙ্কিত চিত্র।"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Creative/Long Question",
+                        "questions": [
+                            {
+                                "type": "Scenario (Decision Making)",
+                                "prompt": "দৃশ্যপট: তোমার এলাকায় কিশোরদের মধ্যে মোবাইল আসক্তি বেড়েছে। প্রশ্ন: এই সমস্যা সমাধানে ‘যৌক্তিক সিদ্ধান্ত গ্রহণ’-এর ধাপগুলো অনুসরণ করে একটি পরিকল্পনা তৈরি কর।"
+                            },
+                            {
+                                "type": "Project (Research)",
+                                "prompt": "প্রজেক্ট: তোমার পরিবারের গত এক সপ্তাহের ব্যয়ের হিসাব নিয়ে একটি ছোট গবেষণা কর। কোন খাতে বেশি খরচ হচ্ছে এবং কেন?"
+                            },
+                            {
+                                "type": "Scenario (History)",
+                                "prompt": "দৃশ্যপট: তুমি একজন মুক্তিযোদ্ধা। ১৯৭১ সালের যুদ্ধের ময়দানের একটি দিনের দিনলিপি (Diary) লেখ।"
+                            },
+                            {
+                                "type": "Analysis (History)",
+                                "prompt": "বিশ্লেষণ: '৭ই মার্চের ভাষণই ছিল স্বাধীনতার মূলমন্ত্র'—উক্তিটি বিশ্লেষণ কর।"
+                            },
+                            {
+                                "type": "Scenario (Community)",
+                                "prompt": "দৃশ্যপট: তোমার বন্ধু ভিন্ন ধর্মের বা সম্প্রদায়ের। তার একটি উৎসবে তুমি যোগ দিয়েছ। প্রশ্ন: সেই উৎসবের বর্ণনা দাও এবং সামাজিক সম্প্রীতির গুরুত্ব লেখ।"
+                            },
+                            {
+                                "type": "Map Work",
+                                "prompt": "মানচিত্র: প্রাচীন বাংলার জনপদগুলোর (পুন্ড্র, বঙ্গ, সমতট) অবস্থান বাংলাদেশের মানচিত্রে চিহ্নিত কর এবং এদের বৈশিষ্ট্য লেখ। "
+                            },
+                            {
+                                "type": "Case Study (Disaster)",
+                                "prompt": "কেস স্টাডি: তোমার এলাকায় যদি হঠাৎ বন্যা দেখা দেয়, তবে স্বেচ্ছাসেবক হিসেবে তুমি কী কী পদক্ষেপ নেবে?"
+                            },
+                            {
+                                "type": "Scenario (Civics)",
+                                "prompt": "দৃশ্যপট: রাস্তায় একজন অন্ধ ব্যক্তি রাস্তা পার হতে পারছে না। প্রশ্ন: একজন সক্রিয় নাগরিক হিসেবে তোমার করণীয় কী? সক্রিয় নাগরিকের ৫টি গুণাবলী লেখ।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject": "Digital Technology (ডিজিটাল প্রযুক্তি)",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "কোন তথ্যের উৎস সবচেয়ে বেশি নির্ভরযোগ্য?",
+                                "options": [
+                                    "সামাজিক যোগাযোগ মাধ্যম",
+                                    "ব্যক্তিগত ব্লগ",
+                                    "সরকারি ওয়েবসাইট বা প্রতিষ্ঠিত সংবাদমাধ্যম",
+                                    "উইকিপিডিয়া"
+                                ],
+                                "answer": "সরকারি ওয়েবসাইট বা প্রতিষ্ঠিত সংবাদমাধ্যম"
+                            },
+                            {
+                                "id": 2,
+                                "question": "‘ফেক নিউজ’ বা গুজব ছড়ানোর প্রধান মাধ্যম কোনটি?",
+                                "options": [
+                                    "টেলিভিশন",
+                                    "সংবাদপত্র",
+                                    "সোশ্যাল মিডিয়া",
+                                    "রেডিও"
+                                ],
+                                "answer": "সোশ্যাল মিডিয়া"
+                            },
+                            {
+                                "id": 3,
+                                "question": "ইন্টারনেটে কোনো তথ্য খোঁজার জন্য আমরা কী ব্যবহার করি?",
+                                "options": [
+                                    "ওয়ার্ড প্রসেসর",
+                                    "সার্চ ইঞ্জিন (যেমন: গুগল)",
+                                    "স্প্রেডশিট",
+                                    "পাওয়ারপয়েন্ট"
+                                ],
+                                "answer": "সার্চ ইঞ্জিন (যেমন: গুগল)"
+                            },
+                            {
+                                "id": 6,
+                                "question": "বুদ্ধিবৃত্তিক সম্পদ (Intellectual Property) কোনটি?",
+                                "options": [
+                                    "জমি",
+                                    "বাড়ি",
+                                    "কবিতা বা আবিষ্কার",
+                                    "গাড়ি"
+                                ],
+                                "answer": "কবিতা বা আবিষ্কার"
+                            },
+                            {
+                                "id": 7,
+                                "question": "নিজের লেখা বা সৃষ্টি অন্যের নামে চালিয়ে দেওয়াকে কী বলে?",
+                                "options": [
+                                    "হ্যাকিং",
+                                    "প্লাজিয়ারিজম (Plagiarism) বা চর্যবৃত্তি",
+                                    "ফিশিং",
+                                    "স্প্যামিং"
+                                ],
+                                "answer": "প্লাজিয়ারিজম (Plagiarism) বা চর্যবৃত্তি"
+                            },
+                            {
+                                "id": 11,
+                                "question": "আনুষ্ঠানিক যোগাযোগের মাধ্যম কোনটি?",
+                                "options": [
+                                    "মেসেঞ্জার চ্যাট",
+                                    "ই-মেইল",
+                                    "হোয়াটসঅ্যাপ কল",
+                                    "ইমো"
+                                ],
+                                "answer": "ই-মেইল"
+                            },
+                            {
+                                "id": 16,
+                                "question": "শক্তিশালী পাসওয়ার্ডের বৈশিষ্ট্য কোনটি?",
+                                "options": [
+                                    "শুধু নিজের নাম",
+                                    "১-৮ পর্যন্ত সংখ্যা",
+                                    "বড় ও ছোট হাতের অক্ষর, সংখ্যা ও চিহ্নের মিশ্রণ",
+                                    "মোবাইল নম্বর"
+                                ],
+                                "answer": "বড় ও ছোট হাতের অক্ষর, সংখ্যা ও চিহ্নের মিশ্রণ"
+                            },
+                            {
+                                "id": 18,
+                                "question": "ফিশিং (Phishing) কী?",
+                                "options": [
+                                    "মাছ ধরা",
+                                    "প্রতারণামূলক লিংকের মাধ্যমে তথ্য চুরি করা",
+                                    "ছবি এডিট করা",
+                                    "গেম খেলা"
+                                ],
+                                "answer": "প্রতারণামূলক লিংকের মাধ্যমে তথ্য চুরি করা"
+                            },
+                            {
+                                "id": 21,
+                                "question": "স্প্রেডশিট প্রোগ্রাম কোনটি?",
+                                "options": [
+                                    "মাইক্রোসফট ওয়ার্ড",
+                                    "মাইক্রোসফট এক্সেল",
+                                    "পাওয়ারপয়েন্ট",
+                                    "ফটোশপ"
+                                ],
+                                "answer": "মাইক্রোসফট এক্সেল"
+                            },
+                            {
+                                "id": 26,
+                                "question": "সমস্যা সমাধানের ধাপে ধাপে লিখিত নির্দেশাবলিকে কী বলে?",
+                                "options": [
+                                    "ফ্লোচার্ট",
+                                    "অ্যালগরিদম",
+                                    "প্রোগ্রাম",
+                                    "কোড"
+                                ],
+                                "answer": "অ্যালগরিদম"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "ডিজিটাল লিটারেসি বা ডিজিটাল সাক্ষরতা কী?",
+                                "answer": "ডিজিটাল প্রযুক্তি ব্যবহার করে তথ্য খুঁজে পাওয়া, মূল্যায়ন করা এবং তৈরি করার সক্ষমতা।"
+                            },
+                            {
+                                "question": "অ্যালগরিদম কাকে বলে?",
+                                "answer": "কোনো সমস্যা সমাধানের জন্য ধাপে ধাপে নির্দেশনার লিখিত রূপ।"
+                            },
+                            {
+                                "question": "ফ্লোচার্ট (Flowchart) কী?",
+                                "answer": "অ্যালগরিদমকে জ্যামিতিক চিত্রের মাধ্যমে প্রকাশ করা।"
+                            },
+                            {
+                                "question": "হ্যাকিং কাকে বলে?",
+                                "answer": "অনুমতি ছাড়া অন্যের কম্পিউটার সিস্টেম বা নেটওয়ার্কে প্রবেশ করা।"
+                            },
+                            {
+                                "question": "মেধাস্বত্ব বা কপিরাইট কী?",
+                                "answer": "কোনো ব্যক্তির মৌলিক সৃষ্টির ওপর তার আইনি অধিকার।"
+                            },
+                            {
+                                "question": "একটি শক্তিশালী পাসওয়ার্ডের উদাহরণ দাও।",
+                                "answer": "Tr@cy99#B! (অক্ষর, সংখ্যা ও চিহ্নের মিশ্রণ)।"
+                            },
+                            {
+                                "question": "ক্যাপচা (CAPTCHA) কেন ব্যবহার করা হয়?",
+                                "answer": "ব্যবহারকারী মানুষ নাকি রোবট তা যাচাই করার জন্য।"
+                            },
+                            {
+                                "question": "গুগল ম্যাপস কী কাজে লাগে?",
+                                "answer": "পথ বা অবস্থান খুঁজে বের করতে।"
+                            },
+                            {
+                                "question": "স্প্রেডশিটে = চিহ্ন কেন দেওয়া হয়?",
+                                "answer": "কোনো সূত্র বা ফাংশন লেখার শুরুতে = চিহ্ন দিতে হয়।"
+                            },
+                            {
+                                "question": "‘Bug’ এবং ‘Debug’ এর পার্থক্য কী?",
+                                "answer": "Bug হলো ভুল, আর Debug হলো ভুল খুঁজে বের করে সংশোধন করা।"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Creative/Long Question",
+                        "questions": [
+                            {
+                                "type": "Scenario (Safety)",
+                                "prompt": "দৃশ্যপট: তোমার বন্ধু ফেসবুকে একটি লোভনীয় অফারের লিংক পেল যেখানে ক্লিক করলে লটারি জেতার কথা বলা হয়েছে। ক) লিংকটিতে ক্লিক করা কি নিরাপদ? কেন? খ) ফিশিং লিংক চেনার ৩টি উপায় লেখ। গ) তোমার বন্ধুকে তুমি কী পরামর্শ দেবে?"
+                            },
+                            {
+                                "type": "Scenario (Security)",
+                                "prompt": "দৃশ্যপট: তুমি সাইবার ক্যাফেতে বা অন্যের কম্পিউটারে তোমার ইমেইল লগ-ইন করেছ। ক) কাজ শেষে তোমার সবচেয়ে জরুরি কাজটি কী? (লগ-আউট)। খ) পাবলিক কম্পিউটারে ‘সেভ পাসওয়ার্ড’ অপশনে ক্লিক করা উচিত কি না? ব্যাখ্যা কর। গ) ব্যক্তিগত তথ্য সুরক্ষায় ৩টি করণীয় লেখ।"
+                            },
+                            {
+                                "type": "Task (Data)",
+                                "prompt": "কাজ: তোমার ক্লাসের ১০ জন বন্ধুর নাম, বয়স এবং ওজনের একটি তালিকা এক্সেলে তৈরি করার ধাপগুলো লেখ। ক) কীভাবে কলাম ও রো সিলেক্ট করবে? খ) সবার গড় ওজন বের করার সূত্রটি লেখ।"
+                            },
+                            {
+                                "type": "Problem Solving (Algorithm)",
+                                "prompt": "সমস্যা: চা বানানোর প্রক্রিয়া। ক) চা বানানোর অ্যালগরিদম (ধাপে ধাপে) লেখ। খ) এই প্রক্রিয়ার একটি ফ্লোচার্ট আঁক (শুরু -> পানি গরম -> চা পাতা -> চিনি -> ছাঁকা -> শেষ)। "
+                            },
+                            {
+                                "type": "Scenario (Communication)",
+                                "prompt": "দৃশ্যপট: আগামীকাল স্কুল বন্ধ থাকার নোটিশ প্রধান শিক্ষক সবাইকে জানাতে চান। ক) সবচেয়ে দ্রুত কোন ডিজিটাল মাধ্যম ব্যবহার করা উচিত? খ) একটি আনুষ্ঠানিক ইমেইল লেখার কাঠামো (Subject, Body, Closing) তৈরি করে দেখাও।"
+                            },
+                            {
+                                "type": "Scenario (Copyright)",
+                                "prompt": "দৃশ্যপট: তুমি ইন্টারনেটে একটি সুন্দর ছবি পেয়েছ এবং সেটি তোমার নিজের বলে দাবি করে ফেসবুকে পোস্ট করতে চাও। ক) এটি কি সঠিক কাজ? কেন? (প্লাজিয়ারিজম)। খ) অন্যের কাজ ব্যবহার করার সঠিক নিয়ম (ক্রেডিট দেওয়া/অনুমতি নেওয়া) আলোচনা কর।"
+                            },
+                            {
+                                "type": "Presentation",
+                                "prompt": "প্রেজেন্টেশন: ‘পরিবেশ দূষণ’ নিয়ে একটি পাওয়ারপয়েন্ট প্রেজেন্টেশন তৈরির পরিকল্পনা (স্লাইড ১-৫) লেখ।"
+                            },
+                            {
+                                "type": "Future Tech",
+                                "prompt": "রোবট: ভবিষ্যতে রোবট আমাদের জীবনে কী কী পরিবর্তন আনতে পারে? তোমার মতামত দাও।"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "meta": {
+            "class": "7",
+            "curriculum": "NCTB 2025",
+            "part": "3 of 3",
+            "subjects_included": [
+                "Life and Livelihood",
+                "Health and Wellbeing",
+                "Art and Culture"
+            ]
+        },
+        "data": [
+            {
+                "subject": "Life and Livelihood (জীবন ও জীবিকা)",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "পারিবারিক আয়-ব্যয়ের হিসাব রাখাকে কী বলে?",
+                                "options": [
+                                    "ব্যাংকিং",
+                                    "পারিবারিক বাজেট",
+                                    "অডিট",
+                                    "বিনিয়োগ"
+                                ],
+                                "answer": "পারিবারিক বাজেট"
+                            },
+                            {
+                                "id": 3,
+                                "question": "রান্না করার আগে সবচেয়ে জরুরি কাজ কোনটি?",
+                                "options": [
+                                    "মশলা বাটা",
+                                    "হাত ধোয়া ও পরিষ্কার-পরিচ্ছন্নতা",
+                                    "প্লেট সাজানো",
+                                    "গান শোনা"
+                                ],
+                                "answer": "হাত ধোয়া ও পরিষ্কার-পরিচ্ছন্নতা"
+                            },
+                            {
+                                "id": 6,
+                                "question": "কৃষি কাজ কোন ধরনের পেশা?",
+                                "options": [
+                                    "সেবাধর্মী",
+                                    "উৎপাদনমুখী",
+                                    "শিল্পধর্মী",
+                                    "প্রযুক্তিগত"
+                                ],
+                                "answer": "উৎপাদনমুখী"
+                            },
+                            {
+                                "id": 7,
+                                "question": "ভবিষ্যতে কোন ধরনের দক্ষতার চাহিদা বাড়বে?",
+                                "options": [
+                                    "মুখস্থ করার দক্ষতা",
+                                    "সমস্যা সমাধানের দক্ষতা (Problem Solving)",
+                                    "টাইপরাইটিং",
+                                    "শুধু শারীরিক শক্তি"
+                                ],
+                                "answer": "সমস্যা সমাধানের দক্ষতা (Problem Solving)"
+                            },
+                            {
+                                "id": 8,
+                                "question": "‘ফ্রিল্যান্সিং’ কী?",
+                                "options": [
+                                    "বিনা পয়সায় কাজ করা",
+                                    "মুক্ত পেশা বা স্বাধীনভাবে কাজ করা",
+                                    "সরকারি চাকরি",
+                                    "কৃষি কাজ"
+                                ],
+                                "answer": "মুক্ত পেশা বা স্বাধীনভাবে কাজ করা"
+                            },
+                            {
+                                "id": 12,
+                                "question": "‘স্মার্ট’ (SMART) লক্ষ্যের ‘T’ মানে কী?",
+                                "options": [
+                                    "Talent",
+                                    "Time-bound (সময় নির্দিষ্ট)",
+                                    "Technology",
+                                    "Test"
+                                ],
+                                "answer": "Time-bound (সময় নির্দিষ্ট)"
+                            },
+                            {
+                                "id": 14,
+                                "question": "বাজেটে আয়ের চেয়ে ব্যয় বেশি হলে তাকে কী বলে?",
+                                "options": [
+                                    "উদ্বৃত্ত বাজেট",
+                                    "ঘাটতি বাজেট",
+                                    "সুষম বাজেট",
+                                    "শূন্য বাজেট"
+                                ],
+                                "answer": "ঘাটতি বাজেট"
+                            },
+                            {
+                                "id": 16,
+                                "question": "ব্যাংকে টাকা জমা রাখলে কী পাওয়া যায়?",
+                                "options": [
+                                    "জরিমানা",
+                                    "মুনাফা বা সুদ",
+                                    "লস",
+                                    "কিছুই না"
+                                ],
+                                "answer": "মুনাফা বা সুদ"
+                            },
+                            {
+                                "id": 19,
+                                "question": "মোবাইল ব্যাংকিং সেবা কোনটি?",
+                                "options": [
+                                    "ফেসবুক",
+                                    "বিকাশ/নগদ/রকেট",
+                                    "ইউটিউব",
+                                    "গুগল"
+                                ],
+                                "answer": "বিকাশ/নগদ/রকেট"
+                            },
+                            {
+                                "id": 21,
+                                "question": "টবে সবজি চাষের জন্য কোন মাটি সবচেয়ে ভালো?",
+                                "options": [
+                                    "বেলে মাটি",
+                                    "দোআঁশ মাটি",
+                                    "এঁটেল মাটি",
+                                    "পাথরকুচি"
+                                ],
+                                "answer": "দোআঁশ মাটি"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "বাজেট কাকে বলে?",
+                                "answer": "নির্দিষ্ট সময়ের জন্য সম্ভাব্য আয় ও ব্যয়ের লিখিত পরিকল্পনাকে বাজেট বলে।"
+                            },
+                            {
+                                "question": "সঞ্চয় কী?",
+                                "answer": "আয়ের যে অংশ ভোগ বা খরচ না করে ভবিষ্যতের জন্য জমা রাখা হয়।"
+                            },
+                            {
+                                "question": "পেশা কী?",
+                                "answer": "যে কাজের মাধ্যমে মানুষ অর্থ উপার্জন করে জীবন ধারণ করে।"
+                            },
+                            {
+                                "question": "আর্থিক সাক্ষরতা কী?",
+                                "answer": "টাকা-পয়সা আয়, ব্যয়, সঞ্চয় ও বিনিয়োগ সম্পর্কে সঠিক জ্ঞান ও দক্ষতা।"
+                            },
+                            {
+                                "question": "সুষম খাদ্য কাকে বলে?",
+                                "answer": "যে খাবারে শর্করা, আমিষ, স্নেহ, ভিটামিন, খনিজ লবণ ও পানি—এই ৬টি উপাদান সঠিক অনুপাতে থাকে।"
+                            },
+                            {
+                                "question": "মাটি ছাড়া চাষাবাদ পদ্ধতিকে কী বলে?",
+                                "answer": "হাইড্রোপনিক্স (Hydroponics)।"
+                            },
+                            {
+                                "question": "‘নেটওয়ার্কিং’ বলতে ক্যারিয়ারে কী বোঝায়?",
+                                "answer": "পেশাগত যোগাযোগ বাড়ানো।"
+                            },
+                            {
+                                "question": "এটিএম (ATM) বুথ থেকে কী তোলা যায়?",
+                                "answer": "নগদ টাকা।"
+                            },
+                            {
+                                "question": "সিভি (CV) এর পূর্ণরূপ কী?",
+                                "answer": "Curriculum Vitae."
+                            },
+                            {
+                                "question": "সফল উদ্যোক্তার একটি গুণ লেখ।",
+                                "answer": "ধৈর্য ও ঝুঁকি নেওয়ার সাহস।"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Creative/Long Question",
+                        "questions": [
+                            {
+                                "type": "Scenario (Budget)",
+                                "prompt": "দৃশ্যপট: তোমার বাবার মাসিক আয় ৩০,০০০ টাকা। পরিবারের সদস্য সংখ্যা ৪ জন। ক) এই আয়ের ওপর ভিত্তি করে একটি কাল্পনিক মাসিক বাজেট তৈরি কর (খাদ্য, বাসা ভাড়া, শিক্ষা, চিকিৎসা ও সঞ্চয় খাত দেখিয়ে)। খ) যদি হঠাৎ ৫০০০ টাকা চিকিৎসা বাবদ বেশি খরচ হয়, তবে কোন খাত থেকে সেই টাকা সমন্বয় করবে এবং কেন?"
+                            },
+                            {
+                                "type": "Plan (Savings)",
+                                "prompt": "দৃশ্যপট: তুমি একটি নতুন সাইকেল কিনতে চাও যার দাম ১০,০০০ টাকা। তোমার কাছে বর্তমানে ২০০০ টাকা আছে। ক) আগামী ৬ মাসের মধ্যে সাইকেলটি কেনার জন্য একটি ‘সঞ্চয় পরিকল্পনা’ তৈরি কর। খ) আয়ের উৎসগুলো কী হতে পারে?"
+                            },
+                            {
+                                "type": "Project (Agriculture)",
+                                "prompt": "প্রজেক্ট: তোমার স্কুলের বারান্দায় বা বাড়ির ছাদে টবে ‘মরিচ’ বা ‘পুঁইশাক’ চাষ করার পরিকল্পনা কর। ক) মাটি প্রস্তুত করা থেকে শুরু করে ফসল সংগ্রহ পর্যন্ত ৫টি ধাপ বর্ণনা কর। খ) গাছের পরিচর্যায় তুমি কী কী করবে?"
+                            },
+                            {
+                                "type": "Scenario (Cooking)",
+                                "prompt": "রেসিপি: তোমার পরিবারের জন্য এক বেলার একটি সুষম ও পুষ্টিকর দুপুরের খাবারের মেনু তৈরি কর এবং যেকোনো একটি আইটেম (যেমন: খিচুড়ি বা সবজি ভাজি) রান্নার প্রণালী ধাপে ধাপে লেখ।"
+                            },
+                            {
+                                "type": "Career Mapping",
+                                "prompt": "ক্যারিয়ার ম্যাপ: তুমি ভবিষ্যতে কী হতে চাও? (ডাক্তার/ইঞ্জিনিয়ার/কৃষিবিদ/উদ্যোক্তা)। ক) এই পেশাটি কেন বেছে নিয়েছ? খ) এই পেশায় সফল হওয়ার জন্য এখন থেকে তোমার কী কী দক্ষতা (Skill) অর্জন করা প্রয়োজন? একটি ছক তৈরি কর।"
+                            },
+                            {
+                                "type": "Analysis (Future Skills)",
+                                "prompt": "বিশ্লেষণ: চতুর্থ শিল্প বিপ্লবের ফলে অনেক পেশা হারিয়ে যাচ্ছে আবার নতুন পেশা তৈরি হচ্ছে। ক) এমন ৩টি পেশার নাম লেখ যা ভবিষ্যতে বিলুপ্ত হতে পারে। খ) নিজেকে ভবিষ্যতের জন্য প্রস্তুত করতে তুমি কোন কোন প্রযুক্তির ব্যবহার শিখবে?"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject": "Health and Wellbeing (স্বাস্থ্য সুরক্ষা)",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "নিরাপদ খাবার বলতে কী বোঝায়?",
+                                "options": [
+                                    "দামি হোটেলের খাবার",
+                                    "জীবাণুমুক্ত ও স্বাস্থ্যসম্মত খাবার",
+                                    "প্যাকেটজাত খাবার",
+                                    "বিদেশি খাবার"
+                                ],
+                                "answer": "জীবাণুমুক্ত ও স্বাস্থ্যসম্মত খাবার"
+                            },
+                            {
+                                "id": 2,
+                                "question": "কোনটি সুষম খাদ্যের উপাদান নয়?",
+                                "options": [
+                                    "শর্করা",
+                                    "আমিষ",
+                                    "জাঙ্ক ফুড (Junk Food)",
+                                    "ভিটামিন"
+                                ],
+                                "answer": "জাঙ্ক ফুড (Junk Food)"
+                            },
+                            {
+                                "id": 3,
+                                "question": "রক্তস্বল্পতা বা অ্যানিমিয়া হয় কোনটির অভাবে?",
+                                "options": [
+                                    "ক্যালসিয়াম",
+                                    "লৌহ (Iron)",
+                                    "আয়োডিন",
+                                    "ভিটামিন সি"
+                                ],
+                                "answer": "লৌহ (Iron)"
+                            },
+                            {
+                                "id": 4,
+                                "question": "খাবার আগে হাত ধোয়ার সঠিক সময় কতক্ষণ?",
+                                "options": [
+                                    "৫ সেকেন্ড",
+                                    "১০ সেকেন্ড",
+                                    "অন্তত ২০ সেকেন্ড",
+                                    "১ মিনিট"
+                                ],
+                                "answer": "অন্তত ২০ সেকেন্ড"
+                            },
+                            {
+                                "id": 9,
+                                "question": "শরীরচর্চা বা ব্যায়ামের প্রধান উপকারিতা কী?",
+                                "options": [
+                                    "সময় কাটানো",
+                                    "শারীরিক ও মানসিক সুস্থতা",
+                                    "ক্ষুধা কমানো",
+                                    "ঘুম কমানো"
+                                ],
+                                "answer": "শারীরিক ও মানসিক সুস্থতা"
+                            },
+                            {
+                                "id": 14,
+                                "question": "বাংলাদেশের জাতীয় খেলা কোনটি?",
+                                "options": [
+                                    "ক্রিকেট",
+                                    "ফুটবল",
+                                    "কাবাডি (হা-ডু-ডু)",
+                                    "হকি"
+                                ],
+                                "answer": "কাবাডি (হা-ডু-ডু)"
+                            },
+                            {
+                                "id": 16,
+                                "question": "সংক্রামক রোগ কীভাবে ছড়ায়?",
+                                "options": [
+                                    "ব্যায়াম করলে",
+                                    "হাঁচি-কাশির মাধ্যমে বা সংস্পর্শে",
+                                    "একা থাকলে",
+                                    "বই পড়লে"
+                                ],
+                                "answer": "হাঁচি-কাশির মাধ্যমে বা সংস্পর্শে"
+                            },
+                            {
+                                "id": 17,
+                                "question": "ডেঙ্গু জ্বর কোন মশার কামড়ে হয়?",
+                                "options": [
+                                    "অ্যানোফিলিস",
+                                    "কিউলেক্স",
+                                    "এডিস",
+                                    "সাধারণ মশা"
+                                ],
+                                "answer": "এডিস"
+                            },
+                            {
+                                "id": 22,
+                                "question": "কৈশোরকাল বা বয়ঃসন্ধিকালের বয়সসীমা সাধারণত কত?",
+                                "options": [
+                                    "০-৫ বছর",
+                                    "৬-৯ বছর",
+                                    "১০-১৯ বছর",
+                                    "২০-৩০ বছর"
+                                ],
+                                "answer": "১০-১৯ বছর"
+                            },
+                            {
+                                "id": 28,
+                                "question": "মানসিক স্বাস্থ্য বলতে কী বোঝায়?",
+                                "options": [
+                                    "শরীরের শক্তি",
+                                    "মনের ভালো থাকা বা আবেগ নিয়ন্ত্রণের ক্ষমতা",
+                                    "বেশি বেশি খাওয়া",
+                                    "জোরে কথা বলা"
+                                ],
+                                "answer": "মনের ভালো থাকা বা আবেগ নিয়ন্ত্রণের ক্ষমতা"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "অপুষ্টি কী?",
+                                "answer": "শরীরে প্রয়োজনীয় পুষ্টি উপাদানের দীর্ঘমেয়াদী অভাব বা অতিরিক্ত গ্রহণ।"
+                            },
+                            {
+                                "question": "সংক্রামক রোগ কাকে বলে?",
+                                "answer": "যেসব রোগ একজন আক্রান্ত ব্যক্তি বা প্রাণী থেকে অন্য সুস্থ মানুষের দেহে ছড়ায় (যেমন: সর্দি, ফ্লু)।"
+                            },
+                            {
+                                "question": "খাদ্য পিরামিড কী?",
+                                "answer": "সুষম খাদ্যের উপাদানগুলোকে তাদের গুরুত্ব ও পরিমাণ অনুযায়ী স্তরে স্তরে সাজিয়ে যে কাল্পনিক পিরামিড তৈরি করা হয়।"
+                            },
+                            {
+                                "question": "ওয়ার্ম আপ (Warm up) কী?",
+                                "answer": "মূল খেলা বা ভারী ব্যায়াম শুরুর আগে হালকা নড়াচড়া বা দৌড়াদৌড়ি করে শরীরকে প্রস্তুত করা।"
+                            },
+                            {
+                                "question": "বয়ঃসন্ধিকাল কাকে বলে?",
+                                "answer": "১০ থেকে ১৯ বছর বয়স পর্যন্ত সময়কাল, যখন শিশু থেকে যৌবনে পদার্পণ ঘটে, তাকে বয়ঃসন্ধিকাল বলে।"
+                            },
+                            {
+                                "question": "ফার্স্ট এইড বক্স কী?",
+                                "answer": "দুর্ঘটনা বা অসুস্থতায় তাৎক্ষণিক চিকিৎসার জন্য প্রয়োজনীয় সরঞ্জাম রাখা বাক্স।"
+                            },
+                            {
+                                "question": "নাক দিয়ে রক্ত পড়লে কী করবে?",
+                                "answer": "সামনের দিকে একটু ঝুঁকে নাকের নরম অংশ ১০ মিনিট চেপে ধরে রাখতে হবে এবং মুখ দিয়ে শ্বাস নিতে হবে।"
+                            },
+                            {
+                                "question": "সাপে কামড়ালে কী করা উচিত নয়?",
+                                "answer": "ওঝার কাছে যাওয়া, ক্ষতস্থান কাটা বা চুষে বিষ বের করার চেষ্টা করা উচিত নয়।"
+                            },
+                            {
+                                "question": "বাল্যবিবাহের একটি কুফল লেখ।",
+                                "answer": "অল্প বয়সে মা হওয়া, যা মা ও শিশু উভয়ের স্বাস্থ্যের জন্য ঝুঁকিপূর্ণ এবং পড়াশোনা বন্ধ হয়ে যাওয়া।"
+                            },
+                            {
+                                "question": "সহমর্মিতা (Empathy) কী?",
+                                "answer": "অন্যের কষ্টটা নিজের মতো করে অনুভব করা।"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Creative/Long Question",
+                        "questions": [
+                            {
+                                "type": "Scenario (Diet Plan)",
+                                "prompt": "দৃশ্যপট: তোমার বন্ধু রাজু সবসময় টিফিনে বার্গার, চিপস আর কোল্ড ড্রিংকস খায়। সে প্রায়ই ক্লাসে ঝিমায় এবং তার ওজন বেড়ে যাচ্ছে। ক) রাজুর খাদ্যাভ্যাসে কী কী সমস্যা আছে চিহ্নিত কর। খ) তাকে সুস্থ থাকার জন্য একটি আদর্শ ‘সুষম খাদ্য তালিকা’ (সকাল, দুপুর, রাত) তৈরি করে দাও।"
+                            },
+                            {
+                                "type": "Scenario (Disease Prevention)",
+                                "prompt": "দৃশ্যপট: বর্ষাকালে তোমার এলাকায় ডেঙ্গু জ্বরের প্রকোপ বেড়েছে। ক) ডেঙ্গু প্রতিরোধে তুমি এবং তোমার বন্ধুরা মিলে কী কী পদক্ষেপ নেবে? খ) ডেঙ্গু জ্বরের লক্ষণগুলো কী কী এবং আক্রান্ত হলে করণীয় কী?"
+                            },
+                            {
+                                "type": "Scenario (Mental Health)",
+                                "prompt": "দৃশ্যপট: মিনা লক্ষ্য করল তার মেজাজ খুব খিটখিটে হয়ে যাচ্ছে এবং সে নিজের চেহারা নিয়ে খুব সচেতন ও হীনম্মন্যতায় ভুগছে। ক) এটি কোন সময়ের লক্ষণ? খ) এই মানসিক পরিবর্তনগুলো মোকাবিলায় সে কী করতে পারে?"
+                            },
+                            {
+                                "type": "Scenario (First Aid)",
+                                "prompt": "দৃশ্যপট: তোমার স্কুল মাঠে খেলার সময় একজন সহপাঠী পায়ে আঘাত পেল এবং পা মচকে গেল। ক) তুমি তাৎক্ষণিক কী প্রাথমিক চিকিৎসা দেবে? (RICE পদ্ধতি: Rest, Ice, Compression, Elevation ব্যাখ্যা কর)। খ) স্কুলের প্রাথমিক চিকিৎসার বক্সে কী কী থাকা উচিত তার একটি তালিকা কর।"
+                            },
+                            {
+                                "type": "Project (Awareness)",
+                                "prompt": "সচেতনতা: ‘মাদককে না বলুন’—এই স্লোগান নিয়ে একটি সচেতনতামূলক পোস্টারের বিষয়বস্তু ও স্লোগান লেখ।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject": "Art and Culture (শিল্প ও সংস্কৃতি)",
+                "total_questions_extracted": 150,
+                "sections": [
+                    {
+                        "type": "MCQ",
+                        "questions": [
+                            {
+                                "id": 1,
+                                "question": "শিল্পকলার প্রধান উৎস কী?",
+                                "options": [
+                                    "বই",
+                                    "প্রকৃতি",
+                                    "ইন্টারনেট",
+                                    "জাদুঘর"
+                                ],
+                                "answer": "প্রকৃতি"
+                            },
+                            {
+                                "id": 2,
+                                "question": "ছবি আঁকার মূল উপাদান কোনটি?",
+                                "options": [
+                                    "ফ্রেম",
+                                    "রেখা ও আকার (Line & Shape)",
+                                    "দামী রং",
+                                    "ক্যানভাস"
+                                ],
+                                "answer": "রেখা ও আকার (Line & Shape)"
+                            },
+                            {
+                                "id": 4,
+                                "question": "‘সবার আমি ছাত্র’ কবিতাটি কার লেখা?",
+                                "options": [
+                                    "রবীন্দ্রনাথ ঠাকুর",
+                                    "সুনির্মল বসু",
+                                    "জসীম উদ্‌দীন",
+                                    "কাজী নজরুল ইসলাম"
+                                ],
+                                "answer": "সুনির্মল বসু"
+                            },
+                            {
+                                "id": 5,
+                                "question": "মাটি দিয়ে তৈরি শিল্পকর্মকে কী বলে?",
+                                "options": [
+                                    "ভাস্কর্য",
+                                    "মৃৎশিল্প (Pottery)",
+                                    "বয়নশিল্প",
+                                    "দারুশিল্প"
+                                ],
+                                "answer": "মৃৎশিল্প (Pottery)"
+                            },
+                            {
+                                "id": 9,
+                                "question": "মৌলিক রং (Primary Colors) কয়টি?",
+                                "options": [
+                                    "২টি",
+                                    "৩টি (লাল, নীল, হলুদ)",
+                                    "৪টি",
+                                    "৭টি"
+                                ],
+                                "answer": "৩টি (লাল, নীল, হলুদ)"
+                            },
+                            {
+                                "id": 11,
+                                "question": "আন্তর্জাতিক মাতৃভাষা দিবস কবে?",
+                                "options": [
+                                    "২৬ মার্চ",
+                                    "২১ ফেব্রুয়ারি",
+                                    "১৬ ডিসেম্বর",
+                                    "১৪ এপ্রিল"
+                                ],
+                                "answer": "২১ ফেব্রুয়ারি"
+                            },
+                            {
+                                "id": 12,
+                                "question": "প্রভাতফেরিতে কোন গানটি গাওয়া হয়?",
+                                "options": [
+                                    "ও আমার দেশের মাটি",
+                                    "আমার ভাইয়ের রক্তে রাঙানো একুশে ফেব্রুয়ারি",
+                                    "মোরা একটি ফুলকে বাঁচাবো বলে",
+                                    "কারার ওই লৌহ কপাট"
+                                ],
+                                "answer": "আমার ভাইয়ের রক্তে রাঙানো একুশে ফেব্রুয়ারি"
+                            },
+                            {
+                                "id": 13,
+                                "question": "শহিদ মিনারের নকশা কে করেছেন?",
+                                "options": [
+                                    "জয়নুল আবেদিন",
+                                    "হামিদুর রহমান",
+                                    "কামরুল হাসান",
+                                    "শামীম শিকদার"
+                                ],
+                                "answer": "হামিদুর রহমান"
+                            },
+                            {
+                                "id": 16,
+                                "question": "বাংলাদেশের জাতীয় সংগীতের রচয়িতা কে?",
+                                "options": [
+                                    "কাজী নজরুল ইসলাম",
+                                    "রবীন্দ্রনাথ ঠাকুর",
+                                    "ডি এল রায়",
+                                    "জীবনানন্দ দাশ"
+                                ],
+                                "answer": "রবীন্দ্রনাথ ঠাকুর"
+                            },
+                            {
+                                "id": 21,
+                                "question": "বাংলা নববর্ষের প্রথম দিন কোনটি?",
+                                "options": [
+                                    "১ ফাল্গুন",
+                                    "১ বৈশাখ (পহেলা বৈশাখ)",
+                                    "১ আষাঢ়",
+                                    "১ পৌষ"
+                                ],
+                                "answer": "১ বৈশাখ (পহেলা বৈশাখ)"
+                            },
+                            {
+                                "id": 29,
+                                "question": "নকশী কাঁথা সেলাই করেন কারা?",
+                                "options": [
+                                    "কামাররা",
+                                    "গ্রামের নারীরা",
+                                    "জেলেরা",
+                                    "কাঠমিস্ত্রিরা"
+                                ],
+                                "answer": "গ্রামের নারীরা"
+                            },
+                            {
+                                "id": 31,
+                                "question": "বর্ষাকালের প্রধান ফুল কোনটি?",
+                                "options": [
+                                    "শিউলি",
+                                    "কদম",
+                                    "পলাশ",
+                                    "শিমুল"
+                                ],
+                                "answer": "কদম"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Short Question",
+                        "questions": [
+                            {
+                                "question": "শিল্পকলা কাকে বলে?",
+                                "answer": "মানুষের মনের ভাব যখন সৃজনশীল ও সুন্দরভাবে প্রকাশ পায় (ছবি, গান, নাচ বা অভিনয়ের মাধ্যমে), তাকে শিল্পকলা বলে।"
+                            },
+                            {
+                                "question": "চারুকলা ও কারুকলার পার্থক্য কী?",
+                                "answer": "চারুকলা মূলত দেখার ও অনুভূতির জন্য (যেমন: ছবি আঁকা), আর কারুকলা হলো ব্যবহারের জন্য তৈরি শিল্প (যেমন: নকশী কাঁথা, মাটির কলস)।"
+                            },
+                            {
+                                "question": "রঙের তিনটি প্রধান গুণ কী কী?",
+                                "answer": "হিউ (রঙের নাম), ভ্যালু (উজ্জ্বলতা) এবং ইনটেনসিটি (ঘনত্ব)।"
+                            },
+                            {
+                                "question": "নকশী কাঁথা কী?",
+                                "answer": "পুরোনো কাপড় ও সুতো দিয়ে গ্রামীণ নারীদের তৈরি নকশা করা কাঁথা।"
+                            },
+                            {
+                                "question": "শীতল পাটি কী দিয়ে তৈরি হয়?",
+                                "answer": "বেত বা মুর্তা গাছ দিয়ে।"
+                            },
+                            {
+                                "question": "মঙ্গল শোভাযাত্রা কেন করা হয়?",
+                                "answer": "নতুন বছরে সবার মঙ্গল বা কল্যাণ কামনায় এবং অশুভ শক্তি দূর করতে।"
+                            },
+                            {
+                                "question": "ষড়ঋতু বলতে কী বোঝ?",
+                                "answer": "বাংলাদেশের ছয়টি ঋতুর চক্র (গ্রীষ্ম, বর্ষা, শরৎ, হেমন্ত, শীত, বসন্ত)।"
+                            },
+                            {
+                                "question": "নবান্ন উৎসব কখন হয়?",
+                                "answer": "হেমন্তকালে, যখন নতুন ধান ঘরে ওঠে।"
+                            },
+                            {
+                                "question": "একতারা কোন ধরনের বাদ্যযন্ত্র?",
+                                "answer": "তারযন্ত্র (বাউলরা ব্যবহার করেন)।"
+                            },
+                            {
+                                "question": "কোলাজ (Collage) কী?",
+                                "answer": "কাগজ বা কাপড়ের টুকরো আঠা দিয়ে লাগিয়ে ছবি তৈরি করা।"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Creative/Long Question",
+                        "questions": [
+                            {
+                                "type": "Activity (Drawing)",
+                                "prompt": "দৃশ্যপট: তোমার স্কুলের বাগানে একটি ফুল ফুটেছে। ক) ফুলটির দিকে তাকিয়ে তার রেখাচিত্র (Line Drawing) আঁক। খ) ফুলটিতে কী কী রং আছে এবং আলো-ছায়া কোথায় পড়েছে তা বর্ণনা কর।"
+                            },
+                            {
+                                "type": "Design (Pattern)",
+                                "prompt": "ডিজাইন: একটি জ্যামিতিক নকশা তৈরি কর যেখানে ত্রিভুজ, বৃত্ত এবং চতুর্ভুজ ব্যবহার করা হবে। এতে ৩টি মৌলিক রং ব্যবহার করে রং কর।"
+                            },
+                            {
+                                "type": "Poster Design",
+                                "prompt": "পোস্টার: ‘গাছ লাগান, পরিবেশ বাঁচান’—এই স্লোগান দিয়ে একটি জনসচেতনতামূলক পোস্টার ডিজাইন কর।"
+                            },
+                            {
+                                "type": "Activity (Alpana)",
+                                "prompt": "দৃশ্যপট: পহেলা বৈশাখ উপলক্ষে একটি আলপনার নকশা খাতায় আঁক। এতে কী কী মোটিফ (পাখি, ফুল, লতা) ব্যবহার করেছ তা লেখ।"
+                            },
+                            {
+                                "type": "Craft (Paper)",
+                                "prompt": "কাগজ শিল্প: রঙিন কাগজ কেটে একটি ফুলদানি ও ফুল বানানোর পদ্ধতি ধাপে ধাপে লেখ।"
+                            },
+                            {
+                                "type": "Appreciation (Heritage)",
+                                "prompt": "লোকশিল্প: নকশী কাঁথার ফোঁড় এবং নকশার তাৎপর্য আলোচনা কর। এটি বাংলার নারীদের মনের কথা কীভাবে প্রকাশ করে?"
+                            },
+                            {
+                                "type": "Performance (Music)",
+                                "prompt": "গান: জাতীয় সংগীতের প্রথম ৪ লাইন শুদ্ধ সুরে গাওয়ার নিয়মগুলো লেখ। এই গানে বাংলাদেশের কোন রূপ ফুটে উঠেছে?"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -12,6 +12,9 @@ class IsAdminUser(permissions.BasePermission):
 
 
 class BookSerializer(serializers.ModelSerializer):
+    pdf_file = serializers.FileField(required=False)
+    cover_image = serializers.ImageField(required=False)
+    
     class Meta:
         model = Book
         fields = '__all__'
@@ -27,6 +30,9 @@ class BookmarkSerializer(serializers.ModelSerializer):
 
 
 class SyllabusSerializer(serializers.ModelSerializer):
+    syllabus_pdf = serializers.FileField(required=False)
+    syllabus_image = serializers.ImageField(required=False)
+    
     class Meta:
         model = Syllabus
         fields = '__all__'

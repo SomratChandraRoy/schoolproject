@@ -10,6 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@embedpdf/core": "^2.0.0",
+    "@embedpdf/engines": "^2.0.0",
+    "@embedpdf/plugin-document-manager": "^2.0.0",
+    "@embedpdf/plugin-render": "^2.0.0",
+    "@embedpdf/plugin-scroll": "^2.0.0",
+    "@embedpdf/plugin-viewport": "^2.0.0",
     "@embedpdf/react-pdf-viewer": "^2.0.0",
     "@fontsource/hind-siliguri": "^5.2.7",
     "@fontsource/inter": "^5.2.8",

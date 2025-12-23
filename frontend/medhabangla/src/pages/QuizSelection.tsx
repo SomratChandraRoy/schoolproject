@@ -19,6 +19,7 @@ const QuizSelection: React.FC = () => {
     const navigate = useNavigate();
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('medium');
+    const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>(['mcq']); // Default to MCQ
     const [userClass, setUserClass] = useState<number>(9);
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [loading, setLoading] = useState(true);
@@ -28,6 +29,33 @@ const QuizSelection: React.FC = () => {
         { id: 'easy', name: 'Easy', description: 'Perfect for beginners', color: 'bg-green-500' },
         { id: 'medium', name: 'Medium', description: 'Standard difficulty', color: 'bg-yellow-500' },
         { id: 'hard', name: 'Hard', description: 'Challenge yourself', color: 'bg-red-500' }
+    ];
+
+    const questionTypes = [
+        {
+            id: 'mcq',
+            name: 'MCQ',
+            bengaliName: 'বহুনির্বাচনী',
+            description: 'Multiple choice questions',
+            icon: '✓',
+            color: 'bg-blue-100 dark:bg-blue-900/30'
+        },
+        {
+            id: 'short',
+            name: 'Short Answer',
+            bengaliName: 'সংক্ষিপ্ত উত্তর',
+            description: 'Brief written answers',
+            icon: '✍️',
+            color: 'bg-green-100 dark:bg-green-900/30'
+        },
+        {
+            id: 'long',
+            name: 'Long Answer',
+            bengaliName: 'বিস্তারিত উত্তর',
+            description: 'Detailed explanations',
+            icon: '📝',
+            color: 'bg-purple-100 dark:bg-purple-900/30'
+        }
     ];
 
     useEffect(() => {
@@ -80,9 +108,22 @@ const QuizSelection: React.FC = () => {
         );
     };
 
+    const toggleQuestionType = (typeId: string) => {
+        setSelectedQuestionTypes(prev =>
+            prev.includes(typeId)
+                ? prev.filter(id => id !== typeId)
+                : [...prev, typeId]
+        );
+    };
+
     const handleStartQuiz = () => {
         if (selectedSubjects.length === 0) {
             alert('Please select at least one subject');
+            return;
+        }
+
+        if (selectedQuestionTypes.length === 0) {
+            alert('Please select at least one question type');
             return;
         }
 
@@ -90,7 +131,8 @@ const QuizSelection: React.FC = () => {
             state: {
                 subjects: selectedSubjects,
                 difficulty: selectedDifficulty,
-                classLevel: userClass
+                classLevel: userClass,
+                questionTypes: selectedQuestionTypes
             }
         });
     };
@@ -228,6 +270,57 @@ const QuizSelection: React.FC = () => {
                                         </p>
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                                📝 Select Question Types
+                            </h2>
+                            <p className="text-gray-600 dark:text-gray-300 mb-6">
+                                Choose one or more question types for your quiz
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {questionTypes.map(type => (
+                                    <button
+                                        key={type.id}
+                                        onClick={() => toggleQuestionType(type.id)}
+                                        className={`p-6 rounded-lg border-2 transition-all transform hover:scale-105 ${selectedQuestionTypes.includes(type.id)
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                                            }`}
+                                    >
+                                        <div className="text-4xl mb-3">{type.icon}</div>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                            {type.name}
+                                        </h3>
+                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            {type.bengaliName}
+                                        </p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                                            {type.description}
+                                        </p>
+                                        {selectedQuestionTypes.includes(type.id) && (
+                                            <div className="mt-3">
+                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500 text-white">
+                                                    ✓ Selected
+                                                </span>
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 text-2xl">💡</div>
+                                    <div className="flex-1">
+                                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                                            <span className="font-semibold">Tip:</span> You can select multiple question types to practice different formats in one quiz!
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </>

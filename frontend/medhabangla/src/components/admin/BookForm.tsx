@@ -17,12 +17,28 @@ const BookForm: React.FC<BookFormProps> = ({ item, onSubmit, onCancel, loading }
         description: item?.description || '',
     });
 
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [coverImage, setCoverImage] = useState<File | null>(null);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const submitData = {
-            ...formData,
-            class_level: parseInt(formData.class_level),
-        };
+
+        // Create FormData for file upload
+        const submitData = new FormData();
+        submitData.append('title', formData.title);
+        submitData.append('author', formData.author);
+        submitData.append('class_level', formData.class_level);
+        submitData.append('category', formData.category);
+        submitData.append('language', formData.language);
+        submitData.append('description', formData.description);
+
+        if (pdfFile) {
+            submitData.append('pdf_file', pdfFile);
+        }
+        if (coverImage) {
+            submitData.append('cover_image', coverImage);
+        }
+
         await onSubmit(submitData);
     };
 
@@ -120,11 +136,50 @@ const BookForm: React.FC<BookFormProps> = ({ item, onSubmit, onCancel, loading }
                 />
             </div>
 
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    📝 Note: PDF file and cover image upload will be available after creating the book record.
-                </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        PDF File {!item && '*'}
+                    </label>
+                    <input
+                        type="file"
+                        accept=".pdf"
+                        required={!item}
+                        onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-200"
+                    />
+                    {item?.pdf_file && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Current: {item.pdf_file.split('/').pop()}
+                        </p>
+                    )}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Cover Image
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-200"
+                    />
+                    {item?.cover_image && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Current: {item.cover_image.split('/').pop()}
+                        </p>
+                    )}
+                </div>
             </div>
+
+            {!item && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                        📚 PDF file is required when creating a new book. Cover image is optional.
+                    </p>
+                </div>
+            )}
 
             <div className="flex justify-end space-x-3 pt-4">
                 <button

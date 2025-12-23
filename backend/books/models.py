@@ -20,7 +20,7 @@ class Book(models.Model):
     class_level = models.IntegerField(choices=[(i, f'Class {i}') for i in range(6, 13)])
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
-    pdf_file = models.FileField(upload_to='books/')
+    pdf_file = models.FileField(upload_to='books/', blank=True, null=True)
     cover_image = models.ImageField(upload_to='book_covers/', blank=True, null=True)
     description = models.TextField(blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -58,15 +58,21 @@ class Syllabus(models.Model):
     class_level = models.IntegerField(choices=CLASS_LEVEL_CHOICES)
     subject = models.CharField(max_length=50, choices=SUBJECT_CHOICES)
     chapter_title = models.CharField(max_length=200)
+    chapter_number = models.IntegerField(default=1)
     chapter_description = models.TextField(blank=True)
     page_range = models.CharField(max_length=50, blank=True)  # e.g., "10-25"
     estimated_hours = models.DecimalField(max_digits=3, decimal_places=1, default=1.0)
+    
+    # File uploads for syllabus content
+    syllabus_pdf = models.FileField(upload_to='syllabus/pdfs/', blank=True, null=True)
+    syllabus_image = models.ImageField(upload_to='syllabus/images/', blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         unique_together = ('class_level', 'subject', 'chapter_title')
-        ordering = ['class_level', 'subject', 'id']
+        ordering = ['class_level', 'subject', 'chapter_number']
     
     def __str__(self):
         return f"Class {self.class_level} - {self.get_subject_display()} - {self.chapter_title}"

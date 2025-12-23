@@ -86,11 +86,19 @@ WSGI_APPLICATION = 'medhabangla.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# For local development, use SQLite
-# For production with Docker, use PostgreSQL
+# Database configuration with support for SQLite, Docker PostgreSQL, and AWS RDS PostgreSQL
 import os
 
-if os.getenv('DOCKER_ENV'):
+# Check if using SQLite (local development)
+if os.getenv('USE_SQLITE', 'False') == 'True':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+# Check if using Docker environment
+elif os.getenv('DOCKER_ENV'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -101,6 +109,24 @@ if os.getenv('DOCKER_ENV'):
             'PORT': '5432',
         }
     }
+# Use AWS RDS PostgreSQL (production/cloud)
+elif os.getenv('DB_HOST'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'medhabangla'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', ''),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'OPTIONS': {
+                'connect_timeout': 10,
+                'options': '-c statement_timeout=30000'  # 30 seconds timeout
+            },
+            'CONN_MAX_AGE': 600,  # Connection pooling - keep connections alive for 10 minutes
+        }
+    }
+# Default to SQLite if no configuration provided
 else:
     DATABASES = {
         'default': {
@@ -122,7 +148,15 @@ WORKOS_CLIENT_ID = os.getenv('WORKOS_CLIENT_ID')
 WORKOS_REDIRECT_URI = os.getenv('WORKOS_REDIRECT_URI')
 
 # Google Gemini API settings
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')  # Legacy single key
+
+# Multiple Gemini API Keys for rotation (comma-separated)
+GEMINI_API_KEYS_STR = os.getenv('GEMINI_API_KEYS', '')
+if GEMINI_API_KEYS_STR:
+    GEMINI_API_KEYS = [key.strip() for key in GEMINI_API_KEYS_STR.split(',') if key.strip()]
+else:
+    # Fallback to single key if multiple keys not provided
+    GEMINI_API_KEYS = [GEMINI_API_KEY] if GEMINI_API_KEY else []
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

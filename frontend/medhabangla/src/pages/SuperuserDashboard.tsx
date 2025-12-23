@@ -278,7 +278,15 @@ const CRUDTable: React.FC<{ entity: string; title: string; apiPath: string }> = 
             }
 
             const result = await response.json();
-            setData(Array.isArray(result) ? result : []);
+
+            // Handle paginated response (DRF pagination)
+            if (result && typeof result === 'object' && 'results' in result) {
+                setData(Array.isArray(result.results) ? result.results : []);
+            } else if (Array.isArray(result)) {
+                setData(result);
+            } else {
+                setData([]);
+            }
         } catch (error: any) {
             console.error(`Error fetching ${entity}:`, error);
             setError(error.message || `Failed to load ${title}`);
@@ -347,45 +355,85 @@ const CRUDTable: React.FC<{ entity: string; title: string; apiPath: string }> = 
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{title} Management</h2>
+            <div className="flex justify-between items-center flex-wrap gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{title} Management</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {filteredData.length} {filteredData.length === 1 ? 'item' : 'items'}
+                        {searchTerm && ` (filtered from ${data.length})`}
+                    </p>
+                </div>
                 <button
                     onClick={handleCreate}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
                 >
-                    + Create New
+                    <span className="text-xl">+</span>
+                    <span>Create New {entity.charAt(0).toUpperCase() + entity.slice(1, -1)}</span>
                 </button>
             </div>
 
-            <div className="mb-4">
+            <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400">🔍</span>
+                </div>
                 <input
                     type="text"
-                    placeholder={`Search ${title}...`}
+                    placeholder={`Search ${title.toLowerCase()}...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
+                {searchTerm && (
+                    <button
+                        onClick={() => setSearchTerm('')}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                        ✕
+                    </button>
+                )}
             </div>
 
             {filteredData.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    No {title.toLowerCase()} found. {searchTerm && 'Try a different search term or '}
-                    <button onClick={handleCreate} className="text-blue-600 hover:underline">
-                        create a new one
-                    </button>.
+                <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                    <div className="text-6xl mb-4">📭</div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        No {title.toLowerCase()} found
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                        {searchTerm
+                            ? `No results match "${searchTerm}". Try a different search term.`
+                            : `Get started by creating your first ${entity.slice(0, -1)}.`
+                        }
+                    </p>
+                    <button
+                        onClick={searchTerm ? () => setSearchTerm('') : handleCreate}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+                    >
+                        {searchTerm ? (
+                            <>
+                                <span>✕</span>
+                                <span>Clear Search</span>
+                            </>
+                        ) : (
+                            <>
+                                <span>+</span>
+                                <span>Create {entity.charAt(0).toUpperCase() + entity.slice(1, -1)}</span>
+                            </>
+                        )}
+                    </button>
                 </div>
             ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto shadow-md rounded-lg border border-gray-200 dark:border-gray-700">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
+                        <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                     ID
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                     Details
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -397,23 +445,97 @@ const CRUDTable: React.FC<{ entity: string; title: string; apiPath: string }> = 
                                         #{item.id}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                                        <pre className="text-xs overflow-auto max-w-2xl max-h-40 bg-gray-50 dark:bg-gray-900 p-2 rounded">
-                                            {JSON.stringify(item, null, 2)}
-                                        </pre>
+                                        {entity === 'users' && (
+                                            <div className="space-y-1">
+                                                <div className="font-medium text-base">{item.username}</div>
+                                                <div className="text-gray-600 dark:text-gray-400">{item.email}</div>
+                                                <div className="flex gap-2 mt-2">
+                                                    {item.is_admin && <span className="px-2 py-1 text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded">Admin</span>}
+                                                    {item.is_teacher && <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded">Teacher</span>}
+                                                    {item.is_student && <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">Student</span>}
+                                                    {item.class_level && <span className="px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded">Class {item.class_level}</span>}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {entity === 'quizzes' && (
+                                            <div className="space-y-1">
+                                                <div className="font-medium">{item.question_text?.substring(0, 100)}{item.question_text?.length > 100 ? '...' : ''}</div>
+                                                <div className="flex gap-2 mt-2">
+                                                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">{item.subject}</span>
+                                                    <span className="px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded">Class {item.class_target}</span>
+                                                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded">{item.difficulty}</span>
+                                                    <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded">{item.question_type}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {entity === 'subjects' && (
+                                            <div className="space-y-1">
+                                                <div className="font-medium text-base">{item.name}</div>
+                                                <div className="flex gap-2 mt-2">
+                                                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">Class {item.class_level}</span>
+                                                    {item.stream && <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded">{item.stream}</span>}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {entity === 'books' && (
+                                            <div className="space-y-1">
+                                                <div className="font-medium text-base">{item.title}</div>
+                                                <div className="text-gray-600 dark:text-gray-400">by {item.author}</div>
+                                                <div className="flex gap-2 mt-2 flex-wrap">
+                                                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">Class {item.class_level}</span>
+                                                    <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded">{item.category}</span>
+                                                    <span className="px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded">{item.language}</span>
+                                                    {item.pdf_file && (
+                                                        <a href={item.pdf_file} target="_blank" rel="noopener noreferrer" className="px-2 py-1 text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded hover:bg-red-200 dark:hover:bg-red-800">
+                                                            📄 PDF
+                                                        </a>
+                                                    )}
+                                                    {item.cover_image && (
+                                                        <a href={item.cover_image} target="_blank" rel="noopener noreferrer" className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded hover:bg-yellow-200 dark:hover:bg-yellow-800">
+                                                            🖼️ Cover
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {entity === 'syllabus' && (
+                                            <div className="space-y-1">
+                                                <div className="font-medium text-base">{item.chapter_title}</div>
+                                                <div className="text-gray-600 dark:text-gray-400">{item.subject}</div>
+                                                <div className="flex gap-2 mt-2 flex-wrap">
+                                                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">Class {item.class_level}</span>
+                                                    {item.chapter_number && <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded">Chapter {item.chapter_number}</span>}
+                                                    {item.syllabus_pdf && (
+                                                        <a href={item.syllabus_pdf} target="_blank" rel="noopener noreferrer" className="px-2 py-1 text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded hover:bg-red-200 dark:hover:bg-red-800">
+                                                            📄 PDF
+                                                        </a>
+                                                    )}
+                                                    {item.syllabus_image && (
+                                                        <a href={item.syllabus_image} target="_blank" rel="noopener noreferrer" className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded hover:bg-yellow-200 dark:hover:bg-yellow-800">
+                                                            🖼️ Image
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                        <button
-                                            onClick={() => handleEdit(item)}
-                                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(item.id)}
-                                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium"
-                                        >
-                                            Delete
-                                        </button>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => handleEdit(item)}
+                                                className="px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 rounded-lg font-medium transition-colors flex items-center gap-1"
+                                            >
+                                                <span>✏️</span>
+                                                <span>Edit</span>
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(item.id)}
+                                                className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800 rounded-lg font-medium transition-colors flex items-center gap-1"
+                                            >
+                                                <span>🗑️</span>
+                                                <span>Delete</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -456,13 +578,22 @@ const CRUDModal: React.FC<{ entity: string; item: any; apiPath: string; onClose:
             const url = item ? `${apiPath}${item.id}/` : apiPath;
             const method = item ? 'PUT' : 'POST';
 
+            // Check if data is FormData (for file uploads)
+            const isFormData = data instanceof FormData;
+
+            const headers: any = {
+                'Authorization': `Token ${token}`
+            };
+
+            // Only add Content-Type for JSON, let browser set it for FormData
+            if (!isFormData) {
+                headers['Content-Type'] = 'application/json';
+            }
+
             const response = await fetch(url, {
                 method,
-                headers: {
-                    'Authorization': `Token ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
+                headers,
+                body: isFormData ? data : JSON.stringify(data)
             });
 
             if (response.ok) {

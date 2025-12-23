@@ -1,0 +1,818 @@
+[
+    {
+        "meta_info": {
+            "curriculum": "SSC Class 10 (NCTB)",
+            "years_analyzed": "2017-2024",
+            "batch": "Part 1 of 3 (Core Subjects)",
+            "note": "Includes AI-generated explanations and extra important questions."
+        },
+        "subjects": [
+            {
+                "subject_name": "Bangla 1st Paper",
+                "subject_code": "101",
+                "type": "Core",
+                "questions": [
+                    {
+                        "id": "B1-MCQ-01",
+                        "type": "MCQ",
+                        "question": "'শুভা' গল্পে শুভা তার দুই গরুর নাম কী রেখেছিল?",
+                        "options": [
+                            "ক) সর্ব্বশী ও পাঙ্গুলি",
+                            "খ) শ্বেত ও শ্যাম",
+                            "গ) লালি ও ভোলি",
+                            "ঘ) মিনি ও কাবুলি"
+                        ],
+                        "answer": "ক) সর্ব্বশী ও পাঙ্গুলি",
+                        "ai_extra_info": "রবীন্দ্রনাথ ঠাকুর বোবা মেয়ে শুভার সাথে প্রকৃতির ও প্রাণীর সম্পর্ক দেখাতে এই নামগুলো ব্যবহার করেছেন। সর্ব্বশী অর্থ সব হারানো এবং পাঙ্গুলি অর্থ যে দ্রুত চলতে পারে না—যা শুভার জীবনের সাথে রূপক অর্থে মেলে।"
+                    },
+                    {
+                        "id": "B1-MCQ-02",
+                        "type": "MCQ",
+                        "question": "'জীবন-সঙ্গীত' কবিতায় কবির মূল বক্তব্য কী?",
+                        "options": [
+                            "ক) পলায়নপরতা",
+                            "খ) নৈরাশ্যবাদ",
+                            "গ) আশাবাদ ও কর্তব্যপরায়ণতা",
+                            "ঘ) রোমান্টিকতা"
+                        ],
+                        "answer": "গ) আশাবাদ ও কর্তব্যপরায়ণতা",
+                        "ai_extra_info": "হেমচন্দ্র বন্দ্যোপাধ্যায় এই কবিতায় বুঝিয়েছেন যে জীবন কেবল স্বপ্নের মতো নয়, বরং সংসারে থেকে সাহসের সাথে যুদ্ধ করাই জীবনের সার্থকতা।"
+                    },
+                    {
+                        "id": "B1-MCQ-ADD-01",
+                        "type": "MCQ",
+                        "is_added_by_ai": true,
+                        "question": "'কপোতাক্ষ নদ' কবিতায় কবির কোন ভাব প্রকাশ পেয়েছে?",
+                        "options": [
+                            "ক) দেশপ্রেম ও স্মৃতিকাতরতা",
+                            "খ) প্রকৃতির রূপ",
+                            "গ) নদীর ভাঙ্গন",
+                            "ঘ) বিদ্রোহ"
+                        ],
+                        "answer": "ক) দেশপ্রেম ও স্মৃতিকাতরতা",
+                        "ai_extra_info": "মাইকেল মধুসূদন দত্ত প্রবাসে বসে এই সনেটটি রচনা করেন, যেখানে শৈশবের নদীর প্রতি তার গভীর ভালোবাসা প্রকাশ পেয়েছে।"
+                    },
+                    {
+                        "id": "B1-SQ-01",
+                        "type": "Short Answer",
+                        "question": "সুভার মা সুভাকে দেখে বিরক্ত হতেন কেন?",
+                        "answer": "সুভার মা সুভাকে নিজের 'গর্ভের কলঙ্ক' মনে করতেন। তিনি মনে করতেন মেয়ের এই প্রতিবন্ধকতা তার নিজের কোনো ত্রুটির ফল, তাই তিনি সুভাকে দেখে বিরক্ত হতেন।",
+                        "ai_extra_info": "এটি তৎকালীন সমাজের কুসংস্কারাচ্ছন্ন মানসিকতার প্রতিফলন।"
+                    },
+                    {
+                        "id": "B1-CQ-01",
+                        "type": "Creative Question (Stem)",
+                        "stem": "মিনু গ্রামের একটি বাকপ্রতিবন্ধী মেয়ে। গ্রামের ছেলেমেয়েরা তাকে খেপায়, তাই সে নদীর ধারে বসে ছাগল আর বিড়ালের সাথে বন্ধুত্ব করে।...",
+                        "sub_questions": [
+                            {
+                                "label": "ক",
+                                "question": "'শুভা' গল্পের রচয়িতা কে?",
+                                "answer": "রবীন্দ্রনাথ ঠাকুর।"
+                            },
+                            {
+                                "label": "খ",
+                                "question": "শুভা কেন প্রকৃতির সাথে সখ্য গড়ে তুলেছিল?",
+                                "answer": "মানুষের ভাষা না থাকলেও প্রকৃতির ভাষা আছে। শুভা কথা বলতে পারত না বলে মানুষের কাছে অবহেলা পেত, কিন্তু প্রকৃতি ও প্রাণীরা তাকে নিঃশব্দে সঙ্গ দিত বলে সে তাদের সাথে সখ্য গড়েছিল।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "Bangla 2nd Paper",
+                "subject_code": "102",
+                "type": "Core",
+                "questions": [
+                    {
+                        "id": "B2-MCQ-01",
+                        "type": "MCQ",
+                        "question": "কোনটি দ্বন্দ্ব সমাসের উদাহরণ?",
+                        "options": [
+                            "ক) মা-বাবা",
+                            "খ) চৌরাস্তা",
+                            "গ) বিড়াল",
+                            "ঘ) নীলকণ্ঠ"
+                        ],
+                        "answer": "ক) মা-বাবা",
+                        "ai_extra_info": "দ্বন্দ্ব সমাসে উভয় পদের অর্থই প্রধান থাকে। ব্যাসবাক্য: মা ও বাবা = মা-বাবা।"
+                    },
+                    {
+                        "id": "B2-MCQ-02",
+                        "type": "MCQ",
+                        "question": "'বিদ্যালয়' এর সঠিক সন্ধি বিচ্ছেদ কোনটি?",
+                        "options": [
+                            "ক) বিদ্যা + লয়",
+                            "খ) বিদ্যা + আলয়",
+                            "গ) বিদ + আলয়",
+                            "ঘ) বিদ্যা + আলায়"
+                        ],
+                        "answer": "খ) বিদ্যা + আলয়",
+                        "ai_extra_info": "সূত্র: আ + আ = আ। এখানে বিদ্যার 'আ' এবং আলয়ের 'আ' মিলে বিদ্যালয় হয়েছে।"
+                    },
+                    {
+                        "id": "B2-SQ-01",
+                        "type": "Short Answer",
+                        "question": "ব্যাসবাক্যসহ সমাসের নাম লেখ: 'সিংহাসন' (Added Step)",
+                        "answer": "ব্যাসবাক্য: সিংহ চিহ্নিত আসন। সমাসের নাম: মধ্যপদলোপী কর্মধারয় সমাস।",
+                        "ai_extra_info": "এখানে মাঝখানের পদ 'চিহ্নিত' লোপ পেয়েছে।"
+                    },
+                    {
+                        "id": "B2-COMP-01",
+                        "type": "Composition",
+                        "question": "ধূমপানের কুফল সম্পর্কে দুই বন্ধুর মধ্যে একটি সংলাপ রচনা কর।",
+                        "answer": "(মডেল উত্তর সারাংশ) দুই বন্ধুর (যেমন: রাজু ও মিনা) কথোপকথন থাকবে। এতে ক্যান্সারের ঝুঁকি, শ্বাসকষ্ট এবং অর্থের অপচয়ের বিষয়গুলো উঠে আসবে।",
+                        "ai_extra_info": "সংলাপে অন্তত ১০টি বাক্য বিনিময় (Exchange) থাকা বাঞ্ছনীয়।"
+                    }
+                ]
+            },
+            {
+                "subject_name": "English 1st Paper",
+                "subject_code": "107",
+                "type": "Core",
+                "questions": [
+                    {
+                        "id": "E1-MCQ-01",
+                        "type": "MCQ",
+                        "context": "Based on May Day Passage",
+                        "question": "The events of May Day 1886 are a reminder that workers will continue to be:",
+                        "options": [
+                            "a) Paid",
+                            "b) Exploited",
+                            "c) Respected",
+                            "d) Ignored"
+                        ],
+                        "answer": "b) Exploited",
+                        "ai_extra_info": "Historical Context: Without unions and regulations, workers were often forced to work 14+ hours a day."
+                    },
+                    {
+                        "id": "E1-SQ-01",
+                        "type": "Short Answer",
+                        "question": "What did the strikers demand in 1886?",
+                        "answer": "The strikers demanded an eight-hour workday instead of the long shifts they were forced to work.",
+                        "ai_extra_info": "This movement originated in Chicago at the McCormick Harvester Company."
+                    },
+                    {
+                        "id": "E1-WRITING-01",
+                        "type": "Writing",
+                        "question": "Write a summary of the passage 'The Shat Gombuj Mosque'.",
+                        "answer": "(Model Key Points) The Shat Gombuj Mosque is a UNESCO World Heritage site in Bagerhat. Founded by Khan Jahan Ali in the 15th century. It has 60 pillars and 77 domes (plus 4 on corners). It represents the Tughlaq style of architecture.",
+                        "ai_extra_info": "When writing a summary, do not copy sentences directly from the text. Use your own words and keep it within 1/3 of the original length."
+                    }
+                ]
+            },
+            {
+                "subject_name": "English 2nd Paper",
+                "subject_code": "108",
+                "type": "Core",
+                "questions": [
+                    {
+                        "id": "E2-MCQ-01",
+                        "type": "MCQ",
+                        "question": "Which is the correct Tag Question for 'Let us go out,'?",
+                        "options": [
+                            "a) will we?",
+                            "b) shall we?",
+                            "c) won't we?",
+                            "d) do we?"
+                        ],
+                        "answer": "b) shall we?",
+                        "ai_extra_info": "Grammar Rule: Imperative sentences starting with 'Let us' or 'Let's' always take 'shall we?' as the tag."
+                    },
+                    {
+                        "id": "E2-MCQ-ADD-01",
+                        "type": "MCQ",
+                        "is_added_by_ai": true,
+                        "question": "The phrase 'Maiden speech' means:",
+                        "options": [
+                            "a) Late speech",
+                            "b) First speech",
+                            "c) Final speech",
+                            "d) Short speech"
+                        ],
+                        "answer": "b) First speech",
+                        "ai_extra_info": "This is a common idiom tested in SSC exams."
+                    },
+                    {
+                        "id": "E2-SQ-01",
+                        "type": "Transformation",
+                        "question": "Transform to Negative: 'Man is mortal.'",
+                        "answer": "Man is not immortal.",
+                        "ai_extra_info": "Rule: When transforming Universal Truths to negative, use 'not' + 'antonym' to keep the meaning unchanged."
+                    },
+                    {
+                        "id": "E2-CV-01",
+                        "type": "Writing",
+                        "question": "Write a CV with a cover letter for the post of an Assistant Teacher.",
+                        "answer": "(Structure Requirement) 1. Date & Contact Info. 2. Cover Letter addressing Headmaster. 3. CV Section: Name, Father's Name, Address, Education (SSC, HSC, BA/MA charts), Experience, Reference.",
+                        "ai_extra_info": "Ensure the dates in the Education table are logical (e.g., SSC in 2016, HSC in 2018, Honours in 2022)."
+                    }
+                ]
+            },
+            {
+                "subject_name": "General Mathematics",
+                "subject_code": "109",
+                "type": "Core",
+                "questions": [
+                    {
+                        "id": "M-MCQ-01",
+                        "type": "MCQ",
+                        "question": "tan60° এর মান কত?",
+                        "options": [
+                            "ক) 1/3",
+                            "খ) √3",
+                            "গ) 1",
+                            "ঘ) ∞"
+                        ],
+                        "answer": "খ) √3",
+                        "ai_extra_info": "ত্রিকোণমিতিক মান মনে রাখার কৌশল: tan0=0, tan30=1/√3, tan45=1, tan60=√3, tan90=অসংজ্ঞায়িত।"
+                    },
+                    {
+                        "id": "M-MCQ-02",
+                        "type": "MCQ",
+                        "question": "r ব্যাসার্ধবিশিষ্ট বৃত্তের ক্ষেত্রফল কোনটি?",
+                        "options": [
+                            "ক) 2πr",
+                            "খ) πr²",
+                            "গ) πr",
+                            "ঘ) 2πr²"
+                        ],
+                        "answer": "খ) πr²",
+                        "ai_extra_info": "2πr হলো পরিধি (Circumference) এবং πr² হলো ক্ষেত্রফল (Area)।"
+                    },
+                    {
+                        "id": "M-CQ-01",
+                        "type": "Creative Question (Algebra)",
+                        "stem": "x² - √3x + 1 = 0",
+                        "sub_questions": [
+                            {
+                                "label": "ক",
+                                "question": "x + 1/x এর মান নির্ণয় কর।",
+                                "answer": "দেওয়া আছে, x² - √3x + 1 = 0 বা, x² + 1 = √3x বা, (x² + 1)/x = √3 সুতরাং, x + 1/x = √3।"
+                            },
+                            {
+                                "label": "খ",
+                                "question": "প্রমাণ কর যে, x³ + 1/x³ = 0",
+                                "answer": "আমরা জানি, a³+b³ = (a+b)³ - 3ab(a+b)। মান বসিয়ে: (√3)³ - 3(1)(√3) = 3√3 - 3√3 = 0। (প্রমাণিত)"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "M-CQ-ADD-01",
+                        "type": "Creative Question (Geometry)",
+                        "is_added_by_ai": true,
+                        "stem": "বৃত্তের কেন্দ্র O এবং ব্যাস ভিন্ন জ্যা AB। কেন্দ্র থেকে জ্যা এর ওপর লম্ব OM।",
+                        "sub_questions": [
+                            {
+                                "label": "খ",
+                                "question": "প্রমাণ কর যে, M, AB এর মধ্যবিন্দু (AM = BM)।",
+                                "answer": "এটি উপপাদ্য-১৭ এর বিপরীত। সমকোণী ত্রিভুজ OAM ও OBM এ অতিভুজ OA = অতিভুজ OB (ব্যাসার্ধ) এবং OM সাধারণ বাহু। তাই ত্রিভুজদ্বয় সর্বসম। সুতরাং AM = BM।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "ICT",
+                "subject_code": "154",
+                "type": "Core",
+                "questions": [
+                    {
+                        "id": "ICT-MCQ-01",
+                        "type": "MCQ",
+                        "question": "আধুনিক কম্পিউটারের জনক কে?",
+                        "options": [
+                            "ক) চার্লস ব্যাবেজ",
+                            "খ) অ্যাডা লাভলেস",
+                            "গ) বিল গেটস",
+                            "ঘ) স্টিভ জবস"
+                        ],
+                        "answer": "ক) চার্লস ব্যাবেজ",
+                        "ai_extra_info": "চার্লস ব্যাবেজ 'অ্যানালিটিক্যাল ইঞ্জিন' এর নকশা করেছিলেন। তবে অ্যাডা লাভলেসকে প্রথম প্রোগ্রামার বলা হয়।"
+                    },
+                    {
+                        "id": "ICT-MCQ-02",
+                        "type": "MCQ",
+                        "question": "HTML-এ হাইপারলিংকের জন্য কোন ট্যাগ ব্যবহৃত হয়?",
+                        "options": [
+                            "ক) <b>",
+                            "খ) <a>",
+                            "গ) <li>",
+                            "ঘ) <p>"
+                        ],
+                        "answer": "খ) <a>",
+                        "ai_extra_info": "Anchor tag (<a>) এর সাথে 'href' অ্যাট্রিবিউট ব্যবহার করে লিংক করা হয়।"
+                    },
+                    {
+                        "id": "ICT-CQ-01",
+                        "type": "Creative Question",
+                        "stem": "একটি কোম্পানি খাতায় কর্মীদের তথ্য রাখে, ফলে তথ্য খুঁজে পেতে দেরি হয়।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "DBMS ব্যবহার করে কীভাবে এই সমস্যার সমাধান করা যায়? ব্যাখ্যা কর।",
+                                "answer": "DBMS (Database Management System) ব্যবহার করে হাজার হাজার কর্মীর তথ্য ডিজিটালি সংরক্ষণ করা যায়। কুয়েরি (Query) ব্যবহার করে কয়েক সেকেন্ডের মধ্যে নির্দিষ্ট কর্মীর তথ্য বের করা সম্ভব, যা খাতায় করলে ঘন্টার পর ঘন্টা সময় লাগত।"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "meta_info": {
+            "curriculum": "SSC Class 10 (NCTB)",
+            "years_analyzed": "2017-2024",
+            "batch": "Part 2 of 3 (Science Group)",
+            "note": "Contains specific scientific formulas and diagram descriptions in ai_extra_info."
+        },
+        "subjects": [
+            {
+                "subject_name": "Physics",
+                "subject_code": "136",
+                "type": "Science",
+                "questions": [
+                    {
+                        "id": "PHY-MCQ-01",
+                        "type": "MCQ",
+                        "question": "ত্বরণের একক কোনটি?",
+                        "options": [
+                            "ক) ms⁻¹",
+                            "খ) ms⁻²",
+                            "গ) ms",
+                            "ঘ) m/s³"
+                        ],
+                        "answer": "খ) ms⁻²",
+                        "ai_extra_info": "ত্বরণ (Acceleration) হলো সময়ের সাথে বেগের পরিবর্তনের হার। বেগ (m/s) / সময় (s) = m/s² বা ms⁻²।"
+                    },
+                    {
+                        "id": "PHY-MCQ-02",
+                        "type": "MCQ",
+                        "question": "হ্রস্বদৃষ্টি (Myopia) দূর করতে কোন লেন্স ব্যবহার করা হয়?",
+                        "options": [
+                            "ক) উত্তল (Convex)",
+                            "খ) অবতল (Concave)",
+                            "গ) সিলিন্ড্রিক্যাল",
+                            "ঘ) বাইফোকাল"
+                        ],
+                        "answer": "খ) অবতল (Concave)",
+                        "ai_extra_info": "হ্রস্বদৃষ্টিতে প্রতিবিম্ব রেটিনার সামনে গঠিত হয়। অবতল লেন্স আলোকরশ্মিকে অপসারী করে রেটিনার ওপর ফোকাস করতে সাহায্য করে।"
+                    },
+                    {
+                        "id": "PHY-MCQ-03",
+                        "type": "MCQ",
+                        "question": "সংকুচিত স্প্রিং-এ কোন শক্তি জমা থাকে?",
+                        "options": [
+                            "ক) গতিশক্তি",
+                            "খ) বিভবশক্তি",
+                            "গ) তাপশক্তি",
+                            "ঘ) রাসায়নিক শক্তি"
+                        ],
+                        "answer": "খ) বিভবশক্তি",
+                        "ai_extra_info": "কোনো বস্তুর অবস্থানের পরিবর্তনের ফলে যে শক্তি সঞ্চিত হয় তাকে বিভবশক্তি (Potential Energy) বলে। সূত্র: Ep = ½kx²।"
+                    },
+                    {
+                        "id": "PHY-CQ-01",
+                        "type": "Creative Question (Motion)",
+                        "stem": "একটি গাড়ি স্থির অবস্থান থেকে 2ms⁻² সুষম ত্বরণে ১০ সেকেন্ড চলল।",
+                        "sub_questions": [
+                            {
+                                "label": "ক",
+                                "question": "জড়তা (Inertia) কাকে বলে?",
+                                "answer": "বস্তু যে অবস্থায় আছে চিরকাল সেই অবস্থায় থাকতে চাওয়ার যে প্রবণতা বা ধর্ম, তাকে জড়তা বলে।"
+                            },
+                            {
+                                "label": "গ",
+                                "question": "গাড়িটি কর্তৃক অতিক্রান্ত দূরত্ব নির্ণয় কর।",
+                                "answer": "আমরা জানি, s = ut + ½at²। এখানে u=0, a=2, t=10। মান বসিয়ে: s = 0 + ½(2)(10)² = 100 মিটার।"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "PHY-CQ-02",
+                        "type": "Creative Question (Electricity)",
+                        "stem": "5Ω এবং 10Ω মানের দুটি রোধ সমান্তরাল সন্নিবেশে ১২ ভোল্ট ব্যাটারির সাথে যুক্ত।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "বর্তনীটির তুল্যরোধ নির্ণয় কর।",
+                                "answer": "সমান্তরাল সংযোগের ক্ষেত্রে: 1/Rp = 1/R1 + 1/R2। 1/Rp = 1/5 + 1/10 = (2+1)/10 = 3/10। সুতরাং, Rp = 10/3 = 3.33Ω।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "Chemistry",
+                "subject_code": "137",
+                "type": "Science",
+                "questions": [
+                    {
+                        "id": "CHEM-MCQ-01",
+                        "type": "MCQ",
+                        "question": "হ্যালোজেনসমূহ কোন গ্রুপের অন্তর্ভুক্ত?",
+                        "options": [
+                            "ক) গ্রুপ ১",
+                            "খ) গ্রুপ ১৭",
+                            "গ) গ্রুপ ১৮",
+                            "ঘ) গ্রুপ ২"
+                        ],
+                        "answer": "খ) গ্রুপ ১৭",
+                        "ai_extra_info": "হ্যালোজেন অর্থ 'লবণ গঠনকারী'। ফ্লোরিন, ক্লোরিন, ব্রোমিন, আয়োডিন এই গ্রুপের সদস্য।"
+                    },
+                    {
+                        "id": "CHEM-MCQ-02",
+                        "type": "MCQ",
+                        "question": "১ মোল H₂SO₄ এর ভর কত?",
+                        "options": [
+                            "ক) ৯৮ গ্রাম",
+                            "খ) ৯০ গ্রাম",
+                            "গ) ১০০ গ্রাম",
+                            "ঘ) ৮০ গ্রাম"
+                        ],
+                        "answer": "ক) ৯৮ গ্রাম",
+                        "ai_extra_info": "হিসাব: (১x২) + ৩২ + (১৬x৪) = ২ + ৩২ + ৬৪ = ৯৮।"
+                    },
+                    {
+                        "id": "CHEM-MCQ-03",
+                        "type": "MCQ",
+                        "question": "কোনটি অসম্পৃক্ত হাইড্রোকার্বন?",
+                        "options": [
+                            "ক) মিথেন",
+                            "খ) ইথিন",
+                            "গ) প্রোপেন",
+                            "ঘ) বিউটেন"
+                        ],
+                        "answer": "খ) ইথিন",
+                        "ai_extra_info": "যাদের কার্বন-কার্বন দ্বিবন্ধন বা ত্রিবন্ধন থাকে তারা অসম্পৃক্ত। ইথিন (C₂H₄) এ দ্বিবন্ধন আছে।"
+                    },
+                    {
+                        "id": "CHEM-CQ-01",
+                        "type": "Creative Question (Organic)",
+                        "stem": "একটি হাইড্রোকার্বন ইথিন (C₂H₄)।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "এই হাইড্রোকার্বন থেকে কীভাবে ইথানল প্রস্তুত করবে? সমীকরণসহ লেখ।",
+                                "answer": "ইথিনের সাথে উচ্চচাপ ও তাপে ফসফরিক এসিড (H₃PO₄) প্রভাবকের উপস্থিতিতে জলীয়বাষ্প যোগ করলে ইথানল উৎপন্ন হয়। C₂H₄ + H₂O → C₂H₅OH।"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "CHEM-CQ-02",
+                        "type": "Creative Question (Limiting Reactant)",
+                        "stem": "১০ গ্রাম হাইড্রোজেন ১০ গ্রাম অক্সিজেনের সাথে বিক্রিয়া করে পানি উৎপন্ন করে।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "বিক্রিয়াটিতে লিমিটিং বিক্রিয়ক কোনটি তা নির্ণয় কর।",
+                                "answer": "বিক্রিয়া: 2H₂ + O₂ → 2H₂O। ৪ গ্রাম H₂ লাগে ৩২ গ্রাম O₂ এর জন্য। এখানে অক্সিজেনের পরিমাণ কম থাকায় অক্সিজেন আগেই শেষ হয়ে যাবে। তাই অক্সিজেন (O₂) হলো লিমিটিং বিক্রিয়ক।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "Biology",
+                "subject_code": "138",
+                "type": "Science",
+                "questions": [
+                    {
+                        "id": "BIO-MCQ-01",
+                        "type": "MCQ",
+                        "question": "কোষের শক্তিঘর (Powerhouse) কোনটি?",
+                        "options": [
+                            "ক) মাইটোকন্ড্রিয়া",
+                            "খ) নিউক্লিয়াস",
+                            "গ) রাইবোজোম",
+                            "ঘ) প্লাস্টিড"
+                        ],
+                        "answer": "ক) মাইটোকন্ড্রিয়া",
+                        "ai_extra_info": "মাইটোকন্ড্রিয়াতে শ্বসন প্রক্রিয়ায় প্রচুর শক্তি (ATP) উৎপন্ন হয় বলে একে কোষের শক্তিঘর বলা হয়।"
+                    },
+                    {
+                        "id": "BIO-MCQ-02",
+                        "type": "MCQ",
+                        "question": "সর্বজনীন দাতা কোন রক্তের গ্রুপ?",
+                        "options": [
+                            "ক) A",
+                            "খ) O",
+                            "গ) B",
+                            "ঘ) AB"
+                        ],
+                        "answer": "খ) O",
+                        "ai_extra_info": "গ্রুপ O-তে কোনো অ্যান্টিজেন (A বা B) নেই, তাই এটি যেকোনো গ্রুপকে রক্ত দিতে পারে।"
+                    },
+                    {
+                        "id": "BIO-CQ-01",
+                        "type": "Creative Question (Genetics)",
+                        "stem": "দ্বিসূত্রক ডিএনএ (DNA) মডেল।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "ডিএনএ (DNA) এর ভৌত গঠন বর্ণনা কর।",
+                                "answer": "ওয়াটসন ও ক্রিক মডেল অনুযায়ী ডিএনএ দেখতে অনেকটা প্যাঁচানো সিঁড়ির মতো (Double Helix)। এটি সুগার-ফসফেট দিয়ে তৈরি দুটি দণ্ড এবং নাইট্রোজেন বেস (A-T, G-C) দিয়ে তৈরি ধাপ নিয়ে গঠিত।"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "BIO-CQ-02",
+                        "type": "Creative Question (Physiology)",
+                        "stem": "পাকস্থলীতে খাদ্য পরিপাক।",
+                        "sub_questions": [
+                            {
+                                "label": "খ",
+                                "question": "পাকস্থলীতে আমিষ জাতীয় খাদ্যের পরিপাক প্রক্রিয়া বর্ণনা কর।",
+                                "answer": "পাকস্থলীতে পেপসিন এনজাইম থাকে যা অম্লীয় পরিবেশে সক্রিয় হয়। এটি জটিল আমিষকে ভেঙে পলি-পেপটাইডে পরিণত করে।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "Higher Mathematics",
+                "subject_code": "126",
+                "type": "Science",
+                "questions": [
+                    {
+                        "id": "HM-MCQ-01",
+                        "type": "MCQ",
+                        "question": "যদি P(A) = 0.4 হয়, তবে P(A') কত?",
+                        "options": [
+                            "ক) 0.6",
+                            "খ) 0.4",
+                            "গ) 0.5",
+                            "ঘ) 1.0"
+                        ],
+                        "answer": "ক) 0.6",
+                        "ai_extra_info": "কোনো ঘটনার ঘটা এবং না-ঘটার সম্ভাবনার যোগফল সর্বদা ১। সূত্র: P(A') = 1 - P(A)।"
+                    },
+                    {
+                        "id": "HM-MCQ-02",
+                        "type": "MCQ",
+                        "question": "nCr এর মান কোনটি?",
+                        "options": [
+                            "ক) n! / (r!(n-r)!)",
+                            "খ) (n-r)! / n!",
+                            "গ) n!",
+                            "ঘ) r!"
+                        ],
+                        "answer": "ক) n! / (r!(n-r)!)",
+                        "ai_extra_info": "এটি সমাবেশ (Combination) এর সূত্র। যেখানে ক্রম গুরুত্বপূর্ণ নয়।"
+                    },
+                    {
+                        "id": "HM-CQ-01",
+                        "type": "Creative Question (Geometry)",
+                        "stem": "একটি ত্রিভুজের শীর্ষবিন্দুগুলো হলো A(2,3), B(5,6), C(-1,4)।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "ত্রিভুজটির ক্ষেত্রফল নির্ণয় কর।",
+                                "answer": "ক্ষেত্রফল = ½ | (x1y2 + x2y3 + x3y1) - (y1x2 + y2x3 + y3x1) |। মান বসিয়ে হিসাব করতে হবে। একক হবে 'বর্গ একক'।"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "HM-CQ-02",
+                        "type": "Creative Question (Probability)",
+                        "stem": "একটি থলেতে ৩টি লাল ও ৪টি কালো বল আছে। দৈবভাবে ২টি বল তোলা হলো।",
+                        "sub_questions": [
+                            {
+                                "label": "খ",
+                                "question": "বল দুইটি একই রঙের হওয়ার সম্ভাবনা কত?",
+                                "answer": "মোট বল ৭টি। দুটি লাল হওয়ার সম্ভাবনা (3/7 * 2/6) অথবা দুটি কালো হওয়ার সম্ভাবনা (4/7 * 3/6)। এই দুটি যোগ করতে হবে।"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "meta_info": {
+            "curriculum": "SSC Class 10 (NCTB)",
+            "years_analyzed": "2017-2024",
+            "batch": "Part 3 of 3 (Business, Humanities & Religion)",
+            "note": "Final batch. Includes financial formulas and historical context in ai_extra_info."
+        },
+        "subjects": [
+            {
+                "subject_name": "Accounting",
+                "subject_code": "146",
+                "type": "Business Studies",
+                "questions": [
+                    {
+                        "id": "ACC-MCQ-01",
+                        "type": "MCQ",
+                        "question": "কোনটি চলতি সম্পদ?",
+                        "options": [
+                            "ক) দেনাদার",
+                            "খ) যন্ত্রপাতি",
+                            "গ) মূলধন",
+                            "ঘ) সুনাম"
+                        ],
+                        "answer": "ক) দেনাদার",
+                        "ai_extra_info": "চলতি সম্পদ হলো যা এক বছরের মধ্যে নগদে রূপান্তর করা যায়। যেমন: হাতে নগদ, ব্যাংক জমা, দেনাদার।"
+                    },
+                    {
+                        "id": "ACC-MCQ-02",
+                        "type": "MCQ",
+                        "question": "মালিকানা স্বত্ব (Equity) নির্ণয়ের সূত্র কোনটি?",
+                        "options": [
+                            "ক) মোট সম্পদ - মোট দায়",
+                            "খ) মোট সম্পদ + মোট দায়",
+                            "গ) আয় - ব্যয়",
+                            "ঘ) নগদ + ব্যাংক"
+                        ],
+                        "answer": "ক) মোট সম্পদ - মোট দায়",
+                        "ai_extra_info": "হিসাব সমীকরণ: A = L + E। সুতরাং, E (মালিকানা স্বত্ব) = A (সম্পদ) - L (দায়)।"
+                    },
+                    {
+                        "id": "ACC-CQ-01",
+                        "type": "Creative Question (Financial Statement)",
+                        "stem": "একটি রেওয়ামিল দেওয়া আছে (সম্পদ ও দায়ের তালিকা)।",
+                        "sub_questions": [
+                            {
+                                "label": "খ",
+                                "question": "বিশদ আয় বিবরণী প্রস্তুত কর।",
+                                "answer": "বিশদ আয় বিবরণীতে কেবল মুনাফাজাতীয় আয় ও ব্যয় আসে। মোট মুনাফা = নিট বিক্রয় - বিক্রীত পণ্যের ব্যয়। নিট মুনাফা = মোট মুনাফা - পরিচালন ব্যয় + অন্যান্য আয়।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "Finance & Banking",
+                "subject_code": "152",
+                "type": "Business Studies",
+                "questions": [
+                    {
+                        "id": "FIN-MCQ-01",
+                        "type": "MCQ",
+                        "question": "'রুল ৭২' কিসের জন্য ব্যবহৃত হয়?",
+                        "options": [
+                            "ক) টাকা দ্বিগুণ হওয়ার সময় নির্ণয়ে",
+                            "খ) টাকা তিনগুণ হওয়ার সময় নির্ণয়ে",
+                            "গ) ক্ষতি নির্ণয়ে",
+                            "ঘ) কর নির্ণয়ে"
+                        ],
+                        "answer": "ক) টাকা দ্বিগুণ হওয়ার সময় নির্ণয়ে",
+                        "ai_extra_info": "সূত্র: সময় (n) = ৭২ / সুদের হার (r)। এটি একটি 'থাম্ব রুল' বা আনুমানিক হিসাব।"
+                    },
+                    {
+                        "id": "FIN-CQ-01",
+                        "type": "Creative Question (Time Value of Money)",
+                        "stem": "জনাব এক্স ১০% সুদে ১ লক্ষ টাকা ৫ বছরের জন্য বিনিয়োগ করলেন।",
+                        "sub_questions": [
+                            {
+                                "label": "খ",
+                                "question": "৫ বছর পর চক্রবৃদ্ধি সুদে তিনি কত টাকা পাবেন (FV) নির্ণয় কর।",
+                                "answer": "আমরা জানি, FV = PV(1+r)ⁿ। এখানে PV=১,০০,০০০, r=০.১০, n=৫। ক্যালকুলেশন করে উত্তর বের করতে হবে।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "History of Bangladesh",
+                "subject_code": "153",
+                "type": "Humanities",
+                "questions": [
+                    {
+                        "id": "HIS-MCQ-01",
+                        "type": "MCQ",
+                        "question": "বাঙালির 'ম্যাগনাকার্টা' বা মুক্তির সনদ কোনটি?",
+                        "options": [
+                            "ক) ৬ দফা",
+                            "খ) ১১ দফা",
+                            "গ) ২১ দফা",
+                            "ঘ) ৭ দফা"
+                        ],
+                        "answer": "ক) ৬ দফা",
+                        "ai_extra_info": "১৯৬৬ সালে বঙ্গবন্ধু শেখ মুজিবুর রহমান ৬ দফা পেশ করেন। এটি বাঙালির স্বায়ত্তশাসনের দাবি ছিল বলে একে ম্যাগনাকার্টার সাথে তুলনা করা হয়।"
+                    },
+                    {
+                        "id": "HIS-MCQ-02",
+                        "type": "MCQ",
+                        "question": "নীল নদের তীরে কোন সভ্যতা গড়ে উঠেছিল?",
+                        "options": [
+                            "ক) মিশরীয়",
+                            "খ) সুমেরীয়",
+                            "গ) সিন্ধু",
+                            "ঘ) চৈনিক"
+                        ],
+                        "answer": "ক) মিশরীয়",
+                        "ai_extra_info": "হেরোডোটাস বলেছিলেন, 'মিশর নীল নদের দান'। কৃষি ও যাতায়াতের জন্য এই সভ্যতা নদীর ওপর নির্ভরশীল ছিল।"
+                    },
+                    {
+                        "id": "HIS-CQ-01",
+                        "type": "Creative Question (1971)",
+                        "stem": "১৬ই ডিসেম্বর পাকিস্তানি বাহিনীর আত্মসমর্পণের দৃশ্য।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "মুক্তিযুদ্ধের চূড়ান্ত বিজয়ের দিনগুলোর বর্ণনা দাও।",
+                                "answer": "যৌথ বাহিনীর আক্রমণের মুখে পাকিস্তানি বাহিনী কোণঠাসা হয়ে পড়ে। ১৪ই ডিসেম্বর বুদ্ধিজীবী হত্যা করে তারা মনোবল ভাঙার চেষ্টা করে, কিন্তু ১৬ই ডিসেম্বর ৯৩ হাজার সৈন্য নিয়ে রেসকোর্স ময়দানে তারা আত্মসমর্পণ করতে বাধ্য হয়।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "Geography & Environment",
+                "subject_code": "110",
+                "type": "Humanities",
+                "questions": [
+                    {
+                        "id": "GEO-MCQ-01",
+                        "type": "MCQ",
+                        "question": "সূর্যের নিকটতম গ্রহ কোনটি?",
+                        "options": [
+                            "ক) বুধ",
+                            "খ) শুক্র",
+                            "গ) পৃথিবী",
+                            "ঘ) মঙ্গল"
+                        ],
+                        "answer": "ক) বুধ",
+                        "ai_extra_info": "বুধ (Mercury) সূর্যের সবচেয়ে কাছে অবস্থিত এবং এটি সৌরজগতের ক্ষুদ্রতম গ্রহ।"
+                    },
+                    {
+                        "id": "GEO-CQ-01",
+                        "type": "Creative Question (Solar System)",
+                        "stem": "সৌরজগতের চিত্র।",
+                        "sub_questions": [
+                            {
+                                "label": "খ",
+                                "question": "পৃথিবী গ্রহের বৈশিষ্ট্য বর্ণনা কর।",
+                                "answer": "পৃথিবী একমাত্র গ্রহ যেখানে প্রাণের অস্তিত্ব আছে। এর বায়ুমণ্ডলে অক্সিজেন ও নাইট্রোজেন আছে এবং গড় তাপমাত্রা জীব বসবাসের উপযোগী।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "Economics",
+                "subject_code": "141",
+                "type": "Humanities",
+                "questions": [
+                    {
+                        "id": "ECO-CQ-01",
+                        "type": "Creative Question (Demand)",
+                        "stem": "পেঁয়াজের দাম বাড়লে চাহিদা কমে যায়।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "রেখাচিত্রের সাহায্যে চাহিদাবিধি ব্যাখ্যা কর।",
+                                "answer": "চাহিদাবিধি অনুযায়ী, অন্যান্য অবস্থা অপরিবর্তিত থাকলে দাম বাড়লে চাহিদা কমে এবং দাম কমলে চাহিদা বাড়ে। এটি একটি নিম্নগামী রেখা দ্বারা প্রকাশ করা হয়।"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "subject_name": "Islam & Moral Education",
+                "subject_code": "111",
+                "type": "Common",
+                "questions": [
+                    {
+                        "id": "ISL-MCQ-01",
+                        "type": "MCQ",
+                        "question": "ইসলাম শব্দের অর্থ কী?",
+                        "options": [
+                            "ক) শান্তি ও আত্মসমর্পণ",
+                            "খ) যুদ্ধ",
+                            "গ) মুক্তি",
+                            "ঘ) সম্পদ"
+                        ],
+                        "answer": "ক) শান্তি ও আত্মসমর্পণ",
+                        "ai_extra_info": "ইসলাম শব্দটি 'সিলম' ধাতু থেকে এসেছে যার অর্থ শান্তি।"
+                    },
+                    {
+                        "id": "ISL-MCQ-02",
+                        "type": "MCQ",
+                        "question": "পবিত্র কুরআন কত বছরে নাজিল হয়?",
+                        "options": [
+                            "ক) ২৩ বছরে",
+                            "খ) ২৫ বছরে",
+                            "গ) ৪০ বছরে",
+                            "ঘ) ৬৩ বছরে"
+                        ],
+                        "answer": "ক) ২৩ বছরে",
+                        "ai_extra_info": "সঠিক সময়কাল: ২২ বছর ৫ মাস ১৪ দিন (আনুমানিক ২৩ বছর)।"
+                    },
+                    {
+                        "id": "ISL-CQ-01",
+                        "type": "Creative Question (Zakat)",
+                        "stem": "জনাব রহিম অনেক সম্পদের মালিক কিন্তু তিনি যাকাত দেন না।",
+                        "sub_questions": [
+                            {
+                                "label": "গ",
+                                "question": "সমাজে যাকাতের গুরুত্ব ব্যাখ্যা কর।",
+                                "answer": "যাকাত ধনী ও দরিদ্রের বৈষম্য কমায়। এটি কোনো দয়া নয়, বরং ধনীদের সম্পদে গরিবের অধিকার। যাকাত দিলে সম্পদ পবিত্র হয় এবং বৃদ্ধি পায়।"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

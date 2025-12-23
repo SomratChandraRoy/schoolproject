@@ -362,3 +362,6 @@ The AI Chat system is now fully functional with:
 - Smooth user experience
 
 All components are tested and working correctly with the Gemini API.
+
+
+i have class 6-12 all subject question in my A.C.Q/( under the folder in json, .md file ). first read and understand them . also i have postgress sql database hosting in aws . i want to use the database for my project connect database with my project , then move my all 6-12 class all subject questions into the postgress sql database in aws .  here is my my postgress sql database credentials --

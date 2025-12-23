@@ -255,10 +255,21 @@ class GenerateQuizQuestionView(APIView):
         difficulty = request.data.get('difficulty', 'medium')
         question_type = request.data.get('question_type', 'mcq')
         
+        # Validate required fields
+        if not subject or not class_level:
+            return Response({'error': 'Subject and class_level are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        print(f"[AI Generation] User: {user.username}, Subject: {subject}, Class: {class_level}, Difficulty: {difficulty}, Type: {question_type}")
+        
         try:
-            # Get AI response using Google Gemini
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            # Import key manager
+            from .api_key_manager import get_key_manager
+            
+            # Get the key manager
+            try:
+                key_manager = get_key_manager()
+            except RuntimeError:
+                return Response({'error': 'API key manager not initialized'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Create prompt for generating question
             prompt = f"""You are an expert educational content creator for the Bangladeshi education system.
@@ -282,8 +293,19 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks):
 
 For non-MCQ questions, set "options" to an empty object {{}}."""
             
-            response = model.generate_content(prompt)
-            response_text = response.text.strip()
+            print(f"[AI Generation] Calling Gemini API with key rotation...")
+            
+            # Use key manager to generate content with automatic rotation
+            success, response_text, error_message = key_manager.generate_content(
+                prompt=prompt,
+                model_name='gemini-2.5-flash-lite'  # Using lite version which has better quota
+            )
+            
+            if not success:
+                print(f"[AI Generation] ERROR: {error_message}")
+                return Response({'error': error_message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            print(f"[AI Generation] Received response (length: {len(response_text)})")
             
             # Try to parse the response as JSON
             import json
@@ -296,15 +318,27 @@ For non-MCQ questions, set "options" to an empty object {{}}."""
                     response_text = re.sub(r'\n?```$', '', response_text)
                 
                 question_data = json.loads(response_text)
-            except json.JSONDecodeError:
+                print(f"[AI Generation] Successfully parsed JSON")
+            except json.JSONDecodeError as je:
+                print(f"[AI Generation] JSON decode error: {str(je)}")
                 # If JSON parsing fails, try to extract JSON from the response
                 json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
                 if json_match:
                     question_data = json.loads(json_match.group())
+                    print(f"[AI Generation] Extracted JSON from response")
                 else:
+                    print(f"[AI Generation] Could not extract JSON. Response: {response_text[:200]}")
                     raise ValueError("Could not extract valid JSON from AI response")
             
+            # Validate question data
+            if not question_data.get('question_text'):
+                return Response({'error': 'AI response missing question_text'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if not question_data.get('correct_answer'):
+                return Response({'error': 'AI response missing correct_answer'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
             # Create the quiz question in the database
+            print(f"[AI Generation] Creating quiz in database...")
             quiz_question = Quiz.objects.create(
                 subject=subject,
                 class_target=class_level,
@@ -313,14 +347,22 @@ For non-MCQ questions, set "options" to an empty object {{}}."""
                 question_type=question_type,
                 options=question_data.get('options', {}),
                 correct_answer=question_data['correct_answer'],
-                explanation=question_data['explanation']
+                explanation=question_data.get('explanation', '')
             )
+            
+            print(f"[AI Generation] Quiz created successfully with ID: {quiz_question.id}")
+            
+            # Log key manager status
+            status_info = key_manager.get_status()
+            print(f"[AI Generation] Key Manager Status: {status_info}")
             
             serializer = QuizSerializer(quiz_question)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
-            return Response({'error': f'Error generating question: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            error_message = str(e)
+            print(f"[AI Generation] ERROR: {error_message}")
+            return Response({'error': f'Error generating question: {error_message}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ManageClassQuestionsView(APIView):
@@ -508,3 +550,229 @@ class ImprovedRemedialLearningView(APIView):
             return Response({'explanation': explanation})
         except Exception as e:
             return Response({'error': f'Error generating explanation: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AnalyzeQuizResultsView(APIView):
+    """Comprehensive AI analysis of quiz results"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        quiz_data = request.data.get('quiz_data', {})
+        answers = request.data.get('answers', {})
+        
+        if not quiz_data or not answers:
+            return Response({'error': 'Quiz data and answers are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Calculate results
+            questions = quiz_data.get('questions', [])
+            total_questions = len(questions)
+            correct_count = 0
+            wrong_count = 0
+            unanswered_count = 0
+            
+            detailed_results = []
+            wrong_answers = []
+            
+            for idx, question in enumerate(questions):
+                user_answer = answers.get(str(idx), '')
+                correct_answer = question.get('correctAnswer', '')
+                
+                if not user_answer:
+                    unanswered_count += 1
+                    status_text = 'unanswered'
+                elif user_answer == correct_answer:
+                    correct_count += 1
+                    status_text = 'correct'
+                else:
+                    wrong_count += 1
+                    status_text = 'wrong'
+                    wrong_answers.append({
+                        'question': question.get('text', ''),
+                        'userAnswer': user_answer,
+                        'correctAnswer': correct_answer,
+                        'options': question.get('options', [])
+                    })
+                
+                detailed_results.append({
+                    'question_id': question.get('id'),
+                    'question_text': question.get('text', ''),
+                    'user_answer': user_answer,
+                    'correct_answer': correct_answer,
+                    'status': status_text
+                })
+            
+            score_percentage = round((correct_count / total_questions) * 100) if total_questions > 0 else 0
+            
+            # Generate AI analysis using Gemini
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            # Use gemini-2.5-flash - stable model with good quota
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            
+            subject = quiz_data.get('subject', 'General')
+            class_level = quiz_data.get('classLevel', user.class_level or 9)
+            
+            # Create comprehensive analysis prompt
+            analysis_prompt = f"""আপনি একজন বিশেষজ্ঞ শিক্ষা বিশ্লেষক। একজন Class {class_level} এর শিক্ষার্থী {subject} বিষয়ে একটি কুইজ দিয়েছে।
+
+**কুইজ ফলাফল:**
+- মোট প্রশ্ন: {total_questions}
+- সঠিক উত্তর: {correct_count}
+- ভুল উত্তর: {wrong_count}
+- উত্তর দেয়নি: {unanswered_count}
+- স্কোর: {score_percentage}%
+
+**ভুল উত্তরগুলো:**
+{chr(10).join([f"প্রশ্ন: {w['question']}\nশিক্ষার্থীর উত্তর: {w['userAnswer']}\nসঠিক উত্তর: {w['correctAnswer']}" for w in wrong_answers[:5]])}
+
+অনুগ্রহ করে নিম্নলিখিত বিষয়ে একটি বিস্তারিত বিশ্লেষণ প্রদান করুন (বাংলায়):
+
+## 📊 সামগ্রিক পারফরম্যান্স বিশ্লেষণ
+- শিক্ষার্থীর শক্তিশালী দিক
+- উন্নতির প্রয়োজন এমন ক্ষেত্র
+- স্কোরের মূল্যায়ন
+
+## 🎯 ভুল ধারণা চিহ্নিতকরণ
+- কোন টপিকগুলোতে ভুল বেশি হয়েছে
+- সাধারণ ভুলের প্যাটার্ন
+- মূল সমস্যা কোথায়
+
+## 💡 উন্নতির জন্য পরামর্শ
+- কোন টপিকগুলো আরও পড়তে হবে
+- কীভাবে অনুশীলন করবে
+- পড়ার কৌশল
+
+## 📚 পরবর্তী পদক্ষেপ
+- অগ্রাধিকার ভিত্তিতে পড়ার তালিকা
+- অনুশীলনের জন্য পরামর্শ
+- আত্মবিশ্বাস বৃদ্ধির উপায়
+
+উৎসাহব্যঞ্জক এবং গঠনমূলক ভাষায় লিখুন। শিক্ষার্থীকে অনুপ্রাণিত করুন।"""
+            
+            response = model.generate_content(analysis_prompt)
+            ai_analysis = response.text
+            
+            # Return comprehensive results
+            return Response({
+                'summary': {
+                    'total_questions': total_questions,
+                    'correct': correct_count,
+                    'wrong': wrong_count,
+                    'unanswered': unanswered_count,
+                    'score_percentage': score_percentage
+                },
+                'detailed_results': detailed_results,
+                'ai_analysis': ai_analysis,
+                'wrong_answers': wrong_answers
+            })
+            
+        except Exception as e:
+            return Response({'error': f'Error analyzing quiz: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GeneratePersonalizedLearningView(APIView):
+    """Generate personalized learning plan based on wrong answers"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        wrong_answers = request.data.get('wrong_answers', [])
+        subject = request.data.get('subject', 'General')
+        class_level = request.data.get('class_level', user.class_level or 9)
+        
+        print(f"[Learning Plan] User: {user.username}, Subject: {subject}, Class: {class_level}")
+        print(f"[Learning Plan] Wrong answers count: {len(wrong_answers)}")
+        
+        if not wrong_answers:
+            return Response({'message': 'Great job! You got all questions correct. No learning plan needed.'})
+        
+        try:
+            # Configure Gemini API
+            print(f"[Learning Plan] Configuring Gemini API...")
+            genai.configure(api_key=settings.GEMINI_API_KEY)
+            # Use gemini-2.5-flash - stable model with good quota
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            
+            # Create detailed learning prompt
+            mistakes_text = "\n\n".join([
+                f"**প্রশ্ন {i+1}:** {w['question']}\n"
+                f"**শিক্ষার্থীর উত্তর:** {w['userAnswer']}\n"
+                f"**সঠিক উত্তর:** {w['correctAnswer']}\n"
+                f"**অপশনগুলো:** {', '.join(w.get('options', []))}"
+                for i, w in enumerate(wrong_answers)
+            ])
+            
+            learning_prompt = f"""আপনি একজন অভিজ্ঞ শিক্ষক যিনি Class {class_level} এর শিক্ষার্থীদের {subject} বিষয়ে পড়ান।
+
+একজন শিক্ষার্থী নিম্নলিখিত প্রশ্নগুলোতে ভুল করেছে:
+
+{mistakes_text}
+
+অনুগ্রহ করে একটি **ব্যক্তিগত শিক্ষা পরিকল্পনা** তৈরি করুন যাতে থাকবে:
+
+## 🎓 প্রতিটি ভুলের বিস্তারিত ব্যাখ্যা
+
+প্রতিটি ভুল প্রশ্নের জন্য:
+1. **কেন ভুল হয়েছে:** শিক্ষার্থী কোন ধারণায় ভুল করেছে
+2. **সঠিক ধারণা:** সহজ ভাষায় সঠিক ব্যাখ্যা
+3. **মনে রাখার কৌশল:** সহজে মনে রাখার টিপস
+4. **উদাহরণ:** বাস্তব জীবনের উদাহরণ বা সহজ উদাহরণ
+
+## 📖 পড়ার পরিকল্পনা
+
+- কোন অধ্যায়/টপিক আবার পড়তে হবে
+- কোন বইয়ের কোন পৃষ্ঠা দেখতে হবে (NCTB বই অনুযায়ী)
+- অনলাইন রিসোর্স (যদি থাকে)
+
+## ✍️ অনুশীলনের পরামর্শ
+
+- কী ধরনের প্রশ্ন অনুশীলন করতে হবে
+- কতগুলো প্রশ্ন করতে হবে
+- কীভাবে অনুশীলন করবে
+
+## 🎯 চেক-পয়েন্ট
+
+শিক্ষার্থী বুঝেছে কিনা তা যাচাই করার জন্য ৩-৫টি সহজ প্রশ্ন দিন।
+
+## 💪 উৎসাহব্যঞ্জক বার্তা
+
+শিক্ষার্থীকে অনুপ্রাণিত করুন এবং আত্মবিশ্বাস বাড়ান।
+
+---
+
+**গুরুত্বপূর্ণ:** সহজ, স্পষ্ট এবং উৎসাহব্যঞ্জক ভাষায় লিখুন। শিক্ষার্থী যেন সহজেই বুঝতে পারে এবং অনুপ্রাণিত হয়।"""
+            
+            print(f"[Learning Plan] Calling Gemini API...")
+            response = model.generate_content(learning_prompt)
+            learning_plan = response.text
+            
+            print(f"[Learning Plan] Successfully generated learning plan (length: {len(learning_plan)})")
+            
+            # Clean the response - remove excessive markdown formatting
+            # Keep basic structure but remove symbols that might look messy
+            cleaned_plan = learning_plan
+            # Remove excessive # symbols but keep structure
+            cleaned_plan = cleaned_plan.replace('###', '').replace('##', '').replace('#', '')
+            # Keep ** for emphasis but make it cleaner
+            # Keep the text readable in plain format
+            
+            return Response({
+                'learning_plan': cleaned_plan,
+                'topics_to_review': [w['question'][:50] + '...' for w in wrong_answers[:5]],
+                'total_mistakes': len(wrong_answers)
+            })
+            
+        except Exception as e:
+            error_message = str(e)
+            print(f"[Learning Plan] ERROR: {error_message}")
+            
+            # Check for specific Gemini API errors
+            if 'API key' in error_message or 'api_key' in error_message:
+                return Response({'error': 'Gemini API key configuration error. Please contact support.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            elif 'quota' in error_message.lower():
+                return Response({'error': 'API quota exceeded. Please try again later.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            elif 'permission' in error_message.lower():
+                return Response({'error': 'API permission denied. Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                return Response({'error': f'Error generating learning plan: {error_message}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

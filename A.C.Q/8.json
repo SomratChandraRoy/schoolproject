@@ -1,0 +1,696 @@
+[
+    {
+        "subject_id": "BAN_08_2024",
+        "subject_name": "Bangla (Sahitya Kanika)",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "'ভাব ও কাজ' প্রবন্ধে কাজী নজরুল ইসলাম 'ভাব' কে কীসের সাথে তুলনা করেছেন?",
+                        "options": [
+                            "(ক) সুগন্ধি ফুল",
+                            "(খ) পুষ্পবিহীন সৌরভ",
+                            "(গ) মাতাল করা মদিরা",
+                            "(ঘ) বাষ্পীয় ইঞ্জিন"
+                        ],
+                        "correct_answer": "(খ) পুষ্পবিহীন সৌরভ",
+                        "ai_extra_info": "Pedagogical Note: This metaphor distinguishes abstract emotion (Bhāb) from concrete action (Kāj)."
+                    },
+                    {
+                        "id": 2,
+                        "question": "'অতিথির স্মৃতি' গল্পে 'অতিথি' কে ছিল?",
+                        "options": [
+                            "(ক) একজন বৃদ্ধ ভৃত্য",
+                            "(খ) একটি রাস্তার কুকুর",
+                            "(গ) মালীর ছোট মেয়ে",
+                            "(ঘ) পথের বিড়াল"
+                        ],
+                        "correct_answer": "(খ) একটি রাস্তার কুকুর",
+                        "ai_extra_info": "Context: This story by Sarat Chandra Chattopadhyay explores human-animal bonding."
+                    },
+                    {
+                        "id": 3,
+                        "question": "প্রমিত বাংলা উচ্চারণের ক্ষেত্রে কোনটি সঠিক?",
+                        "options": [
+                            "(ক) আঞ্চলিকতা দোষে দুষ্ট",
+                            "(খ) ব্যাকরণ মেনে চলা এবং সর্বজনগ্রাহ্য মার্জিত রূপ",
+                            "(গ) বিদেশী শব্দের আধিক্য",
+                            "(ঘ) কেবল কবিতার ভাষায় ব্যবহার্য"
+                        ],
+                        "correct_answer": "(খ) ব্যাকরণ মেনে চলা এবং সর্বজনগ্রাহ্য মার্জিত রূপ",
+                        "ai_extra_info": "New Curriculum Focus: Linguistic awareness and standard pronunciation."
+                    },
+                    {
+                        "id": 4,
+                        "question": "[AI ADDED] 'অতিথির স্মৃতি' গল্পটি আগে কী নামে প্রকাশিত হয়েছিল?",
+                        "options": [
+                            "(ক) দেওঘরের স্মৃতি",
+                            "(খ) পথের সাথী",
+                            "(গ) জীবরক্ষা",
+                            "(ঘ) প্রাণীর প্রতি প্রেম"
+                        ],
+                        "correct_answer": "(ক) দেওঘরের স্মৃতি",
+                        "ai_extra_info": "Extra Fact: Sarat Chandra originally titled this story 'Deogharer Smriti' before it was renamed."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "'ভাব ও কাজ' প্রবন্ধে 'স্পিরিট' বা 'আত্মার শক্তি' বলতে কী বোঝানো হয়েছে?",
+                        "answer": "কাজী নজরুল ইসলাম 'ভাব ও কাজ' প্রবন্ধে 'স্পিরিট' বা 'আত্মার শক্তি' বলতে মানুষের অন্তর্নিহিত সুপ্ত শক্তি বা জাগরণী ক্ষমতাকে বুঝিয়েছেন। এটি এমন এক চালিকাশক্তি যা মানুষকে মহৎ কাজে উদ্বুদ্ধ করে। লেখক সতর্ক করেছেন যে, এই শক্তিকে সঠিক কর্মপরিকল্পনা ছাড়া কেবল আবেগের বশে খরচ করলে তা অপচয় হয়।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "লেখক কেন ভাবকে 'পুষ্পবিহীন সৌরভ' বলেছেন?",
+                        "answer": "ভাব হলো বিমূর্ত এবং অবাস্তব উচ্ছ্বাস, যার নিজস্ব কোনো বাস্তব রূপ নেই। ফুলের যেমন সৌন্দর্য ও অস্তিত্ব আছে, কিন্তু সৌরভের নিজস্ব কোনো কাঠামো নেই, ঠিক তেমনি কাজের মাধ্যমে প্রকাশিত না হলে ভাবের কোনো মূল্য নেই। তাই লেখক একে 'পুষ্পবিহীন সৌরভ' বলেছেন।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "\"ভাবের বাঁশি বাজাইয়া শুধু লোক জড়ো করিলেই হইবে না, তাহাদের দিয়া কাজ করাইয়া লওয়ার কৌশলও জানা চাই।\"— বর্তমান সমাজের প্রেক্ষাপটে উক্তিটি বিশ্লেষণ করো।",
+                        "model_answer": "ভূমিকা: আলোচ্য উক্তিটি কাজী নজরুল ইসলামের 'ভাব ও কাজ' প্রবন্ধ থেকে চয়ন করা হয়েছে। বিশ্লেষণ: বর্তমান সমাজে, বিশেষ করে সামাজিক যোগাযোগ মাধ্যমের যুগে, আমরা প্রায়ই দেখি যে কোনো সামাজিক সমস্যা বা আন্দোলনে মানুষ দ্রুত আবেগে উদ্বেলিত হয়। কিন্তু সুনির্দিষ্ট পরিকল্পনার অভাবে সেই আন্দোলন দীর্ঘস্থায়ী হয় না। লেখক একেই 'ভাবের বাঁশি' বলেছেন। শুধু মানুষকে জাগিয়ে তোলাই নেতার কাজ নয়; সেই জাগ্রত জনতাকে সঠিক পথে পরিচালনা করে দেশের কল্যাণে কাজে লাগানোটাই প্রকৃত নেতৃত্বের যোগ্যতা।"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "MATH_08_2024",
+        "subject_name": "Mathematics (Ganit)",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "ফিবোনাচ্চি অনুক্রমের (Fibonacci Sequence) পরবর্তী সংখ্যাটি কত? 0, 1, 1, 2, 3, 5, 8, …",
+                        "options": [
+                            "(ক) 11",
+                            "(খ) 12",
+                            "(গ) 13",
+                            "(ঘ) 15"
+                        ],
+                        "correct_answer": "(গ) 13",
+                        "ai_extra_info": "Logic: Each number is the sum of the two preceding ones (5 + 8 = 13)."
+                    },
+                    {
+                        "id": 2,
+                        "question": "৩ ক্রমের ম্যাজিক বর্গ (Magic Square) এর ম্যাজিক ধ্রুবক (Magic Constant) কত?",
+                        "options": [
+                            "(ক) 12",
+                            "(খ) 15",
+                            "(গ) 18",
+                            "(ঘ) 21"
+                        ],
+                        "correct_answer": "(খ) 15",
+                        "ai_extra_info": "Formula: M = n(n^2 + 1)/2. For n=3, M = 3(9+1)/2 = 15."
+                    },
+                    {
+                        "id": 3,
+                        "question": "একটি সমকোণী ত্রিভুজের অতিভুজ ১৩ সে.মি. এবং ভূমি ১২ সে.মি. হলে, লম্বের দৈর্ঘ্য কত?",
+                        "options": [
+                            "(ক) ৫ সে.মি.",
+                            "(খ) ৬ সে.মি.",
+                            "(গ) ৭ সে.মি.",
+                            "(ঘ) ৮ সে.মি."
+                        ],
+                        "correct_answer": "(ক) ৫ সে.মি.",
+                        "ai_extra_info": "Theorem: Pythagorean theorem (a^2 + b^2 = c^2). 13^2 - 12^2 = 169 - 144 = 25. √25 = 5."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "'প্যাটার্ন' (Pattern) বলতে কী বোঝ? একটি উদাহরণ দাও।",
+                        "answer": "গণিতে প্যাটার্ন বলতে নির্দিষ্ট নিয়মে সাজানো সংখ্যা, আকৃতি বা বস্তুর বিন্যাসকে বোঝায়। উদাহরণ: 2, 4, 6, 8, … এটি একটি জোড় সংখ্যার প্যাটার্ন।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "১ থেকে ২০ এর মধ্যে কতটি মৌলিক সংখ্যা (Prime Numbers) আছে এবং কী কী?",
+                        "answer": "১ থেকে ২০ এর মধ্যে ৮টি মৌলিক সংখ্যা আছে। সেগুলো হলো: ২, ৩, ৫, ৭, ১১, ১৩, ১৭, ১৯।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "(গাণিতিক অনুসন্ধান) প্রমাণ করো যে, চারটি ক্রমিক স্বাভাবিক সংখ্যার গুণফলের সাথে ১ যোগ করলে একটি পূর্ণবর্গ সংখ্যা পাওয়া যায়।",
+                        "model_answer": "ধরি, রাশিটি P = x(x+1)(x+2)(x+3) + 1। সাজালে পাই: [x(x+3)][(x+1)(x+2)] + 1 = (x^2+3x)(x^2+3x+2) + 1। ধরি x^2+3x = a, তাহলে P = a(a+2) + 1 = a^2+2a+1 = (a+1)^2। যা একটি পূর্ণবর্গ সংখ্যা। উদাহরণ: ১, ২, ৩, ৪। গুণফল = ২৪। ২৪+১ = ২৫ (৫ এর বর্গ)।"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "SCI_08_2024",
+        "subject_name": "Science (Bigyan)",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "নিউটনের প্রথম সূত্র থেকে আমরা পদার্থের কোন ধর্ম সম্পর্কে জানতে পারি?",
+                        "options": [
+                            "(ক) ভরবেগ",
+                            "(খ) জড়তা (Inertia)",
+                            "(গ) মহাকর্ষ",
+                            "(ঘ) ঘনত্ব"
+                        ],
+                        "correct_answer": "(খ) জড়তা (Inertia)",
+                        "ai_extra_info": "Concept: Newton's 1st law defines inertia—the resistance of an object to change its state of motion."
+                    },
+                    {
+                        "id": 2,
+                        "question": "উদ্ভিদ কোষে কোনটি থাকে যা প্রাণী কোষে অনুপস্থিত?",
+                        "options": [
+                            "(ক) মাইটোকন্ড্রিয়া",
+                            "(খ) নিউক্লিয়াস",
+                            "(গ) কোষ প্রাচীর (Cell Wall)",
+                            "(ঘ) রাইবোজোম"
+                        ],
+                        "correct_answer": "(গ) কোষ প্রাচীর (Cell Wall)",
+                        "ai_extra_info": "Biology Fact: Cell walls provide structure and rigidity to plants, which animals do not need."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "'জড়তা' (Inertia) কাকে বলে? এটি কত প্রকার?",
+                        "answer": "বস্তু যে অবস্থায় আছে চিরকাল সেই অবস্থায় থাকতে চাওয়ার যে প্রবণতা বা ধর্ম, তাকে জড়তা বলে। জড়তা দুই প্রকার: ১. স্থিতি জড়তা (স্থির বস্তুর স্থির থাকার প্রবণতা) এবং ২. গতি জড়তা (গতিশীল বস্তুর গতি বজায় রাখার প্রবণতা)।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "[AI ADDED] আইসোটোপ ও আইসোবারের মূল পার্থক্য কী?",
+                        "answer": "আইসোটোপের প্রোটন সংখ্যা সমান কিন্তু ভর সংখ্যা ভিন্ন। অন্যদিকে, আইসোবারের ভর সংখ্যা সমান কিন্তু প্রোটন সংখ্যা ভিন্ন।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "একটি বাস হঠাৎ চলতে শুরু করলে যাত্রীরা পেছনের দিকে হেলে পড়ে কেন? আবার চলন্ত বাস ব্রেক কষলে যাত্রীরা সামনের দিকে ঝুঁকে পড়ে কেন?",
+                        "model_answer": "পেছনের দিকে হেলে পড়া: এটি 'স্থিতি জড়তা'র কারণে ঘটে। বাস চলার সময় শরীরের নিচের অংশ বাসের সাথে গতিশীল হয়, কিন্তু উপরের অংশ স্থির থাকতে চায়। সামনের দিকে ঝুঁকে পড়া: এটি 'গতি জড়তা'র কারণে ঘটে। ব্রেক কষলে শরীরের নিচের অংশ স্থির হয়, কিন্তু উপরের অংশ গতিশীল থাকতে চায়।"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "ENG_08_2024",
+        "subject_name": "English",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "In the story 'The Missing Tenth Man', why was the tenth man considered 'missing'?",
+                        "options": [
+                            "(a) He actually ran away to the forest.",
+                            "(b) He drowned in the river while crossing.",
+                            "(c) The counter forgot to count himself.",
+                            "(d) A tiger attacked the group."
+                        ],
+                        "correct_answer": "(c) The counter forgot to count himself."
+                    },
+                    {
+                        "id": 2,
+                        "question": "Choose the correct passive form: 'She is writing a letter.'",
+                        "options": [
+                            "(a) A letter was written by her.",
+                            "(b) A letter is written by her.",
+                            "(c) A letter is being written by her.",
+                            "(d) A letter has been written by her."
+                        ],
+                        "correct_answer": "(c) A letter is being written by her."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "Why is it important to learn 'Digital Etiquette'?",
+                        "answer": "Digital etiquette is important because it ensures that we treat others with respect online, helps prevent misunderstandings, cyberbullying, and creates a safe digital environment."
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "Write a dialogue between two friends discussing the importance of tree plantation.",
+                        "model_answer": "[Key Elements]: Greetings -> Discussing intense heat/climate change -> Suggesting trees as the solution (Oxygen, shade) -> Plan to plant trees in school/home -> Closing."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "DT_08_2024",
+        "subject_name": "Digital Technology (Digitaljukti)",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "ইন্টারনেটে প্রাপ্ত কোনো তথ্য সত্য না মিথ্যা তা যাচাই করার প্রক্রিয়াকে কী বলে?",
+                        "options": [
+                            "(ক) হ্যাকিং (Hacking)",
+                            "(খ) ফ্যাক্ট চেকিং (Fact Checking)",
+                            "(গ) ফিশিং (Phishing)",
+                            "(ঘ) ব্রাউজিং (Browsing)"
+                        ],
+                        "correct_answer": "(খ) ফ্যাক্ট চেকিং (Fact Checking)",
+                        "ai_extra_info": "Core Competency: Information Literacy involves critical evaluation of digital content."
+                    },
+                    {
+                        "id": 2,
+                        "question": "শক্তিশালী পাসওয়ার্ড (Strong Password) তৈরিতে কোনটি ব্যবহার করা উচিত?",
+                        "options": [
+                            "(ক) নিজের ডাকনাম",
+                            "(খ) ১ থেকে ৮ পর্যন্ত ক্রমিক সংখ্যা",
+                            "(গ) বড় ও ছোট হাতের অক্ষর, সংখ্যা ও প্রতীকের সংমিশ্রণ",
+                            "(ঘ) জন্ম তারিখ"
+                        ],
+                        "correct_answer": "(গ) বড় ও ছোট হাতের অক্ষর, সংখ্যা ও প্রতীকের সংমিশ্রণ",
+                        "ai_extra_info": "Security Tip: Avoid personal info. Use a mix of A-Z, a-z, 0-9, and symbols like @#$."
+                    },
+                    {
+                        "id": 3,
+                        "question": "'ডিজিটাল ফুটপ্রিন্ট' (Digital Footprint) কী?",
+                        "options": [
+                            "(ক) কম্পিউটারের উপর পায়ের ছাপ",
+                            "(খ) ইন্টারনেটে আমাদের কর্মকান্ডের রেকর্ড",
+                            "(গ) ডিজিটাল ক্যামেরা দিয়ে তোলা ছবি",
+                            "(ঘ) বায়োমেট্রিক আঙ্গুলের ছাপ"
+                        ],
+                        "correct_answer": "(খ) ইন্টারনেটে আমাদের কর্মকান্ডের রেকর্ড",
+                        "ai_extra_info": "Concept: Everything you post, like, or search leaves a permanent trail online."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "'ফিশিং' (Phishing) কী?",
+                        "answer": "ফিশিং হলো এক ধরণের সাইবার অপরাধ যেখানে প্রতারকরা বিশ্বস্ত প্রতিষ্ঠানের (যেমন ব্যাংক বা ফেসবুক) ছদ্মবেশে ইমেইল বা মেসেজ পাঠিয়ে ব্যবহারকারীর গোপন তথ্য (পাসওয়ার্ড, পিন) চুরি করার চেষ্টা করে।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "তথ্যের সত্যতা যাচাইয়ের দুটি উপায় লেখ।",
+                        "answer": "১. তথ্যটি একাধিক মূলধারার সংবাদমাধ্যমে প্রকাশিত হয়েছে কিনা তা যাচাই করা (Cross-checking)। ২. ছবির ক্ষেত্রে গুগলের 'রিভার্স ইমেজ সার্চ' ব্যবহার করা।"
+                    },
+                    {
+                        "id": 3,
+                        "question": "স্প্রেডশিট (Excel) ব্যবহার করে যোগ ও গড় নির্ণয়ের সূত্রগুলো লেখ।",
+                        "answer": "যোগ: =SUM(A1:A10) এবং গড়: =AVERAGE(A1:A10)।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "মনে করো তুমি ফেসবুকে একটি খবর দেখলে যে 'আগামীকাল থেকে দেশে ইন্টারনেট বন্ধ থাকবে'। এই খবরটি ভুয়া নাকি সত্য তা তুমি কীভাবে যাচাই করবে?",
+                        "model_answer": "ধাপ ১: খবরের সোর্স বা উৎস চেক করব (কোনো নামকরা পত্রিকা কিনা)। ধাপ ২: গুগলে সার্চ দিয়ে দেখব অন্য কোনো টিভিতে এই খবর দেখাচ্ছে কিনা। ধাপ ৩: সরকারি ওয়েবসাইট (যেমন BTRC) চেক করব। ধাপ ৪: খবরের তারিখ দেখব (পুরানো খবর কিনা)। ধাপ ৫: নিশ্চিত না হয়ে শেয়ার করব না।"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "HSS_08_2024",
+        "subject_name": "History and Social Science",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "বঙ্গবন্ধু শেখ মুজিবুর রহমান ঐতিহাসিক ৭ই মার্চের ভাষণ কোথায় দিয়েছিলেন?",
+                        "options": [
+                            "(ক) পল্টন ময়দানে",
+                            "(খ) রেসকোর্স ময়দানে",
+                            "(গ) সংসদ ভবনে",
+                            "(ঘ) ঢাকা বিশ্ববিদ্যালয়ে"
+                        ],
+                        "correct_answer": "(খ) রেসকোর্স ময়দানে",
+                        "ai_extra_info": "Historical Note: Currently known as Suhrawardy Udyan."
+                    },
+                    {
+                        "id": 2,
+                        "question": "'টেকসই উন্নয়ন লক্ষ্যমাত্রা' (SDG) এর মোট লক্ষ্য কয়টি?",
+                        "options": [
+                            "(ক) ১০টি",
+                            "(খ) ১৫টি",
+                            "(গ) ১৭টি",
+                            "(ঘ) ২১টি"
+                        ],
+                        "correct_answer": "(গ) ১৭টি",
+                        "ai_extra_info": "Context: Established by the UN in 2015 to be achieved by 2030."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "অপারেশন সার্চলাইট (Operation Searchlight) কী?",
+                        "answer": "১৯৭১ সালের ২৫শে মার্চ রাতে পাকিস্তানি সেনাবাহিনী নিরীহ বাঙালির ওপর যে বর্বরোচিত গণহত্যা চালায়, তার সাংকেতিক নাম ছিল 'অপারেশন সার্চলাইট'।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "বৈশ্বিক উষ্ণায়ন (Global Warming) রোধে দুটি করণীয় লেখ।",
+                        "answer": "১. বেশি করে গাছ লাগানো ও বনভূমি রক্ষা করা। ২. জীবাশ্ম জ্বালানির (তেল, গ্যাস) ব্যবহার কমিয়ে নবায়নযোগ্য শক্তি ব্যবহার করা।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "বাংলাদেশের মুক্তিযুদ্ধে মুজিবনগর সরকারের ভূমিকা বর্ণনা করো।",
+                        "model_answer": "১৯৭১ সালের ১০ এপ্রিল মুজিবনগর সরকার গঠিত হয়। এই সরকারের ভূমিকা ছিল অপরিসীম: ১. মুক্তিযুদ্ধকে সুসংগঠিতভাবে পরিচালনা করা। ২. আন্তর্জাতিক সম্প্রদায়ের সমর্থন আদায় করা। ৩. মুক্তিযোদ্ধা ও সাধারণ মানুষের মনোবল বৃদ্ধি করা। এই সরকারের নেতৃত্বেই বাংলাদেশ স্বাধীন হয়।"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "LL_08_2024",
+        "subject_name": "Life and Livelihood (Jibon o Jibika)",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "ব্যাংক একাউন্ট খোলার সময় কোন ফরমটি পূরণ করতে হয়?",
+                        "options": [
+                            "(ক) Admission Form",
+                            "(খ) KYC (Know Your Customer) Form",
+                            "(গ) Registration Form",
+                            "(ঘ) Challan Form"
+                        ],
+                        "correct_answer": "(খ) KYC (Know Your Customer) Form",
+                        "ai_extra_info": "Financial Literacy: KYC prevents fraud and money laundering."
+                    },
+                    {
+                        "id": 2,
+                        "question": "পারিবারিক বাজেট কেন প্রয়োজন?",
+                        "options": [
+                            "(ক) ঋণ করার জন্য",
+                            "(খ) আয় ও ব্যয়ের ভারসাম্য বজায় রাখার জন্য",
+                            "(গ) আয়কর ফাঁকি দেওয়ার জন্য",
+                            "(ঘ) ব্যাংকে টাকা জমানোর জন্য"
+                        ],
+                        "correct_answer": "(খ) আয় ও ব্যয়ের ভারসাম্য বজায় রাখার জন্য"
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "'সঞ্চয়' (Savings) বলতে কী বোঝ?",
+                        "answer": "আয়ের যে অংশ ভোগের বা খরচের পর অবশিষ্ট থাকে এবং ভবিষ্যতের প্রয়োজনে জমা রাখা হয়, তাকে সঞ্চয় বলে।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "আধুনিক কৃষিতে ড্রোনের একটি ব্যবহার লেখ।",
+                        "answer": "ফসলের ক্ষেত উপর থেকে পর্যবেক্ষণ করা এবং সঠিক স্থানে পরিমাণমতো কীটনাশক বা সার স্প্রে করতে ড্রোন ব্যবহার করা হয়।"
+                    },
+                    {
+                        "id": 3,
+                        "question": "[AI ADDED] সফট স্কিল (Soft Skills) বলতে কী বোঝ?",
+                        "answer": "সফট স্কিল হলো মানুষের আচরণগত দক্ষতা যেমন—যোগাযোগ দক্ষতা, দলগতভাবে কাজ করা, সময়ানুবর্তিতা এবং সমস্যা সমাধানের ক্ষমতা।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "২০ বছর পর পেশার জগতে কী পরিবর্তন আসতে পারে? নিজেকে প্রস্তুত করতে তুমি কী করবে?",
+                        "model_answer": "২০ বছর পর অনেক কায়িক শ্রমের কাজ রোবট বা এআই (AI) দিয়ে হবে। নতুন প্রযুক্তিনির্ভর পেশা তৈরি হবে। প্রস্তুতি: ১. প্রযুক্তির ব্যবহার শিখব (কোডিং/আইটি)। ২. সমস্যা সমাধানের দক্ষতা বাড়াব। ৩. নতুন কিছু শেখার মানসিকতা রাখব।"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "WB_08_2024",
+        "subject_name": "Wellbeing (Sastho Shurakkha)",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "সুষম খাদ্যে কয়টি উপাদান থাকে?",
+                        "options": [
+                            "(ক) ৪টি",
+                            "(খ) ৫টি",
+                            "(গ) ৬টি",
+                            "(ঘ) ৩টি"
+                        ],
+                        "correct_answer": "(গ) ৬টি",
+                        "ai_extra_info": "Components: Carbs, Protein, Fat, Vitamins, Minerals, Water."
+                    },
+                    {
+                        "id": 2,
+                        "question": "বয়ঃসন্ধিকালে শারীরিক পরিবর্তনের জন্য মূলত দায়ী কোনটি?",
+                        "options": [
+                            "(ক) ভিটামিন",
+                            "(খ) হরমোন",
+                            "(গ) এনজাইম",
+                            "(ঘ) শর্করা"
+                        ],
+                        "correct_answer": "(খ) হরমোন",
+                        "ai_extra_info": "Biology: Testosterone (boys) and Estrogen (girls) are key hormones."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "মানসিক স্বাস্থ্য ভালো রাখার দুটি উপায় লেখ।",
+                        "answer": "১. প্রতিদিন পর্যাপ্ত ঘুম (৭-৮ ঘন্টা) ও সুষম খাবার খাওয়া। ২. নিজের মনের কষ্ট বা দুশ্চিন্তা বিশ্বস্ত কারো সাথে (বাবা-মা/বন্ধু) শেয়ার করা।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "'বডি শেমিং' কেন করা উচিত নয়?",
+                        "answer": "বডি শেমিং মানুষের আত্মবিশ্বাস (Self-confidence) নষ্ট করে, তাকে সামাজিকভাবে হীনমন্যতায় ভোগায় এবং মানসিক স্বাস্থ্যের মারাত্মক ক্ষতি করে।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "খাদ্যে ভেজালের ক্ষতিকর দিক এবং প্রতিকার আলোচনা করো।",
+                        "model_answer": "ক্ষতিকর দিক: ১. লিভার ও কিডনি নষ্ট হতে পারে। ২. ক্যান্সার ও এজমার ঝুঁকি বাড়ে। ৩. শিশুদের মানসিক বিকাশ বাধাগ্রস্ত হয়। প্রতিকার: ১. বিএসটিআই (BSTI) অনুমোদিত পণ্য কেনা। ২. জনসচেতনতা বৃদ্ধি করা। ৩. প্রশাসনের নজরদারি বাড়ানো।"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "AC_08_2024",
+        "subject_name": "Art and Culture (Silpo o Sangskriti)",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "বাংলাদেশের লোকশিল্পের অন্যতম নিদর্শন কোনটি?",
+                        "options": [
+                            "(ক) নকশি কাঁথা",
+                            "(খ) কম্পিউটার",
+                            "(গ) প্লাস্টিক ফুল",
+                            "(ঘ) টাইলস"
+                        ],
+                        "correct_answer": "(ক) নকশি কাঁথা",
+                        "ai_extra_info": "Heritage: Nakshi Kantha represents the storytelling tradition of rural Bengal stitched into quilts."
+                    },
+                    {
+                        "id": 2,
+                        "question": "পহেলা বৈশাখের প্রধান আকর্ষণ কোনটি?",
+                        "options": [
+                            "(ক) মঙ্গল শোভাযাত্রা",
+                            "(খ) ঘুড়ি ওড়ানো",
+                            "(গ) নৌকা বাইচ",
+                            "(ঘ) পিঠা উৎসব"
+                        ],
+                        "correct_answer": "(ক) মঙ্গল শোভাযাত্রা",
+                        "ai_extra_info": "Recognition: Mangal Shobhajatra is recognized by UNESCO as an Intangible Cultural Heritage."
+                    },
+                    {
+                        "id": 3,
+                        "question": "শিল্পাচার্য জয়নুল আবেদিন কিসের জন্য বিখ্যাত?",
+                        "options": [
+                            "(ক) গান",
+                            "(খ) নাচ",
+                            "(গ) চিত্রকর্ম (দুর্ভিক্ষের ছবি)",
+                            "(ঘ) কবিতা"
+                        ],
+                        "correct_answer": "(গ) চিত্রকর্ম",
+                        "ai_extra_info": "History: He is the founding father of Bangladeshi modern art, famous for his 1943 Famine sketches."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "'নবান্ন' উৎসব কখন পালিত হয়?",
+                        "answer": "বাংলা অগ্রহায়ণ মাসে যখন নতুন ধান কাটা হয়, তখন কৃষকরা এই আনন্দ উদযাপন করতে নবান্ন উৎসব পালন করেন।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "টেরাকোটা (Terracotta) কী?",
+                        "answer": "টেরাকোটা হলো পোড়ামাটির তৈরি শিল্পকর্ম। কান্তজীউ মন্দিরে বা পাহাড়পুর বৌদ্ধ বিহারে এর চমৎকার নিদর্শন দেখা যায়।"
+                    },
+                    {
+                        "id": 3,
+                        "question": "[AI ADDED] বাংলাদেশের দুটি লোকসংগীতের ধারার নাম লেখ।",
+                        "answer": "১. ভাটিয়ালি (নদীমাতৃক গান) এবং ২. ভাওয়াইয়া (উত্তরবঙ্গের গান)।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "বাংলাদেশের সংস্কৃতিতে নদ-নদীর প্রভাব আলোচনা করো।",
+                        "model_answer": "বাংলাদেশ নদীমাতৃক দেশ। আমাদের সংস্কৃতিতে নদীর প্রভাব গভীর। ১. গান: নদীর স্রোতের সাথে তাল মিলিয়ে ভাটিয়ালি ও সারি গান তৈরি হয়েছে। ২. উৎসব: নৌকা বাইচ আমাদের ঐতিহ্যবাহী উৎসব। ৩. জীবিকা: জেলে সম্প্রদায়ের জীবন ও সংস্কৃতি নদীকে কেন্দ্র করেই গড়ে উঠেছে।"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "subject_id": "IS_08_2024",
+        "subject_name": "Islamic Studies (Islam Shikkha)",
+        "curriculum_year": "2024",
+        "content": [
+            {
+                "type": "MCQ",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "নিফাক শব্দের অর্থ কী?",
+                        "options": [
+                            "(ক) বিশ্বাস",
+                            "(খ) ভণ্ডামি/কপটতা",
+                            "(গ) সত্যবাদিতা",
+                            "(ঘ) দানশীলতা"
+                        ],
+                        "correct_answer": "(খ) ভণ্ডামি/কপটতা",
+                        "ai_extra_info": "Definition: A person who shows Islam outwardly but conceals disbelief inwardly is a Munafiq."
+                    },
+                    {
+                        "id": 2,
+                        "question": "যাকাত ইসলামের কততম স্তম্ভ?",
+                        "options": [
+                            "(ক) ২য়",
+                            "(খ) ৩য়",
+                            "(গ) ৪র্থ",
+                            "(ঘ) ৫ম"
+                        ],
+                        "correct_answer": "(খ) ৩য়",
+                        "ai_extra_info": "Pillars: 1. Kalima, 2. Salat, 3. Zakat, 4. Sawm, 5. Hajj."
+                    },
+                    {
+                        "id": 3,
+                        "question": "'আসমাউল হুসনা' কী?",
+                        "options": [
+                            "(ক) নবীদের নাম",
+                            "(খ) আল্লাহর গুণবাচক নামসমূহ",
+                            "(গ) ফেরেশতাদের নাম",
+                            "(ঘ) আসমানী কিতাব"
+                        ],
+                        "correct_answer": "(খ) আল্লাহর গুণবাচক নামসমূহ",
+                        "ai_extra_info": "Knowledge: There are 99 beautiful names of Allah (e.g., Ar-Rahman, Al-Malik)."
+                    }
+                ]
+            },
+            {
+                "type": "Short Answer",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "মুনাফিকের চিহ্ন তিনটি কী কী?",
+                        "answer": "রাসূল (সা.) এর হাদিস অনুযায়ী মুনাফিকের চিহ্ন ৩টি: ১. কথা বললে মিথ্যা বলে, ২. ওয়াদা করলে ভঙ্গ করে, এবং ৩. আমানত রাখলে খিয়ানত করে।"
+                    },
+                    {
+                        "id": 2,
+                        "question": "হযরত আইয়ুব (আ.) এর জীবনী থেকে আমরা কী শিখি?",
+                        "answer": "হযরত আইয়ুব (আ.) এর জীবনী থেকে আমরা চরম বিপদের সময়েও আল্লাহর ওপর ভরসা রাখা এবং 'সবর' বা ধৈর্য ধারণ করার শিক্ষা পাই।"
+                    },
+                    {
+                        "id": 3,
+                        "question": "[AI ADDED] 'হককুল ইবাদ' বা বান্দার হক বলতে কী বোঝ?",
+                        "answer": "মানুষের প্রতি মানুষের যে অধিকার ও কর্তব্য রয়েছে (যেমন- প্রতিবেশীর হক, পিতা-মাতার সেবা), তাকেই হককুল ইবাদ বলে। আল্লাহ এটি ক্ষমা করেন না যতক্ষণ না বান্দা নিজে ক্ষমা করে।"
+                    }
+                ]
+            },
+            {
+                "type": "Broad Question",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "যাকাতের আর্থ-সামাজিক গুরুত্ব আলোচনা করো।",
+                        "model_answer": "যাকাত হলো ইসলামের অর্থনৈতিক ব্যবস্থার মূল ভিত্তি। গুরুত্ব: ১. দারিদ্র্য বিমোচন: ধনীদের সম্পদ গরিবদের মধ্যে বন্টন হয়। ২. বৈষম্য হ্রাস: সমাজে ধনী-দরিদ্রের ব্যবধান কমে। ৩. সম্পদের পবিত্রতা: যাকাত দিলে অবশিষ্ট সম্পদ পবিত্র হয়। ৪. ভ্রাতৃত্ববোধ: এটি সমাজে সহমর্মিতা ও ভালোবাসার বন্ধন তৈরি করে।"
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,45 +1,106 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import AILearningModal from '../components/AILearningModal';
+import QuizResultsLoading from '../components/QuizResultsLoading';
 
 const Quiz: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<{[key: number]: string}>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: string }>({});
   const [quizFinished, setQuizFinished] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
-  const [mistakes, setMistakes] = useState<{[key: number]: boolean}>({});
+  const [mistakes, setMistakes] = useState<{ [key: number]: boolean }>({});
   const [quizData, setQuizData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [aiRemediation, setAiRemediation] = useState<string | null>(null);
   const [loadingRemediation, setLoadingRemediation] = useState(false);
+  const [finalScore, setFinalScore] = useState<number>(0);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
         // Get parameters from location state
-        const { subjects, difficulty, classLevel } = location.state || {};
-        
+        const { subjects, difficulty, classLevel, questionTypes } = location.state || {};
+
+        if (!subjects || subjects.length === 0) {
+          console.error('No subjects selected');
+          alert('Please select at least one subject');
+          setLoading(false);
+          return;
+        }
+
         // Get auth token
         const token = localStorage.getItem('token');
-        
+
+        if (!token) {
+          console.error('No auth token found');
+          alert('Please login first');
+          setLoading(false);
+          return;
+        }
+
+        // Use the first selected subject code
+        const selectedSubject = subjects[0];
+
+        console.log('Fetching quiz for:', { subject: selectedSubject, difficulty, classLevel, questionTypes });
+
+        // Build query parameters
+        let queryParams = `subject=${selectedSubject}&class_level=${classLevel}`;
+
+        // Add question types filter if specified
+        if (questionTypes && questionTypes.length > 0) {
+          queryParams += `&question_types=${questionTypes.join(',')}`;
+        }
+
+        console.log('API URL:', `/api/quizzes/?${queryParams}`);
+
         // Fetch quiz data from backend
-        const response = await fetch(`/api/quizzes/?subject=${subjects[0]}&difficulty=${difficulty}&class_level=${classLevel}`, {
+        const response = await fetch(`/api/quizzes/?${queryParams}`, {
           headers: {
-            'Authorization': `Token ${token}`
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
           }
         });
-        
+
+        console.log('Response status:', response.status);
+
         if (response.ok) {
           const data = await response.json();
-          
+
+          console.log('Fetched quiz data:', data);
+
+          // Handle paginated response from Django REST Framework
+          // The API returns: { count, next, previous, results: [...] }
+          let questions = data.results || data;
+
+          // Filter by question types on frontend if needed
+          if (questionTypes && questionTypes.length > 0) {
+            questions = questions.filter((q: any) => questionTypes.includes(q.question_type));
+          }
+
+          console.log('Number of questions after filtering:', questions.length);
+
+          if (!questions || questions.length === 0) {
+            console.error('No questions found for this subject');
+            alert(`No questions available for ${selectedSubject} in Class ${classLevel}. Please try another subject.`);
+            setQuizData(null);
+            setLoading(false);
+            return;
+          }
+
+          // Get subject name from the first question
+          const subjectName = questions[0]?.subject || selectedSubject;
+
           // Transform data to match expected format
           const transformedData = {
-            title: `${data[0]?.subject || 'Quiz'} - ${difficulty} Level`,
-            subject: data[0]?.subject || 'General',
-            difficulty: difficulty || 'Medium',
+            title: `${subjectName} Quiz - ${difficulty || 'All Levels'}`,
+            subject: subjectName,
+            difficulty: difficulty || 'All Levels',
             classLevel: classLevel || 9,
-            questions: data.map((quiz: any) => ({
+            questions: questions.map((quiz: any) => ({
               id: quiz.id,
               text: quiz.question_text,
               type: quiz.question_type || 'mcq',
@@ -47,57 +108,37 @@ const Quiz: React.FC = () => {
               correctAnswer: quiz.correct_answer
             }))
           };
-          
+
+          console.log('Transformed quiz data:', transformedData);
+          console.log('Total questions loaded:', transformedData.questions.length);
+
           setQuizData(transformedData);
         } else {
-          throw new Error('Failed to fetch quiz data');
+          const errorText = await response.text();
+          console.error('Failed to fetch quiz data:', response.status, errorText);
+          alert(`Failed to load quiz: ${response.status}. Please try again.`);
+          setQuizData(null);
         }
       } catch (error) {
         console.error('Error fetching quiz data:', error);
-        // Fallback to mock data if API fails
-        setQuizData({
-          title: "Mathematics Quiz - Algebra Basics",
-          subject: "Mathematics",
-          difficulty: "Medium",
-          classLevel: 9,
-          questions: [
-            {
-              id: 1,
-              text: "What is the value of x in the equation 2x + 5 = 15?",
-              type: "mcq",
-              options: ["x = 5", "x = 10", "x = 7.5", "x = 20"],
-              correctAnswer: "x = 5"
-            },
-            {
-              id: 2,
-              text: "Simplify the expression: 3(x + 4) - 2x",
-              type: "short",
-              correctAnswer: "x + 12"
-            },
-            {
-              id: 3,
-              text: "Explain the process of solving a quadratic equation using the quadratic formula.",
-              type: "long",
-              correctAnswer: "The quadratic formula is x = (-b ± √(b²-4ac)) / (2a). First, identify coefficients a, b, and c from the equation ax² + bx + c = 0. Then substitute these values into the formula and simplify."
-            }
-          ]
-        });
+        alert('Failed to connect to server. Please check your connection and try again.');
+        setQuizData(null);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchQuizData();
   }, [location.state]);
 
   // Timer effect
   React.useEffect(() => {
     if (timeLeft <= 0 || quizFinished) return;
-    
+
     const timer = setInterval(() => {
       setTimeLeft(prev => prev - 1);
     }, 1000);
-    
+
     return () => clearInterval(timer);
   }, [timeLeft, quizFinished]);
 
@@ -124,18 +165,45 @@ const Quiz: React.FC = () => {
   };
 
   const handleSubmitQuiz = async () => {
-    // Calculate score before finishing
-    const score = calculateScore();
-    
-    // Submit all attempts to backend
+    // Show loading screen immediately
+    setIsSubmitting(true);
+
+    // Calculate score and mistakes BEFORE setting quizFinished
+    const { score, mistakes: newMistakes } = calculateScore();
+
+    // Set the calculated values in state
+    setFinalScore(score);
+    setMistakes(newMistakes);
+
+    // Submit quiz results to backend for AI analysis
     try {
       const token = localStorage.getItem('token');
-      
-      // Submit individual attempts
+
+      // Call AI analysis endpoint
+      const analysisResponse = await fetch('/api/ai/quiz/analyze/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          quiz_data: quizData,
+          answers: selectedAnswers
+        })
+      });
+
+      if (analysisResponse.ok) {
+        const analysisData = await analysisResponse.json();
+        console.log('AI Analysis received:', analysisData);
+
+        // Store analysis data for display
+        setAiRemediation(analysisData.ai_analysis);
+      }
+
+      // Also submit individual attempts for tracking
       const attemptPromises = quizData.questions.map(async (question: any, index: number) => {
         const userAnswer = selectedAnswers[index] || '';
-        const isCorrect = userAnswer === question.correctAnswer;
-        
+
         return fetch('/api/quizzes/attempt/', {
           method: 'POST',
           headers: {
@@ -148,23 +216,10 @@ const Quiz: React.FC = () => {
           })
         });
       });
-      
+
       await Promise.all(attemptPromises);
-      
-      // Submit overall results
-      await fetch('/api/quizzes/submit-results/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
-        },
-        body: JSON.stringify({
-          score: score,
-          mistakes: mistakes
-        })
-      });
-      
-      // Refresh user data to update points
+
+      // Update user points
       const userResponse = await fetch('/api/accounts/profile/', {
         headers: {
           'Authorization': `Token ${token}`
@@ -176,15 +231,21 @@ const Quiz: React.FC = () => {
       }
     } catch (error) {
       console.error('Error submitting quiz results:', error);
+    } finally {
+      // Add a minimum delay to show the loading animation (at least 1.5 seconds)
+      setTimeout(() => {
+        setIsSubmitting(false);
+        // Set quiz finished AFTER all async operations complete
+        // This prevents infinite re-render loop
+        setQuizFinished(true);
+      }, 1500);
     }
-    
-    setQuizFinished(true);
   };
 
-  const handleExitQuiz = () => {
-    if (window.confirm('Are you sure you want to exit? Your progress will be saved.')) {
+  const handleExitQuiz = async () => {
+    if (window.confirm('Are you sure you want to exit? Your progress will be analyzed.')) {
       // Submit current progress before exiting
-      handleSubmitQuiz();
+      await handleSubmitQuiz();
     }
   };
 
@@ -196,8 +257,8 @@ const Quiz: React.FC = () => {
 
   const calculateScore = () => {
     let correct = 0;
-    const newMistakes: {[key: number]: boolean} = {};
-    
+    const newMistakes: { [key: number]: boolean } = {};
+
     // Make sure we're checking all questions that were answered
     Object.keys(selectedAnswers).forEach((key) => {
       const index = parseInt(key);
@@ -210,52 +271,76 @@ const Quiz: React.FC = () => {
         }
       }
     });
-    
-    setMistakes(newMistakes);
+
     const score = quizData.questions.length > 0 ? Math.round((correct / quizData.questions.length) * 100) : 0;
     console.log('Calculated score:', score, 'Correct:', correct, 'Total:', quizData.questions.length);
-    return score;
+
+    // Return both score and mistakes without setting state
+    return { score, mistakes: newMistakes };
   };
 
   const handleImproveWithAI = async () => {
-    // Collect wrong answers for AI remediation
-    const wrongAnswers = Object.keys(mistakes).map(index => ({
-      question: quizData.questions[parseInt(index)].text,
-      userAnswer: selectedAnswers[parseInt(index)],
-      correctAnswer: quizData.questions[parseInt(index)].correctAnswer
-    }));
-    
+    // Open modal immediately
+    setShowAIModal(true);
+    setLoadingRemediation(true);
+    setAiRemediation(null);
+
+    // Collect wrong answers for AI personalized learning
+    const wrongAnswers = Object.keys(mistakes).map(index => {
+      const idx = parseInt(index);
+      return {
+        question: quizData.questions[idx].text,
+        userAnswer: selectedAnswers[idx],
+        correctAnswer: quizData.questions[idx].correctAnswer,
+        options: quizData.questions[idx].options || []
+      };
+    });
+
     if (wrongAnswers.length === 0) {
-      alert('Great job! You got all questions correct. No remediation needed.');
+      setAiRemediation('অসাধারণ! আপনি সব প্রশ্নের সঠিক উত্তর দিয়েছেন। কোনো শিক্ষা পরিকল্পনার প্রয়োজন নেই। চালিয়ে যান!');
+      setLoadingRemediation(false);
       return;
     }
-    
-    setLoadingRemediation(true);
-    
-    // Send to backend for AI remediation
+
+    // Send to backend for AI personalized learning
     try {
       const token = localStorage.getItem('token');
-      
-      const response = await fetch('/api/ai/remedial-learning/', {
+
+      console.log('Sending learning request:', {
+        wrong_answers_count: wrongAnswers.length,
+        subject: quizData.subject,
+        class_level: quizData.classLevel
+      });
+
+      const response = await fetch('/api/ai/quiz/learn/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Token ${token}`
         },
         body: JSON.stringify({
-          wrong_answers: wrongAnswers
+          wrong_answers: wrongAnswers,
+          subject: quizData.subject,
+          class_level: quizData.classLevel
         })
       });
-      
+
+      console.log('Learning response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
-        setAiRemediation(data.explanation);
+        console.log('Learning plan received:', data);
+        setAiRemediation(data.learning_plan);
       } else {
-        throw new Error('Failed to get AI remediation');
+        // Get error details from response
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Learning API error:', errorData);
+        throw new Error(errorData.error || 'Failed to get personalized learning plan');
       }
     } catch (error) {
-      console.error('AI Remediation Error:', error);
-      setAiRemediation('Sorry, we encountered an error generating your personalized learning recommendations. Please try again later.');
+      console.error('AI Learning Error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setAiRemediation(`দুঃখিত, আপনার ব্যক্তিগত শিক্ষা পরিকল্পনা তৈরি করতে সমস্যা হয়েছে।\n\nত্রুটি: ${errorMessage}\n\nঅনুগ্রহ করে আবার চেষ্টা করুন বা পরে চেষ্টা করুন।`);
     } finally {
       setLoadingRemediation(false);
     }
@@ -277,8 +362,8 @@ const Quiz: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-500 dark:text-red-400">Failed to load quiz data</p>
-          <Link 
-            to="/quiz/select" 
+          <Link
+            to="/quiz/select"
             className="mt-4 inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
           >
             Try Again
@@ -291,11 +376,10 @@ const Quiz: React.FC = () => {
   const currentQ = quizData.questions[currentQuestion];
 
   if (quizFinished) {
-    console.log('Quiz finished, calculating score...');
+    console.log('Quiz finished, displaying results...');
     console.log('Selected answers:', selectedAnswers);
     console.log('Quiz data:', quizData);
-    const score = calculateScore();
-    console.log('Final score:', score);
+    console.log('Final score:', finalScore);
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
@@ -307,11 +391,11 @@ const Quiz: React.FC = () => {
                 <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
                   {quizData.title}
                 </p>
-                
+
                 <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-blue-100 dark:bg-blue-900 mb-6">
-                  <span className="text-4xl font-bold text-blue-600 dark:text-blue-300">{score}%</span>
+                  <span className="text-4xl font-bold text-blue-600 dark:text-blue-300">{finalScore}%</span>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                   <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Questions</p>
@@ -336,7 +420,7 @@ const Quiz: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Detailed Results */}
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-8">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Detailed Results</h3>
@@ -345,7 +429,7 @@ const Quiz: React.FC = () => {
                       const userAnswer = selectedAnswers[index];
                       const isCorrect = userAnswer === question.correctAnswer;
                       const wasAnswered = selectedAnswers.hasOwnProperty(index);
-                      
+
                       return (
                         <div key={question.id} className={`p-4 rounded-lg ${isCorrect ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
                           <div className="flex justify-between items-start mb-2">
@@ -372,64 +456,40 @@ const Quiz: React.FC = () => {
                     })}
                   </div>
                 </div>
-                
-                {/* AI Remediation Section */}
-                {aiRemediation && (
-                  <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mt-8">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-xl font-bold text-blue-800 dark:text-blue-200 flex items-center">
-                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                        AI Learning Recommendations
-                      </h3>
-                      <button
-                        onClick={() => setAiRemediation(null)}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="prose dark:prose-invert max-w-none">
-                      <div className="whitespace-pre-wrap text-blue-900 dark:text-blue-100">
-                        {aiRemediation}
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
-                  <button 
+                  <button
                     onClick={() => {
                       setCurrentQuestion(0);
                       setSelectedAnswers({});
                       setQuizFinished(false);
                       setTimeLeft(300);
                       setAiRemediation(null);
+                      setFinalScore(0);
+                      setMistakes({});
+                      setShowAIModal(false);
                     }}
                     className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
                   >
                     Retake Quiz
                   </button>
-                  <Link 
-                    to="/dashboard" 
+                  <Link
+                    to="/dashboard"
                     className="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg transition text-center"
                   >
                     Back to Dashboard
                   </Link>
-                  {Object.keys(mistakes).length > 0 && !aiRemediation && (
-                    <button 
+                  {Object.keys(mistakes).length > 0 && (
+                    <button
                       onClick={handleImproveWithAI}
-                      disabled={loadingRemediation}
-                      className={`px-6 py-3 font-medium rounded-lg transition ${
-                        loadingRemediation
-                          ? 'bg-gray-400 cursor-not-allowed text-white'
-                          : 'bg-green-600 hover:bg-green-700 text-white'
-                      }`}
+                      className="px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-medium rounded-lg transition shadow-lg hover:shadow-xl transform hover:scale-105"
                     >
-                      {loadingRemediation ? 'Loading...' : 'Improve with AI'}
+                      <span className="flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        📚 Learn from Mistakes
+                      </span>
                     </button>
                   )}
                 </div>
@@ -437,6 +497,14 @@ const Quiz: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* AI Learning Modal */}
+        <AILearningModal
+          isOpen={showAIModal}
+          onClose={() => setShowAIModal(false)}
+          learningPlan={aiRemediation || ''}
+          isLoading={loadingRemediation}
+        />
       </div>
     );
   }
@@ -464,10 +532,10 @@ const Quiz: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full" 
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
                 style={{ width: `${((currentQuestion + 1) / quizData.questions.length) * 100}%` }}
               ></div>
             </div>
@@ -476,44 +544,48 @@ const Quiz: React.FC = () => {
               <span>{Math.round(((currentQuestion + 1) / quizData.questions.length) * 100)}% Complete</span>
             </div>
           </div>
-          
+
           {/* Question Area */}
           <div className="px-6 py-8 sm:p-10">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
               {currentQ.text}
             </h2>
-            
+
             {currentQ.type === 'mcq' && (
               <div className="space-y-4">
-                {currentQ.options?.map((option, index) => (
-                  <div 
-                    key={index}
-                    onClick={() => handleAnswerSelect(option)}
-                    className={`p-4 border rounded-lg cursor-pointer transition ${
-                      selectedAnswers[currentQuestion] === option
+                {currentQ.options && Array.isArray(currentQ.options) && currentQ.options.length > 0 ? (
+                  currentQ.options.map((option: string, index: number) => (
+                    <div
+                      key={index}
+                      onClick={() => handleAnswerSelect(option)}
+                      className={`p-4 border rounded-lg cursor-pointer transition ${selectedAnswers[currentQuestion] === option
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
                         : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <div className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${
-                        selectedAnswers[currentQuestion] === option
+                        }`}
+                    >
+                      <div className="flex items-center">
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${selectedAnswers[currentQuestion] === option
                           ? 'border-blue-500 bg-blue-500'
                           : 'border-gray-400 dark:border-gray-500'
-                      }`}>
-                        {selectedAnswers[currentQuestion] === option && (
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-                          </svg>
-                        )}
+                          }`}>
+                          {selectedAnswers[currentQuestion] === option && (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-gray-900 dark:text-white">{option}</span>
                       </div>
-                      <span className="text-gray-900 dark:text-white">{option}</span>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-red-500 dark:text-red-400 p-4 border border-red-300 rounded-lg">
+                    No options available for this question. Please contact support.
                   </div>
-                ))}
+                )}
               </div>
             )}
-            
+
             {currentQ.type === 'short' && (
               <div>
                 <textarea
@@ -525,7 +597,7 @@ const Quiz: React.FC = () => {
                 />
               </div>
             )}
-            
+
             {currentQ.type === 'long' && (
               <div>
                 <textarea
@@ -538,7 +610,7 @@ const Quiz: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           {/* Navigation */}
           <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between gap-4">
             <div>
@@ -562,11 +634,10 @@ const Quiz: React.FC = () => {
                 <button
                   onClick={handleNextQuestion}
                   disabled={!selectedAnswers[currentQuestion]}
-                  className={`px-5 py-2 rounded-md shadow-sm text-sm font-medium text-white ${
-                    selectedAnswers[currentQuestion]
-                      ? 'bg-blue-600 hover:bg-blue-700'
-                      : 'bg-gray-400 cursor-not-allowed'
-                  }`}
+                  className={`px-5 py-2 rounded-md shadow-sm text-sm font-medium text-white ${selectedAnswers[currentQuestion]
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-gray-400 cursor-not-allowed'
+                    }`}
                 >
                   Next Question
                 </button>
@@ -574,11 +645,10 @@ const Quiz: React.FC = () => {
                 <button
                   onClick={handleSubmitQuiz}
                   disabled={!selectedAnswers[currentQuestion]}
-                  className={`px-5 py-2 rounded-md shadow-sm text-sm font-medium text-white ${
-                    selectedAnswers[currentQuestion]
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : 'bg-gray-400 cursor-not-allowed'
-                  }`}
+                  className={`px-5 py-2 rounded-md shadow-sm text-sm font-medium text-white ${selectedAnswers[currentQuestion]
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-gray-400 cursor-not-allowed'
+                    }`}
                 >
                   Submit Quiz
                 </button>
@@ -587,6 +657,9 @@ const Quiz: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Results Loading Screen */}
+      <QuizResultsLoading isVisible={isSubmitting} />
     </div>
   );
 };
