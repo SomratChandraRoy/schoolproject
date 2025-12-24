@@ -97,6 +97,10 @@ class UserPerformance(models.Model):
     correct_attempts = models.IntegerField(default=0)
     last_updated = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        unique_together = ['user', 'subject']
+        ordering = ['-last_updated']
+    
     def update_rating(self, score_percentage, opponent_rating=1000):
         """Update Elo rating based on performance"""
         # Calculate expected score
@@ -134,3 +138,111 @@ class UserPerformance(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.subject} ({self.difficulty}) - Rating: {self.elo_rating}"
+
+
+class UserQuizProgress(models.Model):
+    """Track user's progress through static and AI-generated questions"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=50, choices=Quiz.SUBJECT_CHOICES)
+    class_level = models.IntegerField(choices=[(i, f'Class {i}') for i in range(6, 13)])
+    
+    # Static questions progress
+    static_questions_completed = models.IntegerField(default=0)
+    total_static_questions = models.IntegerField(default=0)
+    static_completion_percentage = models.FloatField(default=0.0)
+    
+    # AI questions progress
+    ai_questions_answered = models.IntegerField(default=0)
+    ai_questions_correct = models.IntegerField(default=0)
+    
+    # Current difficulty level
+    current_difficulty = models.CharField(
+        max_length=10,
+        choices=Quiz.DIFFICULTY_CHOICES,
+        default='easy'
+    )
+    
+    # Status
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('static', 'Completing Static Questions'),
+            ('ai_active', 'AI Questions Active'),
+            ('finished', 'All Questions Finished')
+        ],
+        default='static'
+    )
+    
+    # Timestamps
+    started_at = models.DateTimeField(auto_now_add=True)
+    last_activity = models.DateTimeField(auto_now=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['user', 'subject', 'class_level']
+        ordering = ['-last_activity']
+    
+    def update_progress(self):
+        """Update completion percentage and status"""
+        if self.total_static_questions > 0:
+            self.static_completion_percentage = (
+                self.static_questions_completed / self.total_static_questions
+            ) * 100
+        
+        # Check if 90% of static questions completed
+        if self.static_completion_percentage >= 90 and self.status == 'static':
+            self.status = 'ai_active'
+        
+        # Check if all static questions completed
+        if self.static_questions_completed >= self.total_static_questions:
+            self.status = 'finished'
+            if not self.finished_at:
+                from django.utils import timezone
+                self.finished_at = timezone.now()
+        
+        self.save()
+    
+    def should_generate_ai_questions(self):
+        """Check if AI should generate more questions"""
+        return self.status == 'ai_active' or self.static_completion_percentage >= 90
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.subject} - {self.static_completion_percentage:.1f}% - {self.status}"
+
+
+class AIGeneratedQuestion(models.Model):
+    """Store AI-generated questions for users"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=50, choices=Quiz.SUBJECT_CHOICES)
+    class_level = models.IntegerField(choices=[(i, f'Class {i}') for i in range(6, 13)])
+    difficulty = models.CharField(max_length=10, choices=Quiz.DIFFICULTY_CHOICES)
+    
+    question_text = models.TextField()
+    question_type = models.CharField(
+        max_length=10,
+        choices=[('mcq', 'Multiple Choice'), ('short', 'Short Answer'), ('long', 'Long Answer')],
+        default='mcq'
+    )
+    options = models.JSONField(default=dict)
+    correct_answer = models.TextField()
+    explanation = models.TextField(blank=True)
+    
+    # Status
+    is_answered = models.BooleanField(default=False)
+    user_answer = models.TextField(blank=True)
+    is_correct = models.BooleanField(null=True, blank=True)
+    
+    # Generation info
+    generated_at = models.DateTimeField(auto_now_add=True)
+    answered_at = models.DateTimeField(null=True, blank=True)
+    generation_batch = models.IntegerField(default=1)  # Track which batch this question belongs to
+    
+    class Meta:
+        ordering = ['generated_at']
+        indexes = [
+            models.Index(fields=['user', 'subject', 'is_answered']),
+        ]
+    
+    def __str__(self):
+        status = "Answered" if self.is_answered else "Pending"
+        return f"{self.user.username} - {self.subject} - {status} - {self.question_text[:50]}..."

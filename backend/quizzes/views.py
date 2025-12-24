@@ -45,6 +45,122 @@ class QuizListCreateView(generics.ListCreateAPIView):
         
         return queryset.order_by('-created_at')  # Show newest first
     
+    def list(self, request, *args, **kwargs):
+        """Override list to add fallback AI generation when no questions available"""
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Get query parameters for fallback
+        subject = request.query_params.get('subject')
+        class_level = request.query_params.get('class_level')
+        question_types = request.query_params.get('question_types', 'mcq')
+        
+        print(f"[QuizList] Filtering: subject={subject}, class={class_level}, types={question_types}")
+        print(f"[QuizList] Initial queryset count: {queryset.count()}")
+        
+        # Parse question types
+        types_list = [t.strip() for t in question_types.split(',')]
+        
+        # Validate MCQ questions have proper options (only if MCQ is in the selected types)
+        if 'mcq' in types_list:
+            valid_mcq_ids = []
+            invalid_mcq_ids = []
+            
+            for q in queryset.filter(question_type='mcq'):
+                # Check if options is a valid dict with keys
+                if isinstance(q.options, dict) and len(q.options) >= 2:
+                    valid_mcq_ids.append(q.id)
+                else:
+                    invalid_mcq_ids.append(q.id)
+            
+            print(f"[QuizList] MCQ validation: {len(valid_mcq_ids)} valid, {len(invalid_mcq_ids)} invalid")
+            
+            # Remove invalid MCQ questions
+            if invalid_mcq_ids:
+                queryset = queryset.exclude(id__in=invalid_mcq_ids)
+        
+        # Now filter by question types (this was already done in get_queryset, but let's be explicit)
+        queryset = queryset.filter(question_type__in=types_list)
+        
+        print(f"[QuizList] After filtering by types {types_list}: {queryset.count()} questions")
+        
+        # Check if we have enough questions (threshold: 5)
+        question_count = queryset.count()
+        
+        if question_count < 5 and subject and class_level:
+            print(f"[QuizList] Only {question_count} questions found, triggering AI generation...")
+            
+            # Use fallback AI generation
+            from ai.question_generator import get_question_generator
+            
+            generator = get_question_generator()
+            primary_type = types_list[0]  # Use first selected type
+            
+            # Generate more questions to reach at least 10 total
+            questions_needed = max(10 - question_count, 5)
+            
+            print(f"[QuizList] Generating {questions_needed} AI questions of type '{primary_type}'...")
+            
+            success, ai_questions, error = generator.generate_batch_questions(
+                user=request.user,
+                subject=subject,
+                class_level=int(class_level),
+                difficulty='medium',
+                question_type=primary_type,
+                batch_size=questions_needed
+            )
+            
+            if success:
+                print(f"[QuizList] Successfully generated {len(ai_questions)} AI questions")
+                
+                # Convert AIGeneratedQuestion to response format
+                ai_data = []
+                for q in ai_questions:
+                    ai_data.append({
+                        'id': f'ai_{q.id}',  # Prefix with 'ai_' to distinguish
+                        'subject': q.subject,
+                        'class_target': q.class_level,
+                        'difficulty': q.difficulty,
+                        'question_text': q.question_text,
+                        'question_type': q.question_type,
+                        'options': q.options,
+                        'correct_answer': q.correct_answer,
+                        'explanation': q.explanation
+                    })
+                
+                # Combine database questions with AI questions
+                page = self.paginate_queryset(queryset)
+                if page is not None:
+                    serializer = self.get_serializer(page, many=True)
+                    db_data = serializer.data
+                else:
+                    serializer = self.get_serializer(queryset, many=True)
+                    db_data = serializer.data
+                
+                combined_data = db_data + ai_data
+                
+                print(f"[QuizList] Returning {len(combined_data)} total questions ({len(db_data)} DB + {len(ai_data)} AI)")
+                
+                return Response({
+                    'count': len(combined_data),
+                    'next': None,
+                    'previous': None,
+                    'results': combined_data,
+                    'source': 'mixed' if db_data else 'ai_generated',
+                    'message': f'AI generated {len(ai_data)} questions' if ai_data else None
+                })
+            else:
+                print(f"[QuizList] AI generation failed: {error}")
+                # Continue with database questions only
+        
+        # Standard pagination response
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
     def perform_create(self, serializer):
         # Only teachers and admins can create quizzes
         if self.request.user.is_teacher or self.request.user.is_admin:
@@ -101,11 +217,28 @@ class QuizAttemptView(APIView):
                 user.save()
             
             # Update user performance tracking
-            performance, created = UserPerformance.objects.get_or_create(
-                user=user,
-                subject=quiz.subject,
-                defaults={'difficulty': 'easy'}
-            )
+            # Handle potential duplicates by using filter().first()
+            try:
+                performance, created = UserPerformance.objects.get_or_create(
+                    user=user,
+                    subject=quiz.subject,
+                    defaults={'difficulty': 'easy'}
+                )
+            except UserPerformance.MultipleObjectsReturned:
+                # If duplicates exist, use the most recent one and delete others
+                performances = UserPerformance.objects.filter(
+                    user=user,
+                    subject=quiz.subject
+                ).order_by('-last_updated')
+                
+                performance = performances.first()
+                created = False
+                
+                # Delete duplicates (keep the first one)
+                duplicate_ids = [p.id for p in performances[1:]]
+                if duplicate_ids:
+                    UserPerformance.objects.filter(id__in=duplicate_ids).delete()
+                    print(f"[QuizAttempt] Cleaned up {len(duplicate_ids)} duplicate UserPerformance records")
             
             # Update performance stats
             performance.total_attempts += 1

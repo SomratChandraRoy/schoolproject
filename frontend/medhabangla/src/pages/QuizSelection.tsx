@@ -20,6 +20,7 @@ const QuizSelection: React.FC = () => {
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('medium');
     const [selectedQuestionTypes, setSelectedQuestionTypes] = useState<string[]>(['mcq']); // Default to MCQ
+    const [adaptiveMode, setAdaptiveMode] = useState<boolean>(false); // Adaptive quiz mode
     const [userClass, setUserClass] = useState<number>(9);
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [loading, setLoading] = useState(true);
@@ -127,14 +128,25 @@ const QuizSelection: React.FC = () => {
             return;
         }
 
-        navigate('/quiz', {
-            state: {
-                subjects: selectedSubjects,
-                difficulty: selectedDifficulty,
-                classLevel: userClass,
-                questionTypes: selectedQuestionTypes
-            }
-        });
+        // Navigate to adaptive or regular quiz based on mode
+        if (adaptiveMode) {
+            navigate('/quiz/adaptive', {
+                state: {
+                    subject: selectedSubjects[0], // Adaptive mode uses single subject
+                    classLevel: userClass,
+                    questionType: selectedQuestionTypes[0] // Use first selected type
+                }
+            });
+        } else {
+            navigate('/quiz', {
+                state: {
+                    subjects: selectedSubjects,
+                    difficulty: selectedDifficulty,
+                    classLevel: userClass,
+                    questionTypes: selectedQuestionTypes
+                }
+            });
+        }
     };
 
     return (
@@ -261,6 +273,7 @@ const QuizSelection: React.FC = () => {
                                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg'
                                             : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
                                             }`}
+                                        disabled={adaptiveMode}
                                     >
                                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
                                             {difficulty.name}
@@ -270,6 +283,68 @@ const QuizSelection: React.FC = () => {
                                         </p>
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Adaptive Mode Toggle */}
+                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg shadow-md p-8 mb-8 border-2 border-purple-200 dark:border-purple-800">
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <span className="text-3xl">🤖</span>
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                            Adaptive Quiz Mode
+                                        </h2>
+                                        <span className="px-3 py-1 bg-purple-500 text-white text-xs font-bold rounded-full">
+                                            NEW
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                                        Experience intelligent, progressive learning with AI-powered questions that adapt to your performance!
+                                    </p>
+                                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-green-500">✓</span>
+                                            <span>Start with static questions from our database</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-green-500">✓</span>
+                                            <span>At 90% completion, AI generates personalized questions</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-green-500">✓</span>
+                                            <span>Difficulty increases based on your performance</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-green-500">✓</span>
+                                            <span>Continuous AI generation keeps you challenged</span>
+                                        </div>
+                                    </div>
+                                    {adaptiveMode && (
+                                        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                                ℹ️ <strong>Note:</strong> Adaptive mode works with a single subject and question type. Difficulty adjusts automatically.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="ml-6">
+                                    <button
+                                        onClick={() => setAdaptiveMode(!adaptiveMode)}
+                                        className={`relative inline-flex h-12 w-24 items-center rounded-full transition-colors ${adaptiveMode
+                                                ? 'bg-purple-600'
+                                                : 'bg-gray-300 dark:bg-gray-600'
+                                            }`}
+                                    >
+                                        <span
+                                            className={`inline-block h-10 w-10 transform rounded-full bg-white shadow-lg transition-transform ${adaptiveMode ? 'translate-x-12' : 'translate-x-1'
+                                                }`}
+                                        />
+                                    </button>
+                                    <p className="text-center mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {adaptiveMode ? 'ON' : 'OFF'}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 

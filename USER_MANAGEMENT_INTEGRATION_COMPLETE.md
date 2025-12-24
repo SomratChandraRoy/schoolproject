@@ -322,4 +322,5 @@ The user management system is fully integrated into the MedhaBangla platform. Ad
 - ✅ Production-ready code
 
 The platform now has enterprise-level user management capabilities while maintaining its focus on providing quality education to Bangladeshi students.
-add a feauters all user have a staticquestion information fields (default=unfinished)  . when a user start quiz any subject and he complete all our static question 90 ( like our database fixed class subject question)  her staticquestion information filed convert to "finished" and then ai automaticaly 
+
+add a feature , when any class , any subject question are not available in database so ai create and serve to user for attempt quiz . I found a error when class 9 student select Bangla and any subject and start qu NCiz he see 

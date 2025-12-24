@@ -12,6 +12,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Quiz from './pages/Quiz';
 import QuizSelection from './pages/QuizSelection';
+import AdaptiveQuiz from './pages/AdaptiveQuiz';
 import Books from './pages/Books';
 import Games from './pages/Games';
 import Leaderboard from './pages/Leaderboard';
@@ -97,6 +98,7 @@ function App() {
 
               <Route path="/quiz/select" element={<QuizSelection />} />
               <Route path="/quiz" element={<Quiz />} />
+              <Route path="/quiz/adaptive" element={<AdaptiveQuiz />} />
               <Route path="/books" element={<Books />} />
               <Route path="/pdfd" element={<Pdfd />} />
 

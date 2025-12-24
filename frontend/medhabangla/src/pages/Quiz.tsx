@@ -76,7 +76,25 @@ const Quiz: React.FC = () => {
           // The API returns: { count, next, previous, results: [...] }
           let questions = data.results || data;
 
-          // Filter by question types on frontend if needed
+          // Additional validation: Filter out MCQ questions without proper options
+          questions = questions.filter((q: any) => {
+            if (q.question_type === 'mcq') {
+              // Check if options is a valid object with at least 2 options
+              if (!q.options || typeof q.options !== 'object') {
+                console.warn(`Question ${q.id} has invalid options:`, q.options);
+                return false;
+              }
+              const optionKeys = Object.keys(q.options);
+              if (optionKeys.length < 2) {
+                console.warn(`Question ${q.id} has too few options:`, optionKeys.length);
+                return false;
+              }
+              return true;
+            }
+            return true; // Keep non-MCQ questions
+          });
+
+          // Filter by question types on frontend as additional validation
           if (questionTypes && questionTypes.length > 0) {
             questions = questions.filter((q: any) => questionTypes.includes(q.question_type));
           }
@@ -84,8 +102,15 @@ const Quiz: React.FC = () => {
           console.log('Number of questions after filtering:', questions.length);
 
           if (!questions || questions.length === 0) {
-            console.error('No questions found for this subject');
-            alert(`No questions available for ${selectedSubject} in Class ${classLevel}. Please try another subject.`);
+            console.error('No valid questions found for this subject');
+
+            // Show helpful message based on source
+            const source = data.source || 'database';
+            const message = source === 'ai_generated'
+              ? `AI generated questions for ${selectedSubject} in Class ${classLevel}, but they need validation. Please contact support.`
+              : `No questions available for ${selectedSubject} in Class ${classLevel}. AI is generating questions for you...`;
+
+            alert(message);
             setQuizData(null);
             setLoading(false);
             return;
@@ -93,6 +118,11 @@ const Quiz: React.FC = () => {
 
           // Get subject name from the first question
           const subjectName = questions[0]?.subject || selectedSubject;
+
+          // Show message if AI generated
+          if (data.source === 'ai_generated' || data.source === 'mixed') {
+            console.log('✨ AI generated questions included in this quiz');
+          }
 
           // Transform data to match expected format
           const transformedData = {
@@ -104,7 +134,7 @@ const Quiz: React.FC = () => {
               id: quiz.id,
               text: quiz.question_text,
               type: quiz.question_type || 'mcq',
-              options: quiz.options || [],
+              options: quiz.options || {},
               correctAnswer: quiz.correct_answer
             }))
           };
@@ -553,28 +583,29 @@ const Quiz: React.FC = () => {
 
             {currentQ.type === 'mcq' && (
               <div className="space-y-4">
-                {currentQ.options && Array.isArray(currentQ.options) && currentQ.options.length > 0 ? (
-                  currentQ.options.map((option: string, index: number) => (
+                {currentQ.options && typeof currentQ.options === 'object' && Object.keys(currentQ.options).length > 0 ? (
+                  Object.entries(currentQ.options).map(([key, value]: [string, any]) => (
                     <div
-                      key={index}
-                      onClick={() => handleAnswerSelect(option)}
-                      className={`p-4 border rounded-lg cursor-pointer transition ${selectedAnswers[currentQuestion] === option
+                      key={key}
+                      onClick={() => handleAnswerSelect(value)}
+                      className={`p-4 border rounded-lg cursor-pointer transition ${selectedAnswers[currentQuestion] === value
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
                         : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                         }`}
                     >
                       <div className="flex items-center">
-                        <div className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${selectedAnswers[currentQuestion] === option
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${selectedAnswers[currentQuestion] === value
                           ? 'border-blue-500 bg-blue-500'
                           : 'border-gray-400 dark:border-gray-500'
                           }`}>
-                          {selectedAnswers[currentQuestion] === option && (
+                          {selectedAnswers[currentQuestion] === value && (
                             <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
                             </svg>
                           )}
                         </div>
-                        <span className="text-gray-900 dark:text-white">{option}</span>
+                        <span className="text-gray-900 dark:text-white font-medium mr-2">{key}.</span>
+                        <span className="text-gray-900 dark:text-white">{value}</span>
                       </div>
                     </div>
                   ))

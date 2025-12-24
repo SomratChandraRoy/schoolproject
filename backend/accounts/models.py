@@ -30,6 +30,15 @@ class User(AbstractUser):
     current_streak = models.PositiveIntegerField(default=0)    # Consecutive days studied
     longest_streak = models.PositiveIntegerField(default=0)   # Longest study streak
     
+    # Quiz progress tracking
+    static_question_status = models.CharField(
+        max_length=20,
+        choices=[('unfinished', 'Unfinished'), ('finished', 'Finished')],
+        default='unfinished'
+    )
+    static_questions_completed = models.IntegerField(default=0)  # Count of static questions completed
+    total_static_questions = models.IntegerField(default=0)  # Total static questions for user's class
+    
     def __str__(self):
         return self.username
 
