@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import UserManagement from '../components/admin/UserManagement';
 
 interface User {
   id: number;
@@ -51,7 +52,7 @@ const AdminDashboard: React.FC = () => {
         navigate('/dashboard');
       }
     }
-    
+
     fetchAdminData();
   }, [navigate]);
 
@@ -110,7 +111,7 @@ const AdminDashboard: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         // Update the user in the state
-        setUsers(users.map(user => 
+        setUsers(users.map(user =>
           user.id === userId ? { ...user, ...data.user } : user
         ));
         setShowEditModal(false);
@@ -183,14 +184,14 @@ const AdminDashboard: React.FC = () => {
     setAiLoading(true);
     setAiError(null);
     setAiQuestionResult(null);
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         navigate('/login');
         return;
       }
-      
+
       const response = await fetch('/api/ai/generate-question/', {
         method: 'POST',
         headers: {
@@ -199,7 +200,7 @@ const AdminDashboard: React.FC = () => {
         },
         body: JSON.stringify(aiQuestionForm)
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setAiQuestionResult(data);
@@ -423,7 +424,7 @@ const AdminDashboard: React.FC = () => {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Generate curriculum-appropriate questions for Bangladeshi students using AI.
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -431,7 +432,7 @@ const AdminDashboard: React.FC = () => {
                 </label>
                 <select
                   value={aiQuestionForm.subject}
-                  onChange={(e) => setAiQuestionForm({...aiQuestionForm, subject: e.target.value})}
+                  onChange={(e) => setAiQuestionForm({ ...aiQuestionForm, subject: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 >
                   <option value="physics">Physics</option>
@@ -444,14 +445,14 @@ const AdminDashboard: React.FC = () => {
                   <option value="general_knowledge">General Knowledge</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Class Level
                 </label>
                 <select
                   value={aiQuestionForm.class_level}
-                  onChange={(e) => setAiQuestionForm({...aiQuestionForm, class_level: parseInt(e.target.value)})}
+                  onChange={(e) => setAiQuestionForm({ ...aiQuestionForm, class_level: parseInt(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 >
                   {[6, 7, 8, 9, 10, 11, 12].map(level => (
@@ -459,14 +460,14 @@ const AdminDashboard: React.FC = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Difficulty
                 </label>
                 <select
                   value={aiQuestionForm.difficulty}
-                  onChange={(e) => setAiQuestionForm({...aiQuestionForm, difficulty: e.target.value})}
+                  onChange={(e) => setAiQuestionForm({ ...aiQuestionForm, difficulty: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 >
                   <option value="easy">Easy</option>
@@ -474,14 +475,14 @@ const AdminDashboard: React.FC = () => {
                   <option value="hard">Hard</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Question Type
                 </label>
                 <select
                   value={aiQuestionForm.question_type}
-                  onChange={(e) => setAiQuestionForm({...aiQuestionForm, question_type: e.target.value})}
+                  onChange={(e) => setAiQuestionForm({ ...aiQuestionForm, question_type: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 >
                   <option value="mcq">Multiple Choice</option>
@@ -490,7 +491,7 @@ const AdminDashboard: React.FC = () => {
                 </select>
               </div>
             </div>
-            
+
             <button
               onClick={generateAIQuestion}
               disabled={aiLoading}
@@ -498,7 +499,7 @@ const AdminDashboard: React.FC = () => {
             >
               {aiLoading ? 'Generating...' : 'Generate Question'}
             </button>
-            
+
             {aiError && (
               <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                 <div className="flex">
@@ -516,7 +517,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             {aiQuestionResult && (
               <div className="mt-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                 <h3 className="text-lg font-medium text-green-800 dark:text-green-200 mb-2">Generated Question</h3>
@@ -525,7 +526,7 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-sm font-medium text-green-700 dark:text-green-300">Question:</p>
                     <p className="text-gray-900 dark:text-white mt-1">{aiQuestionResult.question_text}</p>
                   </div>
-                  
+
                   {aiQuestionResult.options && Object.keys(aiQuestionResult.options).length > 0 && (
                     <div>
                       <p className="text-sm font-medium text-green-700 dark:text-green-300">Options:</p>
@@ -538,22 +539,22 @@ const AdminDashboard: React.FC = () => {
                       </ul>
                     </div>
                   )}
-                  
+
                   <div>
                     <p className="text-sm font-medium text-green-700 dark:text-green-300">Correct Answer:</p>
                     <p className="text-gray-900 dark:text-white mt-1">{aiQuestionResult.correct_answer}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm font-medium text-green-700 dark:text-green-300">Explanation:</p>
                     <p className="text-gray-900 dark:text-white mt-1">{aiQuestionResult.explanation}</p>
                   </div>
-                  
+
                   <div className="pt-4 border-t border-green-200 dark:border-green-800">
                     <p className="text-sm text-green-700 dark:text-green-300">
-                      <strong>Subject:</strong> {aiQuestionResult.subject} | 
-                      <strong>Class:</strong> {aiQuestionResult.class_target} | 
-                      <strong>Difficulty:</strong> {aiQuestionResult.difficulty} | 
+                      <strong>Subject:</strong> {aiQuestionResult.subject} |
+                      <strong>Class:</strong> {aiQuestionResult.class_target} |
+                      <strong>Difficulty:</strong> {aiQuestionResult.difficulty} |
                       <strong>Type:</strong> {aiQuestionResult.question_type}
                     </p>
                   </div>
@@ -578,34 +579,34 @@ const AdminDashboard: React.FC = () => {
                 </label>
                 <p className="text-gray-900 dark:text-white">{editingUser.username}</p>
               </div>
-              
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Email
                 </label>
                 <p className="text-gray-900 dark:text-white">{editingUser.email}</p>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center">
                   <input
                     id="is_teacher"
                     type="checkbox"
                     checked={editingUser.is_teacher}
-                    onChange={(e) => setEditingUser({...editingUser, is_teacher: e.target.checked})}
+                    onChange={(e) => setEditingUser({ ...editingUser, is_teacher: e.target.checked })}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="is_teacher" className="ml-2 block text-sm text-gray-900 dark:text-white">
                     Teacher
                   </label>
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     id="is_admin"
                     type="checkbox"
                     checked={editingUser.is_admin}
-                    onChange={(e) => setEditingUser({...editingUser, is_admin: e.target.checked})}
+                    onChange={(e) => setEditingUser({ ...editingUser, is_admin: e.target.checked })}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="is_admin" className="ml-2 block text-sm text-gray-900 dark:text-white">

@@ -12,9 +12,12 @@ const Login: React.FC = () => {
     // Check for error from callback
     const errorParam = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
+    const banReason = searchParams.get('ban_reason');
 
     if (errorParam) {
-      if (errorParam === 'auth_failed') {
+      if (errorParam === 'banned') {
+        setError(`You are banned. Contact our team.\n\nReason: ${banReason || 'No reason provided'}`);
+      } else if (errorParam === 'auth_failed') {
         setError('Authentication failed. Please try again.');
       } else if (errorDescription) {
         setError(decodeURIComponent(errorDescription));
@@ -65,20 +68,44 @@ const Login: React.FC = () => {
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-2">Authentication Error</p>
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                <details className="mt-2">
-                  <summary className="text-xs text-red-500 cursor-pointer hover:text-red-600">
-                    Troubleshooting
-                  </summary>
-                  <div className="mt-2 text-xs text-red-500 space-y-1">
-                    <p>• Check if WorkOS is configured correctly in the dashboard</p>
-                    <p>• Verify Google OAuth connection is set up</p>
-                    <p>• Ensure redirect URI matches: {import.meta.env.VITE_WORKOS_REDIRECT_URI}</p>
-                    <p>• Check browser console for more details</p>
+              <div className={`mb-6 p-4 border rounded-lg ${searchParams.get('error') === 'banned'
+                  ? 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700'
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                }`}>
+                {searchParams.get('error') === 'banned' ? (
+                  <div className="text-center">
+                    <div className="text-5xl mb-4">🚫</div>
+                    <p className="text-lg font-bold text-red-700 dark:text-red-300 mb-2">Account Banned</p>
+                    <p className="text-sm text-red-600 dark:text-red-400 whitespace-pre-line">{error}</p>
+                    <div className="mt-4 pt-4 border-t border-red-300 dark:border-red-700">
+                      <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-2">
+                        Need help? Contact our support team:
+                      </p>
+                      <a
+                        href="mailto:support@medhabangla.com"
+                        className="inline-block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                      >
+                        📧 Contact Support
+                      </a>
+                    </div>
                   </div>
-                </details>
+                ) : (
+                  <>
+                    <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-2">Authentication Error</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    <details className="mt-2">
+                      <summary className="text-xs text-red-500 cursor-pointer hover:text-red-600">
+                        Troubleshooting
+                      </summary>
+                      <div className="mt-2 text-xs text-red-500 space-y-1">
+                        <p>• Check if WorkOS is configured correctly in the dashboard</p>
+                        <p>• Verify Google OAuth connection is set up</p>
+                        <p>• Ensure redirect URI matches: {import.meta.env.VITE_WORKOS_REDIRECT_URI}</p>
+                        <p>• Check browser console for more details</p>
+                      </div>
+                    </details>
+                  </>
+                )}
               </div>
             )}
 

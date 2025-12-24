@@ -318,6 +318,15 @@ class WorkOSAuthView(APIView):
             
             logger.info(f"User {'created' if created else 'found'}: {user.email}")
             
+            # Check if user is banned
+            if user.is_banned:
+                logger.warning(f"Banned user attempted login: {user.email}")
+                return Response({
+                    'error': 'banned',
+                    'message': 'You are banned. Contact our team.',
+                    'ban_reason': user.ban_reason or 'No reason provided'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
             # Update user fields with latest data from WorkOS
             user.google_id = google_id
             user.profile_picture = profile_picture

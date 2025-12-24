@@ -7,6 +7,7 @@ import QuizForm from '../components/admin/QuizForm';
 import SubjectForm from '../components/admin/SubjectForm';
 import BookForm from '../components/admin/BookForm';
 import SyllabusForm from '../components/admin/SyllabusForm';
+import UserManagement from '../components/admin/UserManagement';
 
 type TabType = 'users' | 'quizzes' | 'books' | 'syllabus' | 'subjects' | 'stats';
 
@@ -185,11 +186,12 @@ const StatsTab: React.FC = () => {
 
             <div>
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">👥 Users</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <StatCard title="Total Users" value={stats?.userStats?.total_users || 0} color="blue" />
                     <StatCard title="Students" value={stats?.userStats?.students || 0} color="green" />
                     <StatCard title="Teachers" value={stats?.userStats?.teachers || 0} color="purple" />
                     <StatCard title="Admins" value={stats?.userStats?.admins || 0} color="red" />
+                    <StatCard title="Banned" value={stats?.userStats?.banned_users || 0} color="yellow" />
                 </div>
             </div>
 
@@ -242,7 +244,7 @@ const StatCard: React.FC<{ title: string; value: number; color: string }> = ({ t
 };
 
 const UsersTab: React.FC = () => {
-    return <CRUDTable entity="users" title="Users" apiPath="/api/superuser/accounts/users/" />;
+    return <UserManagement />;
 };
 
 const QuizzesTab: React.FC = () => {

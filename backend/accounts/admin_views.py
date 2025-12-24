@@ -21,8 +21,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name', 
                  'class_level', 'fav_subjects', 'disliked_subjects', 'interests', 
                  'total_points', 'is_student', 'is_teacher', 'is_admin', 'is_staff',
-                 'is_superuser', 'google_id', 'profile_picture', 'total_study_time', 
-                 'current_streak', 'longest_streak', 'date_joined', 'last_login')
+                 'is_superuser', 'is_banned', 'ban_reason', 'google_id', 'profile_picture', 
+                 'total_study_time', 'current_streak', 'longest_streak', 'date_joined', 'last_login')
         read_only_fields = ('id', 'date_joined', 'last_login')
 
 
@@ -109,12 +109,102 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         students = User.objects.filter(is_student=True).count()
         teachers = User.objects.filter(is_teacher=True).count()
         admins = User.objects.filter(is_admin=True).count()
+        banned_users = User.objects.filter(is_banned=True).count()
         
         return Response({
             'total_users': total_users,
             'students': students,
             'teachers': teachers,
-            'admins': admins
+            'admins': admins,
+            'banned_users': banned_users
+        })
+    
+    @action(detail=True, methods=['post'])
+    def ban_user(self, request, pk=None):
+        """Ban a user"""
+        user = self.get_object()
+        ban_reason = request.data.get('ban_reason', 'No reason provided')
+        
+        # Prevent banning admins (only superuser can ban admins)
+        if user.is_admin and not request.user.is_superuser:
+            return Response({
+                'error': 'Only superusers can ban admin users'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Prevent self-ban
+        if user == request.user:
+            return Response({
+                'error': 'You cannot ban yourself'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Teachers cannot ban other teachers or admins
+        if request.user.is_teacher and not request.user.is_admin:
+            if user.is_teacher or user.is_admin:
+                return Response({
+                    'error': 'Teachers cannot ban other teachers or admins'
+                }, status=status.HTTP_403_FORBIDDEN)
+        
+        user.is_banned = True
+        user.ban_reason = ban_reason
+        user.save()
+        
+        return Response({
+            'message': f'User {user.username} has been banned',
+            'user': self.get_serializer(user).data
+        })
+    
+    @action(detail=True, methods=['post'])
+    def unban_user(self, request, pk=None):
+        """Unban a user"""
+        user = self.get_object()
+        
+        # Teachers cannot unban users banned by admins
+        if request.user.is_teacher and not request.user.is_admin:
+            if user.is_teacher or user.is_admin:
+                return Response({
+                    'error': 'Teachers cannot unban teachers or admins'
+                }, status=status.HTTP_403_FORBIDDEN)
+        
+        user.is_banned = False
+        user.ban_reason = None
+        user.save()
+        
+        return Response({
+            'message': f'User {user.username} has been unbanned',
+            'user': self.get_serializer(user).data
+        })
+    
+    @action(detail=True, methods=['post'])
+    def change_role(self, request, pk=None):
+        """Change user role (promote/demote)"""
+        user = self.get_object()
+        
+        # Teachers cannot change admin roles
+        if request.user.is_teacher and not request.user.is_admin:
+            if user.is_admin or request.data.get('is_admin'):
+                return Response({
+                    'error': 'Teachers cannot modify admin roles'
+                }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Prevent self-demotion
+        if user == request.user and request.data.get('is_admin') == False:
+            return Response({
+                'error': 'You cannot demote yourself'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Update roles
+        if 'is_student' in request.data:
+            user.is_student = request.data['is_student']
+        if 'is_teacher' in request.data:
+            user.is_teacher = request.data['is_teacher']
+        if 'is_admin' in request.data and request.user.is_admin:
+            user.is_admin = request.data['is_admin']
+        
+        user.save()
+        
+        return Response({
+            'message': f'User {user.username} role updated',
+            'user': self.get_serializer(user).data
         })
 
 

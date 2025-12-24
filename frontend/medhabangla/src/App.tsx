@@ -16,7 +16,7 @@ import Books from './pages/Books';
 import Games from './pages/Games';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
-import NotesEnhanced from './pages/NotesEnhanced'; // Use enhanced notes
+import NotesFileSystem from './pages/NotesFileSystem'; // File system notes with local storage
 import AdminDashboard from './pages/AdminDashboard';
 import QuizManagement from './pages/QuizManagement';
 import AuthCallback from './pages/AuthCallback';
@@ -33,6 +33,7 @@ import Pdfd from './pages/Pdfd'
 import AIChat from './components/AIChat';
 import ProtectedRoute from './components/ProtectedRoute';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import BanCheck from './components/BanCheck';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 
 // Import PWA utilities
@@ -78,6 +79,9 @@ function App() {
     <DarkModeProvider>
       <Router>
         <div className="App">
+          {/* Ban Check Component - runs on every page */}
+          <BanCheck />
+
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -99,7 +103,7 @@ function App() {
               <Route path="/games" element={<Games />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/notes" element={<NotesEnhanced />} />
+              <Route path="/notes" element={<NotesFileSystem />} />
               <Route path="/syllabus" element={<Syllabus />} />
               <Route path="/study-timer" element={<StudyTimer />} />
               <Route path="/study-stats" element={<StudyStats />} />

@@ -49,6 +49,14 @@ const AuthCallback: React.FC = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
+
+          // Check if user is banned
+          if (errorData.error === 'banned') {
+            // Redirect to login with ban message
+            navigate(`/login?error=banned&ban_reason=${encodeURIComponent(errorData.ban_reason || 'No reason provided')}`);
+            return;
+          }
+
           throw new Error(errorData.error || 'Failed to authenticate with WorkOS');
         }
 
