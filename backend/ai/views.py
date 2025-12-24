@@ -53,9 +53,9 @@ class AIChatMessageView(APIView):
                 message_type=message_type
             )
             
-            # Get AI response using Google Gemini
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            # Get AI response using Hybrid AI Service (Ollama + Gemini fallback)
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
             
             # Customize prompt based on message type
             if message_type == 'homework_help':
@@ -120,24 +120,14 @@ Content: {message}"""
 
 AI:"""
             
-            # Generate AI response with better error handling
-            try:
-                response = model.generate_content(prompt)
-                ai_response = response.text
-            except Exception as gemini_error:
-                # Log the specific Gemini error
-                print(f"Gemini API Error: {str(gemini_error)}")
-                
-                # Check if it's an API key error
-                error_str = str(gemini_error).lower()
-                if 'api key' in error_str or 'api_key' in error_str:
-                    raise Exception("Gemini API key is invalid or expired. Please check your API key configuration.")
-                elif 'quota' in error_str:
-                    raise Exception("Gemini API quota exceeded. Please try again later.")
-                elif 'permission' in error_str:
-                    raise Exception("Gemini API permission denied. Please check your API key permissions.")
-                else:
-                    raise Exception(f"Gemini API error: {str(gemini_error)}")
+            # Generate AI response using Hybrid AI Service
+            success, ai_response, error, source = ai_service.generate(prompt, timeout=60)
+            
+            if not success:
+                # Fallback to error message
+                ai_response = f"দুঃখিত, AI সার্ভারে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।\n\nError: {error}"
+            else:
+                print(f"[AIChat] Response from: {source}")
             
             # Save AI message
             ai_message = AIChatMessage.objects.create(
@@ -605,10 +595,9 @@ class AnalyzeQuizResultsView(APIView):
             
             score_percentage = round((correct_count / total_questions) * 100) if total_questions > 0 else 0
             
-            # Generate AI analysis using Gemini
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            # Use gemini-2.5-flash - stable model with good quota
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            # Generate AI analysis using Hybrid AI Service
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
             
             subject = quiz_data.get('subject', 'General')
             class_level = quiz_data.get('classLevel', user.class_level or 9)
@@ -650,8 +639,12 @@ class AnalyzeQuizResultsView(APIView):
 
 উৎসাহব্যঞ্জক এবং গঠনমূলক ভাষায় লিখুন। শিক্ষার্থীকে অনুপ্রাণিত করুন।"""
             
-            response = model.generate_content(analysis_prompt)
-            ai_analysis = response.text
+            success, ai_analysis, error, source = ai_service.generate(analysis_prompt, timeout=90)
+            
+            if not success:
+                ai_analysis = f"দুঃখিত, বিশ্লেষণ তৈরি করতে সমস্যা হয়েছে।\n\nআপনার স্কোর: {score_percentage}%\nসঠিক: {correct_count}/{total_questions}\n\nঅনুগ্রহ করে আবার চেষ্টা করুন।"
+            else:
+                print(f"[Quiz Analysis] Response from: {source}")
             
             # Return comprehensive results
             return Response({
@@ -688,11 +681,9 @@ class GeneratePersonalizedLearningView(APIView):
             return Response({'message': 'Great job! You got all questions correct. No learning plan needed.'})
         
         try:
-            # Configure Gemini API
-            print(f"[Learning Plan] Configuring Gemini API...")
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            # Use gemini-2.5-flash - stable model with good quota
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            # Use Hybrid AI Service for learning plan generation
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
             
             # Create detailed learning prompt
             mistakes_text = "\n\n".join([
@@ -743,11 +734,16 @@ class GeneratePersonalizedLearningView(APIView):
 
 **গুরুত্বপূর্ণ:** সহজ, স্পষ্ট এবং উৎসাহব্যঞ্জক ভাষায় লিখুন। শিক্ষার্থী যেন সহজেই বুঝতে পারে এবং অনুপ্রাণিত হয়।"""
             
-            print(f"[Learning Plan] Calling Gemini API...")
-            response = model.generate_content(learning_prompt)
-            learning_plan = response.text
+            print(f"[Learning Plan] Calling AI Service...")
+            success, learning_plan, error, source = ai_service.generate(learning_prompt, timeout=120)
             
-            print(f"[Learning Plan] Successfully generated learning plan (length: {len(learning_plan)})")
+            if not success:
+                print(f"[Learning Plan] ERROR: {error}")
+                return Response({
+                    'error': f'Failed to generate learning plan: {error}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            print(f"[Learning Plan] Successfully generated learning plan from {source} (length: {len(learning_plan)})")
             
             # Clean the response - remove excessive markdown formatting
             # Keep basic structure but remove symbols that might look messy

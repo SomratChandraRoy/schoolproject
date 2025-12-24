@@ -8,8 +8,13 @@ from .views import (
     AnalyzeQuizResultsView, GeneratePersonalizedLearningView
 )
 from .pdf_chat_views import AnalyzePDFView, ChatWithPDFView, ClearPDFCacheView
+from .admin_views import AIProviderSettingsView, TestAIProviderView
 
 urlpatterns = [
+    # Admin endpoints (NEW)
+    path('admin/provider-settings/', AIProviderSettingsView.as_view(), name='ai-provider-settings'),
+    path('admin/test-provider/', TestAIProviderView.as_view(), name='test-ai-provider'),
+    
     # Chat endpoints
     path('chat/start/', StartAIChatSessionView.as_view(), name='start-chat-session'),
     path('chat/message/', AIChatMessageView.as_view(), name='ai-chat-message'),

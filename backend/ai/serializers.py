@@ -1,5 +1,29 @@
 from rest_framework import serializers
-from .models import AIChatSession, AIChatMessage, OfflineNote, RemedialExplanation
+from .models import AIChatSession, AIChatMessage, OfflineNote, RemedialExplanation, AIProviderSettings
+
+
+class AIProviderSettingsSerializer(serializers.ModelSerializer):
+    provider_display = serializers.CharField(source='get_provider_display', read_only=True)
+    updated_by_username = serializers.CharField(source='updated_by.username', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = AIProviderSettings
+        fields = [
+            'id',
+            'provider',
+            'provider_display',
+            'ollama_base_url',
+            'ollama_username',
+            'ollama_password',
+            'ollama_model',
+            'updated_at',
+            'updated_by',
+            'updated_by_username'
+        ]
+        read_only_fields = ('id', 'updated_at', 'updated_by', 'provider_display', 'updated_by_username')
+        extra_kwargs = {
+            'ollama_password': {'write_only': True}  # Don't expose password in GET requests
+        }
 
 
 class AIChatSessionSerializer(serializers.ModelSerializer):

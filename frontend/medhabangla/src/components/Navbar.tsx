@@ -1,16 +1,81 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../contexts/DarkModeContext';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 const Navbar: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [deferredPrompt, setDeferredPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = React.useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useDarkMode();
-  
+
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
-  
+
+  // Check if app is installed
+  React.useEffect(() => {
+    console.log('[PWA] Checking installation status...');
+
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('[PWA] App is already installed (standalone mode)');
+      setIsInstalled(true);
+    } else {
+      console.log('[PWA] App is not installed, waiting for beforeinstallprompt event');
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('[PWA] beforeinstallprompt event fired!');
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      console.log('[PWA] Install prompt deferred and ready');
+    };
+
+    const handleAppInstalled = () => {
+      console.log('[PWA] App installed successfully!');
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Debug: Check if service worker is registered
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        console.log('[PWA] Service worker is ready:', registration);
+      });
+    } else {
+      console.warn('[PWA] Service workers not supported');
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    console.log('[PWA] Install button clicked');
+
+    if (!deferredPrompt) {
+      console.warn('[PWA] No deferred prompt available');
+      alert('Installation is not available. Please use Chrome, Edge, or another supported browser.');
+      return;
+    }
+
+    console.log('[PWA] Showing install prompt...');
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`[PWA] User response: ${outcome}`);
+    setDeferredPrompt(null);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -50,11 +115,10 @@ const Navbar: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`${
-                    location.pathname === item.path
-                      ? 'border-blue-500 text-gray-900 dark:text-white'
-                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
-                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                  className={`${location.pathname === item.path
+                    ? 'border-blue-500 text-gray-900 dark:text-white'
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
                   {item.name}
                 </Link>
@@ -62,6 +126,29 @@ const Navbar: React.FC = () => {
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
+            {/* Install App Button */}
+            {!isInstalled && deferredPrompt && (
+              <button
+                onClick={handleInstallClick}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-md hover:shadow-lg"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Install App
+              </button>
+            )}
+
+            {/* Installed Badge */}
+            {isInstalled && (
+              <div className="inline-flex items-center px-3 py-2 text-sm font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                App Installed
+              </div>
+            )}
+
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}
@@ -129,15 +216,37 @@ const Navbar: React.FC = () => {
       {isMenuOpen && (
         <div className="sm:hidden">
           <div className="pt-2 pb-3 space-y-1">
+            {/* Install App Button - Mobile */}
+            {!isInstalled && deferredPrompt && (
+              <button
+                onClick={handleInstallClick}
+                className="w-full flex items-center justify-center px-4 py-3 text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Install App
+              </button>
+            )}
+
+            {/* Installed Badge - Mobile */}
+            {isInstalled && (
+              <div className="mx-3 mb-2 flex items-center justify-center px-4 py-2 text-sm font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-md">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                App Installed
+              </div>
+            )}
+
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`${
-                  location.pathname === item.path
-                    ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-gray-700 dark:text-white'
-                    : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-white'
-                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                className={`${location.pathname === item.path
+                  ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-gray-700 dark:text-white'
+                  : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-white'
+                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
               >
                 {item.name}
               </Link>

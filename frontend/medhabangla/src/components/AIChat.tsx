@@ -480,7 +480,7 @@ const AIChat: React.FC = () => {
             </div>
             <div className="flex items-center justify-between mt-2">
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                ⚡ Powered by Gemini AI
+                ⚡ Powered by Ollama AI (with Gemini fallback)
               </p>
               {!isMobile && (
                 <p className="text-xs text-gray-500 dark:text-gray-400">

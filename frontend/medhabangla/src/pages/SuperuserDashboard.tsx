@@ -58,13 +58,22 @@ const SuperuserDashboard: React.FC = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             <Navbar />
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                        🔐 Superuser Dashboard
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-300">
-                        Complete administrative control over all system resources
-                    </p>
+                <div className="mb-8 flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                            🔐 Superuser Dashboard
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-300">
+                            Complete administrative control over all system resources
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => navigate('/admin/ai-settings')}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center space-x-2"
+                    >
+                        <span>🤖</span>
+                        <span>AI Settings</span>
+                    </button>
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md mb-6">

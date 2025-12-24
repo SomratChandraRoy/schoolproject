@@ -137,18 +137,9 @@ class ChatWithPDFView(APIView):
             metadata_key = f'pdf_metadata_{pdf_hash}'
             metadata = cache.get(metadata_key, {})
             
-            # Get API key
-            key_manager = get_key_manager()
-            api_key = key_manager.get_current_key()
-            if not api_key:
-                return Response(
-                    {'error': 'No API keys available'},
-                    status=status.HTTP_503_SERVICE_UNAVAILABLE
-                )
-            
-            # Configure Gemini
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            # Use Hybrid AI Service for PDF chat
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
             
             # Create prompt with PDF content
             prompt = f"""You are an AI learning assistant helping students understand educational content.
@@ -175,9 +166,16 @@ Instructions:
 
 Answer:"""
             
-            # Generate response
-            response = model.generate_content(prompt)
-            answer = response.text
+            # Generate response using Hybrid AI Service
+            success, answer, error, source = ai_service.generate(prompt, timeout=90)
+            
+            if not success:
+                return Response(
+                    {'error': f'Failed to generate response: {error}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            print(f"[PDF Chat] Response from: {source}")
             
             # Remove markdown formatting for cleaner display
             answer = answer.replace('**', '').replace('*', '').replace('#', '')
@@ -190,15 +188,6 @@ Answer:"""
             
         except Exception as e:
             print(f"Error in chat: {str(e)}")
-            
-            # Check if it's a quota error
-            if '429' in str(e) or 'quota' in str(e).lower():
-                key_manager = get_key_manager()
-                key_manager.rotate_key()
-                return Response(
-                    {'error': 'API quota exceeded. Please try again in a moment.'},
-                    status=status.HTTP_429_TOO_MANY_REQUESTS
-                )
             
             return Response(
                 {'error': f'Failed to generate response: {str(e)}'},

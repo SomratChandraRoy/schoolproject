@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Installation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .test-card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status.pass {
+            background: #10b981;
+            color: white;
+        }
+
+        .status.fail {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status.pending {
+            background: #f59e0b;
+            color: white;
+        }
+
+        button {
+            background: linear-gradient(to right, #2563eb, #9333ea);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        pre {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        h1 {
+            color: #2563eb;
+        }
+
+        h2 {
+            color: #4b5563;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 PWA Installation Test</h1>
+    <p>This page tests if your PWA is properly configured for installation.</p>
+
+    <div class="test-card">
+        <h2>1. Service Worker Support</h2>
+        <div id="sw-support"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>2. Service Worker Registration</h2>
+        <div id="sw-registration"></div>
+        <button onclick="registerSW()">Register Service Worker</button>
+    </div>
+
+    <div class="test-card">
+        <h2>3. Manifest File</h2>
+        <div id="manifest-check"></div>
+        <button onclick="checkManifest()">Check Manifest</button>
+    </div>
+
+    <div class="test-card">
+        <h2>4. Installation Status</h2>
+        <div id="install-status"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>5. Install Prompt</h2>
+        <div id="install-prompt-status"></div>
+        <button id="install-btn" onclick="installApp()" disabled>Install App</button>
+    </div>
+
+    <div class="test-card">
+        <h2>6. Console Logs</h2>
+        <pre id="console-logs">Waiting for events...</pre>
+    </div>
+
+    <script>
+        let deferredPrompt = null;
+        let logs = [];
+
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push(`[${timestamp}] ${message}`);
+            document.getElementById('console-logs').textContent = logs.join('\n');
+        }
+
+        // Test 1: Service Worker Support
+        function checkSWSupport() {
+            const supported = 'serviceWorker' in navigator;
+            const status = supported ? 'pass' : 'fail';
+            document.getElementById('sw-support').innerHTML =
+                `Service Worker API: <span class="status ${status}">${supported ? 'SUPPORTED' : 'NOT SUPPORTED'}</span>`;
+            addLog(`Service Worker Support: ${supported}`);
+            return supported;
+        }
+
+        // Test 2: Service Worker Registration
+        async function registerSW() {
+            if (!checkSWSupport()) return;
+
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                document.getElementById('sw-registration').innerHTML =
+                    `Service Worker: <span class="status pass">REGISTERED</span><br>` +
+                    `Scope: ${registration.scope}<br>` +
+                    `State: ${registration.active ? registration.active.state : 'installing'}`;
+                addLog(`Service Worker registered: ${registration.scope}`);
+
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    addLog('Service Worker update found');
+                });
+            } catch (error) {
+                document.getElementById('sw-registration').innerHTML =
+                    `Service Worker: <span class="status fail">FAILED</span><br>` +
+                    `Error: ${error.message}`;
+                addLog(`Service Worker registration failed: ${error.message}`);
+            }
+        }
+
+        // Test 3: Manifest Check
+        async function checkManifest() {
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+
+            if (!manifestLink) {
+                document.getElementById('manifest-check').innerHTML =
+                    `Manifest Link: <span class="status fail">NOT FOUND</span><br>` +
+                    `Add this to your HTML: &lt;link rel="manifest" href="/manifest.webmanifest" /&gt;`;
+                addLog('Manifest link not found in HTML');
+                return;
+            }
+
+            const manifestUrl = manifestLink.href;
+            addLog(`Manifest URL: ${manifestUrl}`);
+
+            try {
+                const response = await fetch(manifestUrl);
+                const manifest = await response.json();
+
+                document.getElementById('manifest-check').innerHTML =
+                    `Manifest: <span class="status pass">FOUND</span><br>` +
+                    `Name: ${manifest.name || manifest.short_name}<br>` +
+                    `Icons: ${manifest.icons ? manifest.icons.length : 0}<br>` +
+                    `Display: ${manifest.display}<br>` +
+                    `Start URL: ${manifest.start_url}`;
+
+                addLog(`Manifest loaded: ${manifest.name}`);
+                addLog(`Icons: ${manifest.icons ? manifest.icons.map(i => i.sizes).join(', ') : 'none'}`);
+            } catch (error) {
+                document.getElementById('manifest-check').innerHTML =
+                    `Manifest: <span class="status fail">ERROR</span><br>` +
+                    `Error: ${error.message}`;
+                addLog(`Manifest load failed: ${error.message}`);
+            }
+        }
+
+        // Test 4: Installation Status
+        function checkInstallStatus() {
+            const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+            const status = isInstalled ? 'pass' : 'pending';
+            document.getElementById('install-status').innerHTML =
+                `App Status: <span class="status ${status}">${isInstalled ? 'INSTALLED' : 'NOT INSTALLED'}</span>`;
+            addLog(`Installation status: ${isInstalled ? 'installed' : 'not installed'}`);
+        }
+
+        // Test 5: Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            document.getElementById('install-prompt-status').innerHTML =
+                `Install Prompt: <span class="status pass">AVAILABLE</span><br>` +
+                `The app can be installed!`;
+            document.getElementById('install-btn').disabled = false;
+
+            addLog('✅ beforeinstallprompt event fired - App is installable!');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('install-prompt-status').innerHTML =
+                `Install Prompt: <span class="status pass">INSTALLED</span><br>` +
+                `The app has been installed successfully!`;
+            document.getElementById('install-btn').disabled = true;
+
+            addLog('✅ App installed successfully!');
+            checkInstallStatus();
+        });
+
+        async function installApp() {
+            if (!deferredPrompt) {
+                addLog('❌ No install prompt available');
+                return;
+            }
+
+            addLog('Showing install prompt...');
+            deferredPrompt.prompt();
+
+            const { outcome } = await deferredPrompt.userChoice;
+            addLog(`User choice: ${outcome}`);
+
+            if (outcome === 'accepted') {
+                addLog('✅ User accepted installation');
+            } else {
+                addLog('❌ User dismissed installation');
+            }
+
+            deferredPrompt = null;
+        }
+
+        // Initialize tests
+        window.addEventListener('load', () => {
+            addLog('Page loaded, running tests...');
+            checkSWSupport();
+            checkInstallStatus();
+
+            // Auto-register service worker
+            if ('serviceWorker' in navigator) {
+                registerSW();
+            }
+
+            // Check manifest
+            setTimeout(() => {
+                checkManifest();
+            }, 500);
+
+            // Check for install prompt
+            setTimeout(() => {
+                if (!deferredPrompt) {
+                    document.getElementById('install-prompt-status').innerHTML =
+                        `Install Prompt: <span class="status pending">WAITING</span><br>` +
+                        `Waiting for beforeinstallprompt event...<br>` +
+                        `<small>This may not fire if:<br>` +
+                        `- App is already installed<br>` +
+                        `- Browser doesn't support PWA<br>` +
+                        `- Manifest or SW has errors<br>` +
+                        `- Not served over HTTPS (except localhost)</small>`;
+                    addLog('⏳ Waiting for beforeinstallprompt event...');
+                }
+            }, 2000);
+        });
+
+        // Log all console messages
+        const originalLog = console.log;
+        console.log = function (...args) {
+            originalLog.apply(console, args);
+            addLog(args.join(' '));
+        };
+    </script>
+</body>
+
+</html>

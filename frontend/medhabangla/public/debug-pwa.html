@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Debug - Check Install Button</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+
+        h2 {
+            color: #4b5563;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .pass {
+            background: #10b981;
+            color: white;
+        }
+
+        .fail {
+            background: #ef4444;
+            color: white;
+        }
+
+        .warn {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .info {
+            background: #3b82f6;
+            color: white;
+        }
+
+        button {
+            background: linear-gradient(to right, #2563eb, #9333ea);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        pre {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            max-height: 400px;
+        }
+
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 10px;
+        }
+
+        .log-error {
+            border-left-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .log-success {
+            border-left-color: #10b981;
+            color: #10b981;
+        }
+
+        .log-warn {
+            border-left-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist li {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f9fafb;
+            border-radius: 4px;
+        }
+
+        .checklist li::before {
+            content: "❌ ";
+            margin-right: 8px;
+        }
+
+        .checklist li.checked::before {
+            content: "✅ ";
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 PWA Install Button Debug</h1>
+
+    <div class="card">
+        <h2>Quick Status</h2>
+        <div id="quick-status">Checking...</div>
+    </div>
+
+    <div class="card">
+        <h2>Installation Checklist</h2>
+        <ul class="checklist" id="checklist">
+            <li id="check-https">HTTPS or localhost</li>
+            <li id="check-manifest">Manifest file exists</li>
+            <li id="check-sw">Service Worker registered</li>
+            <li id="check-icons">Icons available</li>
+            <li id="check-browser">Supported browser</li>
+            <li id="check-installed">Not already installed</li>
+            <li id="check-event">beforeinstallprompt event</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>Actions</h2>
+        <button onclick="checkEverything()">🔄 Recheck All</button>
+        <button id="install-btn" onclick="installApp()" disabled>📱 Install App</button>
+        <button onclick="clearData()">🗑️ Clear Browser Data</button>
+        <button onclick="window.location.href='/'">🏠 Go to Main App</button>
+    </div>
+
+    <div class="card">
+        <h2>Real-Time Logs</h2>
+        <div id="logs"></div>
+    </div>
+
+    <div class="card">
+        <h2>Console Output</h2>
+        <pre id="console-output">Waiting for events...</pre>
+    </div>
+
+    <script>
+        let deferredPrompt = null;
+        let logs = [];
+        let consoleLogs = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push({ time: timestamp, message, type });
+            updateLogsDisplay();
+        }
+
+        function addConsoleLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            consoleLogs.push(`[${timestamp}] ${message}`);
+            document.getElementById('console-output').textContent = consoleLogs.join('\n');
+        }
+
+        function updateLogsDisplay() {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = logs.map(log =>
+                `<div class="log-entry log-${log.type}">[${log.time}] ${log.message}</div>`
+            ).reverse().join('');
+        }
+
+        function checkItem(id, passed) {
+            const item = document.getElementById(id);
+            if (passed) {
+                item.classList.add('checked');
+            } else {
+                item.classList.remove('checked');
+            }
+        }
+
+        async function checkEverything() {
+            addLog('Starting comprehensive check...', 'info');
+
+            // Check 1: HTTPS or localhost
+            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            checkItem('check-https', isSecure);
+            addLog(`HTTPS/localhost: ${isSecure ? 'PASS' : 'FAIL'}`, isSecure ? 'success' : 'error');
+
+            // Check 2: Manifest
+            try {
+                const manifestLink = document.querySelector('link[rel="manifest"]');
+                if (manifestLink) {
+                    const response = await fetch(manifestLink.href);
+                    const manifest = await response.json();
+                    checkItem('check-manifest', true);
+                    addLog(`Manifest found: ${manifest.name}`, 'success');
+                    addConsoleLog(`Manifest: ${JSON.stringify(manifest, null, 2)}`);
+                } else {
+                    checkItem('check-manifest', false);
+                    addLog('Manifest link not found in HTML', 'error');
+                }
+            } catch (error) {
+                checkItem('check-manifest', false);
+                addLog(`Manifest error: ${error.message}`, 'error');
+            }
+
+            // Check 3: Service Worker
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        checkItem('check-sw', true);
+                        addLog(`Service Worker: ${registration.active ? 'Active' : 'Installing'}`, 'success');
+                        addConsoleLog(`SW Scope: ${registration.scope}`);
+                    } else {
+                        checkItem('check-sw', false);
+                        addLog('Service Worker not registered', 'warn');
+                        // Try to register
+                        addLog('Attempting to register service worker...', 'info');
+                        const reg = await navigator.serviceWorker.register('/sw.js');
+                        addLog('Service Worker registered successfully!', 'success');
+                        checkItem('check-sw', true);
+                    }
+                } catch (error) {
+                    checkItem('check-sw', false);
+                    addLog(`Service Worker error: ${error.message}`, 'error');
+                }
+            } else {
+                checkItem('check-sw', false);
+                addLog('Service Workers not supported', 'error');
+            }
+
+            // Check 4: Icons
+            try {
+                const icon192 = await fetch('/icon-192.png');
+                const icon512 = await fetch('/icon-512.png');
+                const iconsOk = icon192.ok && icon512.ok;
+                checkItem('check-icons', iconsOk);
+                addLog(`Icons: ${iconsOk ? 'Available' : 'Missing'}`, iconsOk ? 'success' : 'warn');
+            } catch (error) {
+                checkItem('check-icons', false);
+                addLog('Icons check failed', 'warn');
+            }
+
+            // Check 5: Browser support
+            const userAgent = navigator.userAgent;
+            const isChrome = /Chrome/.test(userAgent) && !/Edge|Edg/.test(userAgent);
+            const isEdge = /Edge|Edg/.test(userAgent);
+            const isOpera = /OPR/.test(userAgent);
+            const isFirefox = /Firefox/.test(userAgent);
+            const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+
+            const supportedBrowser = isChrome || isEdge || isOpera;
+            checkItem('check-browser', supportedBrowser);
+
+            let browserName = 'Unknown';
+            if (isChrome) browserName = 'Chrome ✅';
+            else if (isEdge) browserName = 'Edge ✅';
+            else if (isOpera) browserName = 'Opera ✅';
+            else if (isFirefox) browserName = 'Firefox ❌ (Not supported)';
+            else if (isSafari) browserName = 'Safari ❌ (Not supported)';
+
+            addLog(`Browser: ${browserName}`, supportedBrowser ? 'success' : 'error');
+
+            if (!supportedBrowser) {
+                addLog('⚠️ PWA install prompts only work in Chrome, Edge, or Opera', 'error');
+                addLog('Please open this app in Chrome, Edge, or Opera to see the install button', 'warn');
+            }
+
+            // Check 6: Not installed
+            const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+            checkItem('check-installed', !isInstalled);
+            addLog(`Installation status: ${isInstalled ? 'Already installed' : 'Not installed'}`, isInstalled ? 'warn' : 'success');
+
+            // Check 7: beforeinstallprompt
+            checkItem('check-event', !!deferredPrompt);
+            addLog(`Install prompt: ${deferredPrompt ? 'Available' : 'Not available yet'}`, deferredPrompt ? 'success' : 'warn');
+
+            // Update quick status
+            updateQuickStatus();
+        }
+
+        function updateQuickStatus() {
+            const allChecked = document.querySelectorAll('.checklist li.checked').length;
+            const total = document.querySelectorAll('.checklist li').length;
+            const statusDiv = document.getElementById('quick-status');
+
+            if (allChecked === total) {
+                statusDiv.innerHTML = '<span class="status pass">✅ ALL CHECKS PASSED - App is installable!</span>';
+            } else {
+                statusDiv.innerHTML = `<span class="status warn">⚠️ ${allChecked}/${total} checks passed</span>`;
+            }
+        }
+
+        async function installApp() {
+            if (!deferredPrompt) {
+                addLog('No install prompt available', 'error');
+                alert('Installation not available. Check the logs above.');
+                return;
+            }
+
+            addLog('Showing install prompt...', 'info');
+            deferredPrompt.prompt();
+
+            const { outcome } = await deferredPrompt.userChoice;
+            addLog(`User choice: ${outcome}`, outcome === 'accepted' ? 'success' : 'warn');
+
+            if (outcome === 'accepted') {
+                addLog('App will be installed!', 'success');
+            } else {
+                addLog('User dismissed installation', 'warn');
+            }
+
+            deferredPrompt = null;
+            document.getElementById('install-btn').disabled = true;
+        }
+
+        function clearData() {
+            if (confirm('This will clear all site data and reload. Continue?')) {
+                addLog('Clearing site data...', 'info');
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    });
+                }
+                localStorage.clear();
+                sessionStorage.clear();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
+        }
+
+        // Listen for beforeinstallprompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-btn').disabled = false;
+            checkItem('check-event', true);
+            addLog('✅ beforeinstallprompt event fired! App is installable!', 'success');
+            addConsoleLog('beforeinstallprompt event received');
+            updateQuickStatus();
+        });
+
+        // Listen for appinstalled
+        window.addEventListener('appinstalled', () => {
+            addLog('✅ App installed successfully!', 'success');
+            addConsoleLog('App installed');
+            checkItem('check-installed', false);
+            updateQuickStatus();
+        });
+
+        // Intercept console.log
+        const originalLog = console.log;
+        console.log = function (...args) {
+            originalLog.apply(console, args);
+            addConsoleLog(args.join(' '));
+        };
+
+        // Run checks on load
+        window.addEventListener('load', () => {
+            addLog('Page loaded, running checks...', 'info');
+            setTimeout(checkEverything, 500);
+        });
+
+        // Log any errors
+        window.addEventListener('error', (e) => {
+            addLog(`Error: ${e.message}`, 'error');
+            addConsoleLog(`ERROR: ${e.message}`);
+        });
+    </script>
+</body>
+
+</html>
