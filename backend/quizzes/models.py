@@ -74,6 +74,13 @@ class QuizAttempt(models.Model):
     is_correct = models.BooleanField()
     attempted_at = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        unique_together = ['user', 'quiz']  # Prevent duplicate attempts
+        ordering = ['-attempted_at']
+        indexes = [
+            models.Index(fields=['user', 'quiz']),
+        ]
+    
     def __str__(self):
         return f"{self.user.username} - {self.quiz.question_text[:30]}... - {'Correct' if self.is_correct else 'Incorrect'}"
 

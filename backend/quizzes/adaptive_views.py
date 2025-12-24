@@ -101,11 +101,10 @@ class AdaptiveQuizNextQuestionView(APIView):
         if progress.status == 'static' or progress.static_completion_percentage < 90:
             # Get static question that user hasn't answered yet
             answered_ids = QuizAttempt.objects.filter(
-                user=user,
-                quiz__subject=subject,
-                quiz__class_target=class_level
-            ).values_list('quiz_id', flat=True)
+                user=user
+            ).values_list('quiz_id', flat=True).distinct()
             
+            # CRITICAL: Exclude ALL answered questions, not just for this subject
             next_question = Quiz.objects.filter(
                 subject=subject,
                 class_target=class_level
@@ -145,12 +144,20 @@ class AdaptiveQuizNextQuestionView(APIView):
             
             if ai_question:
                 print(f"[AdaptiveQuiz] Returning AI question ID: {ai_question.id}")
+                print(f"[AdaptiveQuiz] Question type: {ai_question.question_type}")
+                print(f"[AdaptiveQuiz] Options: {ai_question.options}")
+                
+                # Ensure options is a proper dict for MCQ questions
+                options = ai_question.options if ai_question.options else {}
+                if ai_question.question_type == 'mcq' and not options:
+                    print(f"[AdaptiveQuiz] WARNING: MCQ question has no options!")
+                
                 return Response({
                     'question': {
                         'id': ai_question.id,
                         'question_text': ai_question.question_text,
                         'question_type': ai_question.question_type,
-                        'options': ai_question.options,
+                        'options': options,
                         'difficulty': ai_question.difficulty,
                         'subject': ai_question.subject,
                         'class_target': ai_question.class_level
@@ -188,12 +195,21 @@ class AdaptiveQuizNextQuestionView(APIView):
                     ).order_by('generated_at').first()
                     
                     if ai_question:
+                        print(f"[AdaptiveQuiz] Returning newly generated AI question ID: {ai_question.id}")
+                        print(f"[AdaptiveQuiz] Question type: {ai_question.question_type}")
+                        print(f"[AdaptiveQuiz] Options: {ai_question.options}")
+                        
+                        # Ensure options is a proper dict for MCQ questions
+                        options = ai_question.options if ai_question.options else {}
+                        if ai_question.question_type == 'mcq' and not options:
+                            print(f"[AdaptiveQuiz] WARNING: MCQ question has no options!")
+                        
                         return Response({
                             'question': {
                                 'id': ai_question.id,
                                 'question_text': ai_question.question_text,
                                 'question_type': ai_question.question_type,
-                                'options': ai_question.options,
+                                'options': options,
                                 'difficulty': ai_question.difficulty,
                                 'subject': ai_question.subject,
                                 'class_target': ai_question.class_level
@@ -266,6 +282,26 @@ class AdaptiveQuizSubmitAnswerView(APIView):
             # Handle static question
             try:
                 question = Quiz.objects.get(id=question_id)
+                
+                # CRITICAL: Check if user has already answered this question
+                existing_attempt = QuizAttempt.objects.filter(
+                    user=user,
+                    quiz=question
+                ).first()
+                
+                if existing_attempt:
+                    print(f"[AdaptiveQuiz] User {user.username} already answered question {question_id}")
+                    return Response({
+                        'error': 'You have already answered this question',
+                        'message': 'This question cannot be attempted again',
+                        'already_answered': True,
+                        'previous_attempt': {
+                            'selected_answer': existing_attempt.selected_answer,
+                            'is_correct': existing_attempt.is_correct,
+                            'attempted_at': existing_attempt.attempted_at
+                        }
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
                 is_correct = (answer == question.correct_answer)
                 correct_answer = question.correct_answer
                 explanation = question.explanation
@@ -299,6 +335,21 @@ class AdaptiveQuizSubmitAnswerView(APIView):
             # Handle AI-generated question
             try:
                 question = AIGeneratedQuestion.objects.get(id=question_id, user=user)
+                
+                # CRITICAL: Check if already answered
+                if question.is_answered:
+                    print(f"[AdaptiveQuiz] User {user.username} already answered AI question {question_id}")
+                    return Response({
+                        'error': 'You have already answered this question',
+                        'message': 'This AI question cannot be attempted again',
+                        'already_answered': True,
+                        'previous_attempt': {
+                            'selected_answer': question.user_answer,
+                            'is_correct': question.is_correct,
+                            'attempted_at': question.answered_at
+                        }
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
                 is_correct = (answer == question.correct_answer)
                 correct_answer = question.correct_answer
                 explanation = question.explanation

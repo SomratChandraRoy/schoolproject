@@ -48,6 +48,7 @@ class QuizListCreateView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         """Override list to add fallback AI generation when no questions available"""
         queryset = self.filter_queryset(self.get_queryset())
+        user = request.user
         
         # Get query parameters for fallback
         subject = request.query_params.get('subject')
@@ -59,6 +60,19 @@ class QuizListCreateView(generics.ListCreateAPIView):
         
         # Parse question types
         types_list = [t.strip() for t in question_types.split(',')]
+        
+        # CRITICAL: Exclude questions user has already answered
+        # Get all question IDs this user has attempted
+        answered_question_ids = QuizAttempt.objects.filter(
+            user=user
+        ).values_list('quiz_id', flat=True).distinct()
+        
+        answered_count = len(answered_question_ids)
+        print(f"[QuizList] User has answered {answered_count} questions (excluding them)")
+        
+        # Exclude already answered questions
+        queryset = queryset.exclude(id__in=answered_question_ids)
+        print(f"[QuizList] After excluding answered: {queryset.count()} questions")
         
         # Validate MCQ questions have proper options (only if MCQ is in the selected types)
         if 'mcq' in types_list:
@@ -83,11 +97,12 @@ class QuizListCreateView(generics.ListCreateAPIView):
         
         print(f"[QuizList] After filtering by types {types_list}: {queryset.count()} questions")
         
-        # Check if we have enough questions (threshold: 5)
+        # Check if we have enough questions (threshold: 3)
+        # If 0, 1, or 2 questions available, trigger AI generation
         question_count = queryset.count()
         
-        if question_count < 5 and subject and class_level:
-            print(f"[QuizList] Only {question_count} questions found, triggering AI generation...")
+        if question_count < 3 and subject and class_level:
+            print(f"[QuizList] Only {question_count} questions available (threshold: 3), triggering AI generation...")
             
             # Use fallback AI generation
             from ai.question_generator import get_question_generator
@@ -95,10 +110,11 @@ class QuizListCreateView(generics.ListCreateAPIView):
             generator = get_question_generator()
             primary_type = types_list[0]  # Use first selected type
             
-            # Generate more questions to reach at least 10 total
-            questions_needed = max(10 - question_count, 5)
+            # Generate enough questions to reach at least 10 total
+            questions_needed = max(10 - question_count, 10)
             
             print(f"[QuizList] Generating {questions_needed} AI questions of type '{primary_type}'...")
+            print(f"[QuizList] Parameters: subject={subject}, class={class_level}, type={primary_type}")
             
             success, ai_questions, error = generator.generate_batch_questions(
                 user=request.user,
@@ -110,7 +126,33 @@ class QuizListCreateView(generics.ListCreateAPIView):
             )
             
             if success:
-                print(f"[QuizList] Successfully generated {len(ai_questions)} AI questions")
+                print(f"[QuizList] ✅ Successfully generated {len(ai_questions)} AI questions")
+                
+                # Save AI questions to main Quiz database for all users
+                saved_count = 0
+                for ai_q in ai_questions:
+                    # Check if already exists in Quiz table
+                    existing = Quiz.objects.filter(
+                        subject=ai_q.subject,
+                        class_target=ai_q.class_level,
+                        question_text=ai_q.question_text
+                    ).first()
+                    
+                    if not existing:
+                        new_quiz = Quiz.objects.create(
+                            subject=ai_q.subject,
+                            class_target=ai_q.class_level,
+                            difficulty=ai_q.difficulty,
+                            question_text=ai_q.question_text,
+                            question_type=ai_q.question_type,
+                            options=ai_q.options,
+                            correct_answer=ai_q.correct_answer,
+                            explanation=ai_q.explanation
+                        )
+                        saved_count += 1
+                        print(f"[QuizList] Saved question {saved_count}: {ai_q.question_text[:50]}...")
+                
+                print(f"[QuizList] ✅ Saved {saved_count} new questions to database")
                 
                 # Convert AIGeneratedQuestion to response format
                 ai_data = []
@@ -200,6 +242,25 @@ class QuizAttemptView(APIView):
         try:
             quiz = Quiz.objects.get(id=quiz_id)
             
+            # CRITICAL: Check if user has already answered this question
+            existing_attempt = QuizAttempt.objects.filter(
+                user=user,
+                quiz=quiz
+            ).first()
+            
+            if existing_attempt:
+                print(f"[QuizAttempt] User {user.username} already answered question {quiz_id}")
+                return Response({
+                    'error': 'You have already answered this question',
+                    'message': 'This question cannot be attempted again',
+                    'already_answered': True,
+                    'previous_attempt': {
+                        'selected_answer': existing_attempt.selected_answer,
+                        'is_correct': existing_attempt.is_correct,
+                        'attempted_at': existing_attempt.attempted_at
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             # Check if answer is correct
             is_correct = selected_answer == quiz.correct_answer
             
@@ -210,6 +271,8 @@ class QuizAttemptView(APIView):
                 selected_answer=selected_answer,
                 is_correct=is_correct
             )
+            
+            print(f"[QuizAttempt] User {user.username} answered question {quiz_id}: {'Correct' if is_correct else 'Incorrect'}")
             
             # Update user points
             if is_correct:
@@ -253,6 +316,63 @@ class QuizAttemptView(APIView):
             performance.update_difficulty()
             performance.save()
             
+            # Track progress for adaptive quiz system
+            from .models import UserQuizProgress
+            progress, _ = UserQuizProgress.objects.get_or_create(
+                user=user,
+                subject=quiz.subject,
+                class_level=quiz.class_target
+            )
+            
+            # Update static questions completed
+            progress.static_questions_completed += 1
+            
+            # Count total static questions if not set
+            if progress.total_static_questions == 0:
+                progress.total_static_questions = Quiz.objects.filter(
+                    subject=quiz.subject,
+                    class_target=quiz.class_target
+                ).count()
+            
+            progress.update_progress()
+            
+            # Calculate completion percentage
+            completion_percentage = progress.static_completion_percentage
+            
+            # Trigger background AI generation at 50% completion
+            if completion_percentage >= 50 and completion_percentage < 100:
+                print(f"[QuizAttempt] 50% threshold reached ({completion_percentage:.1f}%), triggering background AI generation")
+                
+                # Start background generation (non-blocking)
+                from threading import Thread
+                from ai.question_generator import get_question_generator
+                
+                def generate_in_background():
+                    try:
+                        generator = get_question_generator()
+                        generator.check_and_generate_questions(
+                            user=user,
+                            subject=quiz.subject,
+                            class_level=quiz.class_target,
+                            difficulty=progress.current_difficulty,
+                            question_type=quiz.question_type
+                        )
+                        print(f"[QuizAttempt] Background AI generation completed")
+                    except Exception as e:
+                        print(f"[QuizAttempt] Background generation error: {str(e)}")
+                
+                thread = Thread(target=generate_in_background, daemon=True)
+                thread.start()
+            
+            # Check if all static questions completed
+            all_static_completed = completion_percentage >= 100
+            
+            # Update user's static_question_status if all completed
+            if all_static_completed and user.static_question_status != 'finished':
+                user.static_question_status = 'finished'
+                user.save()
+                print(f"[QuizAttempt] User {user.username} completed all static questions for {quiz.subject}")
+            
             return Response({
                 'attempt': QuizAttemptSerializer(attempt).data,
                 'is_correct': is_correct,
@@ -261,6 +381,13 @@ class QuizAttemptView(APIView):
                 'user_performance': {
                     'elo_rating': performance.elo_rating,
                     'difficulty': performance.difficulty
+                },
+                'quiz_progress': {
+                    'static_completed': progress.static_questions_completed,
+                    'total_static': progress.total_static_questions,
+                    'completion_percentage': completion_percentage,
+                    'all_static_completed': all_static_completed,
+                    'status': progress.status
                 }
             }, status=status.HTTP_201_CREATED)
             
@@ -323,3 +450,165 @@ class SubjectListView(APIView):
             'class_level': class_level,
             'subjects': serializer.data
         })
+
+
+class ContinueWithAIQuestionsView(APIView):
+    """Continue quiz with AI-generated questions after completing static questions"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        subject = request.data.get('subject')
+        class_level = request.data.get('class_level', user.class_level)
+        question_type = request.data.get('question_type', 'mcq')
+        
+        if not subject or not class_level:
+            return Response(
+                {'error': 'Subject and class_level are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        print(f"[ContinueAI] User {user.username} continuing with AI questions for {subject}")
+        
+        # Get progress
+        from .models import UserQuizProgress, AIGeneratedQuestion
+        progress, _ = UserQuizProgress.objects.get_or_create(
+            user=user,
+            subject=subject,
+            class_level=class_level
+        )
+        
+        # Verify user has completed static questions
+        if progress.static_completion_percentage < 100:
+            return Response(
+                {
+                    'error': 'You must complete all static questions first',
+                    'completion_percentage': progress.static_completion_percentage
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update user's static_question_status to finished
+        if user.static_question_status != 'finished':
+            user.static_question_status = 'finished'
+            user.save()
+            print(f"[ContinueAI] Updated user status to 'finished'")
+        
+        # Update progress status
+        if progress.status != 'ai_active':
+            progress.status = 'ai_active'
+            progress.save()
+        
+        # Check for existing AI questions
+        # CRITICAL: Only get unanswered AI questions
+        ai_questions = AIGeneratedQuestion.objects.filter(
+            user=user,
+            subject=subject,
+            class_level=class_level,
+            is_answered=False  # Only unanswered questions
+        ).order_by('generated_at')
+        
+        ai_count = ai_questions.count()
+        print(f"[ContinueAI] Found {ai_count} unanswered AI questions")
+        
+        # Generate more if needed
+        if ai_count < 6:
+            print(f"[ContinueAI] Generating more AI questions...")
+            from ai.question_generator import get_question_generator
+            
+            generator = get_question_generator()
+            questions_needed = 6 - ai_count
+            
+            success, new_questions, error = generator.generate_batch_questions(
+                user=user,
+                subject=subject,
+                class_level=class_level,
+                difficulty=progress.current_difficulty,
+                question_type=question_type,
+                batch_size=questions_needed
+            )
+            
+            if success:
+                print(f"[ContinueAI] Generated {len(new_questions)} new AI questions")
+                
+                # Save AI questions to main Quiz database for persistence
+                # But DON'T save if user has already answered a similar question
+                saved_count = 0
+                for ai_q in new_questions:
+                    # Check if already exists in Quiz table
+                    existing = Quiz.objects.filter(
+                        subject=ai_q.subject,
+                        class_target=ai_q.class_level,
+                        question_text=ai_q.question_text
+                    ).first()
+                    
+                    if not existing:
+                        new_quiz = Quiz.objects.create(
+                            subject=ai_q.subject,
+                            class_target=ai_q.class_level,
+                            difficulty=ai_q.difficulty,
+                            question_text=ai_q.question_text,
+                            question_type=ai_q.question_type,
+                            options=ai_q.options,
+                            correct_answer=ai_q.correct_answer,
+                            explanation=ai_q.explanation
+                        )
+                        
+                        # Check if user has already answered this question
+                        already_answered = QuizAttempt.objects.filter(
+                            user=user,
+                            quiz=new_quiz
+                        ).exists()
+                        
+                        if already_answered:
+                            # User already answered this, delete it
+                            new_quiz.delete()
+                            print(f"[ContinueAI] Skipped duplicate answered question")
+                        else:
+                            saved_count += 1
+                
+                print(f"[ContinueAI] Saved {saved_count} AI questions to database")
+            else:
+                print(f"[ContinueAI] Failed to generate AI questions: {error}")
+                return Response(
+                    {'error': f'Failed to generate AI questions: {error}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
+        # Get all unanswered AI questions (including newly generated)
+        ai_questions = AIGeneratedQuestion.objects.filter(
+            user=user,
+            subject=subject,
+            class_level=class_level,
+            is_answered=False
+        ).order_by('generated_at')
+        
+        # Convert to response format
+        questions_data = []
+        for q in ai_questions:
+            questions_data.append({
+                'id': f'ai_{q.id}',
+                'question_text': q.question_text,
+                'question_type': q.question_type,
+                'options': q.options,
+                'difficulty': q.difficulty,
+                'subject': q.subject,
+                'class_target': q.class_level,
+                'source': 'ai'
+            })
+        
+        return Response({
+            'message': 'AI questions ready',
+            'questions': questions_data,
+            'count': len(questions_data),
+            'progress': {
+                'status': progress.status,
+                'static_completed': progress.static_questions_completed,
+                'total_static': progress.total_static_questions,
+                'completion_percentage': progress.static_completion_percentage,
+                'current_difficulty': progress.current_difficulty,
+                'ai_questions_answered': progress.ai_questions_answered,
+                'ai_questions_correct': progress.ai_questions_correct
+            },
+            'user_status': user.static_question_status
+        }, status=status.HTTP_200_OK)

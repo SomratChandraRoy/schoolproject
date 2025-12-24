@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     QuizListCreateView, QuizDetailView, QuizAttemptView, 
-    UserAnalyticsView, SubmitQuizResultsView, SubjectListView
+    UserAnalyticsView, SubmitQuizResultsView, SubjectListView,
+    ContinueWithAIQuestionsView
 )
 from .adaptive_views import (
     AdaptiveQuizStartView, AdaptiveQuizNextQuestionView,
@@ -18,6 +19,7 @@ urlpatterns = [
     path('analytics/', UserAnalyticsView.as_view(), name='user-analytics'),
     path('submit-results/', SubmitQuizResultsView.as_view(), name='submit-results'),
     path('subjects/', SubjectListView.as_view(), name='subject-list'),
+    path('continue-ai/', ContinueWithAIQuestionsView.as_view(), name='continue-ai-questions'),
     
     # Adaptive quiz endpoints
     path('adaptive/start/', AdaptiveQuizStartView.as_view(), name='adaptive-quiz-start'),

@@ -79,6 +79,16 @@ class QuestionGenerator:
         # Create AIGeneratedQuestion objects
         generated_questions = []
         for q_data in questions_data:
+            # Get options, ensure it's a dict
+            options = q_data.get('options', {})
+            if not isinstance(options, dict):
+                options = {}
+            
+            # Validate MCQ questions have options
+            if question_type == 'mcq' and not options:
+                print(f"[QuestionGenerator] WARNING: MCQ question missing options, skipping")
+                continue
+            
             question = AIGeneratedQuestion.objects.create(
                 user=user,
                 subject=subject,
@@ -86,7 +96,7 @@ class QuestionGenerator:
                 difficulty=difficulty,
                 question_text=q_data['question_text'],
                 question_type=question_type,
-                options=q_data.get('options', {}),
+                options=options,
                 correct_answer=q_data['correct_answer'],
                 explanation=q_data.get('explanation', ''),
                 generation_batch=batch_number
@@ -175,6 +185,14 @@ Generate exactly {count} questions."""
                     continue
                 if not q.get('question_text') or not q.get('correct_answer'):
                     continue
+                
+                # Ensure options is a dict (not None or other types)
+                if 'options' not in q or q['options'] is None:
+                    q['options'] = {}
+                elif not isinstance(q['options'], dict):
+                    print(f"[QuestionGenerator] WARNING: Invalid options type, converting to dict")
+                    q['options'] = {}
+                
                 valid_questions.append(q)
             
             print(f"[QuestionGenerator] Parsed {len(valid_questions)} valid questions")

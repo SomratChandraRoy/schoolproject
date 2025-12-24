@@ -71,7 +71,8 @@ class GeminiAPIKeyManager:
         self, 
         prompt: str, 
         model_name: str = 'gemini-2.5-flash',
-        max_retries: Optional[int] = None
+        max_retries: Optional[int] = None,
+        timeout: int = 30
     ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Generate content with automatic key rotation on quota errors
@@ -80,6 +81,7 @@ class GeminiAPIKeyManager:
             prompt: The prompt to send to Gemini
             model_name: The model to use (default: gemini-2.5-flash)
             max_retries: Maximum number of keys to try (default: all keys)
+            timeout: Timeout in seconds for API call (default: 30)
         
         Returns:
             Tuple of (success: bool, response_text: str, error_message: str)
@@ -98,9 +100,21 @@ class GeminiAPIKeyManager:
                 # Configure Gemini with current key
                 genai.configure(api_key=current_key)
                 
-                # Create model and generate content
+                # Create model and generate content with timeout
                 model = genai.GenerativeModel(model_name)
-                response = model.generate_content(prompt)
+                
+                # Use ThreadPoolExecutor for timeout
+                from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+                
+                def _generate():
+                    return model.generate_content(prompt)
+                
+                with ThreadPoolExecutor() as executor:
+                    future = executor.submit(_generate)
+                    try:
+                        response = future.result(timeout=timeout)
+                    except FutureTimeoutError:
+                        raise Exception(f"API call timed out after {timeout} seconds")
                 
                 if response and response.text:
                     logger.info(f"Successfully generated content using API key #{self.current_index + 1}")
@@ -112,6 +126,15 @@ class GeminiAPIKeyManager:
             except Exception as e:
                 error_str = str(e).lower()
                 last_error = str(e)
+                
+                # Check if it's a timeout
+                if 'timeout' in error_str or 'timed out' in error_str:
+                    logger.warning(f"Timeout for API key #{self.current_index + 1}")
+                    # Try next key on timeout
+                    if not self.rotate_key():
+                        return False, None, "All API keys timed out. Please try again later."
+                    attempts += 1
+                    continue
                 
                 # Check if it's a quota error
                 if 'quota' in error_str or '429' in error_str:

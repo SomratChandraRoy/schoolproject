@@ -255,8 +255,41 @@ const AdaptiveQuiz: React.FC = () => {
         );
     }
 
-    const options = currentQuestion.options;
+    // Check if options exist and are valid
+    const options = currentQuestion.options || {};
     const optionKeys = Object.keys(options);
+    const isMCQ = currentQuestion.question_type === 'mcq';
+    const hasValidOptions = isMCQ && optionKeys.length >= 2;
+
+    // Debug logging
+    console.log('[AdaptiveQuiz] Current Question:', currentQuestion);
+    console.log('[AdaptiveQuiz] Question Type:', currentQuestion.question_type);
+    console.log('[AdaptiveQuiz] Options:', options);
+    console.log('[AdaptiveQuiz] Option Keys:', optionKeys);
+    console.log('[AdaptiveQuiz] Has Valid Options:', hasValidOptions);
+
+    // Show error if MCQ has no options
+    if (isMCQ && !hasValidOptions) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+                <Navbar />
+                <div className="max-w-3xl mx-auto py-12 px-4">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+                        <h2 className="text-xl font-bold text-yellow-800 dark:text-yellow-200 mb-2">Invalid Question</h2>
+                        <p className="text-yellow-600 dark:text-yellow-300 mb-4">
+                            This MCQ question has no options. This might be an AI generation error.
+                        </p>
+                        <button
+                            onClick={handleNext}
+                            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                        >
+                            Skip to Next Question
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -272,14 +305,14 @@ const AdaptiveQuiz: React.FC = () => {
                                 </h2>
                                 <div className="flex gap-2 mt-2">
                                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${questionSource === 'ai'
-                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                                         }`}>
                                         {questionSource === 'ai' ? '🤖 AI Question' : '📚 Static Question'}
                                     </span>
                                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${progress.current_difficulty === 'easy' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                                            progress.current_difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                        progress.current_difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                                         }`}>
                                         {progress.current_difficulty.toUpperCase()}
                                     </span>
@@ -323,26 +356,26 @@ const AdaptiveQuiz: React.FC = () => {
                                 key={key}
                                 onClick={() => !showResult && setSelectedAnswer(options[key])}
                                 className={`p-4 border rounded-lg cursor-pointer transition ${showResult
-                                        ? options[key] === correctAnswer
-                                            ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
-                                            : options[key] === selectedAnswer
-                                                ? 'border-red-500 bg-red-50 dark:bg-red-900/30'
-                                                : 'border-gray-300 dark:border-gray-600'
-                                        : selectedAnswer === options[key]
-                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
-                                            : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? options[key] === correctAnswer
+                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
+                                        : options[key] === selectedAnswer
+                                            ? 'border-red-500 bg-red-50 dark:bg-red-900/30'
+                                            : 'border-gray-300 dark:border-gray-600'
+                                    : selectedAnswer === options[key]
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                                        : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 <div className="flex items-center">
                                     <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 ${showResult
-                                            ? options[key] === correctAnswer
-                                                ? 'border-green-500 bg-green-500'
-                                                : options[key] === selectedAnswer
-                                                    ? 'border-red-500 bg-red-500'
-                                                    : 'border-gray-400'
-                                            : selectedAnswer === options[key]
-                                                ? 'border-blue-500 bg-blue-500'
+                                        ? options[key] === correctAnswer
+                                            ? 'border-green-500 bg-green-500'
+                                            : options[key] === selectedAnswer
+                                                ? 'border-red-500 bg-red-500'
                                                 : 'border-gray-400'
+                                        : selectedAnswer === options[key]
+                                            ? 'border-blue-500 bg-blue-500'
+                                            : 'border-gray-400'
                                         }`}>
                                         {showResult && options[key] === correctAnswer && (
                                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -367,8 +400,8 @@ const AdaptiveQuiz: React.FC = () => {
                     {/* Result */}
                     {showResult && (
                         <div className={`p-4 rounded-lg mb-6 ${isCorrect
-                                ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
-                                : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800'
+                            ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
+                            : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800'
                             }`}>
                             <p className={`font-semibold mb-2 ${isCorrect ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'
                                 }`}>
@@ -393,8 +426,8 @@ const AdaptiveQuiz: React.FC = () => {
                                 onClick={submitAnswer}
                                 disabled={!selectedAnswer}
                                 className={`px-6 py-2 rounded-lg text-white ${selectedAnswer
-                                        ? 'bg-blue-600 hover:bg-blue-700'
-                                        : 'bg-gray-400 cursor-not-allowed'
+                                    ? 'bg-blue-600 hover:bg-blue-700'
+                                    : 'bg-gray-400 cursor-not-allowed'
                                     }`}
                             >
                                 Submit Answer
