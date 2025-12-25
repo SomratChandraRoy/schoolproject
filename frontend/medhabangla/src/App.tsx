@@ -15,6 +15,8 @@ import QuizSelection from './pages/QuizSelection';
 import AdaptiveQuiz from './pages/AdaptiveQuiz';
 import Books from './pages/Books';
 import Games from './pages/Games';
+import GamesHub from './pages/games/GamesHub';
+import MemoryPattern from './pages/games/MemoryPattern';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import NotesFileSystem from './pages/NotesFileSystem'; // File system notes with local storage
@@ -103,7 +105,20 @@ function App() {
               <Route path="/books" element={<Books />} />
               <Route path="/pdfd" element={<Pdfd />} />
 
-              <Route path="/games" element={<Games />} />
+              {/* Legacy games route */}
+              <Route path="/games-old" element={<Games />} />
+
+              {/* New games routes */}
+              <Route path="/games" element={<GamesHub />} />
+              <Route path="/games/memory_pattern" element={<MemoryPattern />} />
+              <Route path="/games/memory_matrix" element={<MemoryPattern />} />
+              <Route path="/games/math_quiz" element={<MemoryPattern />} />
+              <Route path="/games/equation_storm" element={<MemoryPattern />} />
+              <Route path="/games/word_puzzle" element={<MemoryPattern />} />
+              <Route path="/games/pattern_matching" element={<MemoryPattern />} />
+              <Route path="/games/pathfinder" element={<MemoryPattern />} />
+              <Route path="/games/infinite_loop" element={<MemoryPattern />} />
+
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/notes" element={<NotesFileSystem />} />

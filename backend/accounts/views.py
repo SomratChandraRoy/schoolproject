@@ -24,7 +24,20 @@ class UserDashboardView(APIView):
         
         # Get stats
         quizzes_taken = QuizAttempt.objects.filter(user=user).count()
-        games_played = GameSession.objects.filter(user=user).count()
+        
+        # Get games played - handle both old and new GameSession models
+        try:
+            # Try new model structure (player -> user)
+            from games.models import PlayerProfile
+            player_profile = PlayerProfile.objects.filter(user=user).first()
+            if player_profile:
+                games_played = GameSession.objects.filter(player=player_profile).count()
+            else:
+                games_played = 0
+        except:
+            # Fallback to old model structure if it exists
+            games_played = 0
+        
         # Count unique books bookmarked as a proxy for books read
         books_read = Bookmark.objects.filter(user=user).values('book').distinct().count()
         
