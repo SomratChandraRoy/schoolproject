@@ -43,8 +43,8 @@ const Navbar: React.FC = () => {
     // Initial fetch
     fetchUnreadCount();
 
-    // Poll every 5 seconds
-    const interval = setInterval(fetchUnreadCount, 5000);
+    // Poll every 15 seconds (reduced from 5 to save database connections)
+    const interval = setInterval(fetchUnreadCount, 15000);
 
     return () => clearInterval(interval);
   }, [user, token]);

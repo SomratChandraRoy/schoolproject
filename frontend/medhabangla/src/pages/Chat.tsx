@@ -75,6 +75,13 @@ const Chat: React.FC = () => {
 
             requestNotificationPermission();
             loadChatRooms();
+
+            // Poll chat rooms every 10 seconds to see new conversations
+            const roomsInterval = setInterval(() => {
+                loadChatRooms();
+            }, 10000);
+
+            return () => clearInterval(roomsInterval);
         } else {
             navigate('/login');
         }
@@ -85,10 +92,10 @@ const Chat: React.FC = () => {
             loadMessages(selectedRoom.id);
             markAsRead(selectedRoom.id);
 
-            // Poll for new messages every 10 seconds (reduced from 5 to save connections)
+            // Poll for new messages every 5 seconds for better real-time experience
             const interval = setInterval(() => {
                 loadMessages(selectedRoom.id, true);
-            }, 10000);
+            }, 5000);
 
             return () => clearInterval(interval);
         }
@@ -150,21 +157,24 @@ const Chat: React.FC = () => {
                 const data = await response.json();
                 const newMessages = Array.isArray(data) ? data : (data.results || []);
 
-                // Only update if messages changed (avoid unnecessary re-renders)
-                if (JSON.stringify(newMessages) !== JSON.stringify(messages)) {
-                    setMessages(newMessages);
+                // Update messages - always update to ensure new messages appear
+                setMessages(prevMessages => {
+                    // Check if there are new messages
+                    const hasNewMessages = newMessages.length > prevMessages.length;
 
-                    // Show notification for new messages
-                    if (silent && newMessages.length > messages.length) {
+                    if (hasNewMessages && silent) {
+                        // Show notification for new messages from others
                         const latestMessage = newMessages[newMessages.length - 1];
                         if (latestMessage.sender.id !== user?.id) {
                             showNotification(
                                 `${latestMessage.sender.first_name} ${latestMessage.sender.last_name}`,
-                                latestMessage.content
+                                latestMessage.content || 'Sent a file'
                             );
                         }
                     }
-                }
+
+                    return newMessages;
+                });
             }
         } catch (error) {
             console.error('Error loading messages:', error);
@@ -279,6 +289,7 @@ const Chat: React.FC = () => {
 
             if (response.ok) {
                 const realMessage = await response.json();
+                console.log('Message sent successfully:', realMessage);
 
                 // Replace temp message with real one
                 setMessages(prev => prev.map(m =>
@@ -287,14 +298,20 @@ const Chat: React.FC = () => {
                         : m
                 ));
 
+                // Reload chat rooms to update last message
                 loadChatRooms();
             } else {
+                const errorData = await response.json();
+                console.error('Failed to send message:', response.status, errorData);
+
                 // Mark as failed
                 setMessages(prev => prev.map(m =>
                     m.tempId === tempMessage.tempId
                         ? { ...m, status: 'failed' }
                         : m
                 ));
+
+                alert(`Failed to send message: ${errorData.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error sending message:', error);
@@ -303,6 +320,7 @@ const Chat: React.FC = () => {
                     ? { ...m, status: 'failed' }
                     : m
             ));
+            alert('Network error: Could not send message');
         } finally {
             setSending(false);
         }
