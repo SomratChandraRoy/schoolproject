@@ -35,6 +35,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # Must be first for WebSocket support
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,11 +45,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'channels',  # WebSocket support
     'accounts',
     'quizzes',
     'books',
     'games',
     'ai',
+    'chat',
 ]
 
 # Custom user model
@@ -62,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'medhabangla.middleware.DatabaseConnectionMiddleware',  # Custom DB connection management
 ]
 ROOT_URLCONF = 'medhabangla.urls'
 
@@ -81,6 +85,23 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'medhabangla.wsgi.application'
+
+# ASGI application for WebSocket support
+ASGI_APPLICATION = 'medhabangla.asgi.application'
+
+# Channels configuration
+CHANNEL_LAYERS = {
+    'default': {
+        # Use Redis for production
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')],
+        },
+    } if os.getenv('REDIS_URL') else {
+        # Use in-memory channel layer for development
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 
 
 # Database
@@ -121,9 +142,16 @@ elif os.getenv('DB_HOST'):
             'PORT': os.getenv('DB_PORT', '5432'),
             'OPTIONS': {
                 'connect_timeout': 10,
-                'options': '-c statement_timeout=30000'  # 30 seconds timeout
+                'options': '-c statement_timeout=30000',  # 30 seconds timeout
+                'keepalives': 1,
+                'keepalives_idle': 30,
+                'keepalives_interval': 10,
+                'keepalives_count': 5,
             },
-            'CONN_MAX_AGE': 600,  # Connection pooling - keep connections alive for 10 minutes
+            # Connection pooling settings
+            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '300')),  # 5 minutes default
+            'CONN_HEALTH_CHECKS': True,  # Django 4.1+ feature to validate connections
+            'ATOMIC_REQUESTS': False,  # Set to True if you want automatic transactions
         }
     }
 # Default to SQLite if no configuration provided
@@ -198,6 +226,12 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files (User uploaded files, PDFs, etc.)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Google Drive Configuration for Chat File Storage
+USE_GOOGLE_DRIVE = os.getenv('USE_GOOGLE_DRIVE', 'False') == 'True'
+GOOGLE_DRIVE_CREDENTIALS_JSON = os.getenv('GOOGLE_DRIVE_CREDENTIALS_JSON', '')
+GOOGLE_DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '')
+GOOGLE_DRIVE_PUBLIC_FILES = os.getenv('GOOGLE_DRIVE_PUBLIC_FILES', 'True') == 'True'
 
 # REST Framework settings
 REST_FRAMEWORK = {

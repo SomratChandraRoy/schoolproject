@@ -27,6 +27,7 @@ import StudyTimer from './pages/StudyTimer';
 import StudyStats from './pages/StudyStats';
 import SuperuserDashboard from './pages/SuperuserDashboard';
 import AdminSettings from './pages/AdminSettings';
+import Chat from './pages/Chat';
 
 //import pdfd for cheking pdf viewer ! 
 import Pdfd from './pages/Pdfd'
@@ -109,6 +110,7 @@ function App() {
               <Route path="/syllabus" element={<Syllabus />} />
               <Route path="/study-timer" element={<StudyTimer />} />
               <Route path="/study-stats" element={<StudyStats />} />
+              <Route path="/chat" element={<Chat />} />
             </Route>
 
             {/* Protected Routes for Admin */}

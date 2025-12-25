@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import './index.css'
+import './styles/chat-animations.css'
 
 // Register service worker for PWA (if available)
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

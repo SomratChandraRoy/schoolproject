@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../contexts/DarkModeContext';
+import NotificationBadge from './chat/NotificationBadge';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,12 +12,42 @@ const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [deferredPrompt, setDeferredPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = React.useState(false);
+  const [unreadCount, setUnreadCount] = React.useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
+  const token = localStorage.getItem('token');
+
+  // Fetch unread count for members
+  React.useEffect(() => {
+    if (!user || !user.is_member || !token) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/chat/unread-count/', {
+          headers: { Authorization: `Token ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(data.unread_count || 0);
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+      }
+    };
+
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Poll every 5 seconds
+    const interval = setInterval(fetchUnreadCount, 5000);
+
+    return () => clearInterval(interval);
+  }, [user, token]);
 
   // Check if app is installed
   React.useEffect(() => {
@@ -92,6 +123,11 @@ const Navbar: React.FC = () => {
     { name: 'Notes', path: '/notes' },
   ];
 
+  // Add Chat for members
+  if (user && user.is_member) {
+    navItems.push({ name: 'Chat', path: '/chat' });
+  }
+
   if (user && (user.is_teacher || user.is_admin)) {
     navItems.push({ name: 'Manage Quizzes', path: '/quiz/manage' });
   }
@@ -118,9 +154,23 @@ const Navbar: React.FC = () => {
                   className={`${location.pathname === item.path
                     ? 'border-blue-500 text-gray-900 dark:text-white'
                     : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium relative transition-all duration-200 ${item.name === 'Chat' ? 'hover-icon-bounce' : ''}`}
                 >
-                  {item.name}
+                  {item.name === 'Chat' ? (
+                    <span className="flex items-center gap-1.5 relative">
+                      <svg className="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <span>{item.name}</span>
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-2 -right-3 flex items-center justify-center min-w-[20px] h-[20px] px-1.5 text-[11px] font-bold text-white bg-gradient-to-br from-red-500 via-red-600 to-pink-600 rounded-full shadow-lg animate-notificationPop notification-glow border-2 border-white dark:border-gray-800">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    item.name
+                  )}
                 </Link>
               ))}
             </div>
@@ -243,12 +293,29 @@ const Navbar: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={() => setIsMenuOpen(false)}
                 className={`${location.pathname === item.path
                   ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-gray-700 dark:text-white'
                   : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-white'
-                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                  } block pl-3 pr-4 py-3 border-l-4 text-base font-medium transition-all duration-200`}
               >
-                {item.name}
+                {item.name === 'Chat' ? (
+                  <span className="flex items-center justify-between">
+                    <span className="flex items-center gap-2.5">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <span className="font-semibold">{item.name}</span>
+                    </span>
+                    {unreadCount > 0 && (
+                      <span className="flex items-center justify-center min-w-[24px] h-[24px] px-2 text-xs font-bold text-white bg-gradient-to-br from-red-500 via-red-600 to-pink-600 rounded-full shadow-lg animate-notificationPop notification-glow">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  item.name
+                )}
               </Link>
             ))}
           </div>

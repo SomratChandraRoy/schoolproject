@@ -8,19 +8,19 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'class_level', 
                  'fav_subjects', 'disliked_subjects', 'interests', 'total_points', 'is_student', 
-                 'is_teacher', 'is_admin', 'is_banned', 'ban_reason', 'google_id', 'profile_picture',
+                 'is_teacher', 'is_admin', 'is_member', 'is_banned', 'ban_reason', 'google_id', 'profile_picture',
                  'total_study_time', 'current_streak', 'longest_streak')
-        read_only_fields = ('id', 'is_student', 'is_teacher', 'is_admin', 'is_banned', 'google_id', 'profile_picture')
+        read_only_fields = ('id', 'is_student', 'is_teacher', 'is_admin', 'is_member', 'is_banned', 'google_id', 'profile_picture')
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'class_level', 
                  'fav_subjects', 'disliked_subjects', 'interests', 'total_points', 'is_student', 
-                 'is_teacher', 'is_admin', 'is_banned', 'ban_reason', 'google_id', 'profile_picture',
+                 'is_teacher', 'is_admin', 'is_member', 'is_banned', 'ban_reason', 'google_id', 'profile_picture',
                  'total_study_time', 'current_streak', 'longest_streak')
         read_only_fields = ('id', 'username', 'email', 'is_student', 'is_teacher', 'is_admin', 
-                           'is_banned', 'google_id', 'profile_picture')
+                           'is_member', 'is_banned', 'google_id', 'profile_picture')
 
 class StudySessionSerializer(serializers.ModelSerializer):
     class Meta:

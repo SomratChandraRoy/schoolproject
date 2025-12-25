@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/books/', include('books.urls')),
     path('api/games/', include('games.urls')),
     path('api/ai/', include('ai.urls')),
+    path('api/chat/', include('chat.urls')),
     # Admin API endpoints
     path('api/superuser/accounts/', include('accounts.admin_urls')),
     path('api/superuser/quizzes/', include('quizzes.admin_urls')),

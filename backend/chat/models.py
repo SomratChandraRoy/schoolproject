@@ -46,6 +46,11 @@ class Message(models.Model):
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    # Google Drive fields (optional)
+    drive_file_id = models.CharField(max_length=255, blank=True, null=True)  # Google Drive file ID
+    drive_view_link = models.URLField(max_length=500, blank=True, null=True)  # View link
+    drive_download_link = models.URLField(max_length=500, blank=True, null=True)  # Download link
+    
     class Meta:
         ordering = ['created_at']
     

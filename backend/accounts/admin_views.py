@@ -20,7 +20,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name', 
                  'class_level', 'fav_subjects', 'disliked_subjects', 'interests', 
-                 'total_points', 'is_student', 'is_teacher', 'is_admin', 'is_staff',
+                 'total_points', 'is_student', 'is_teacher', 'is_admin', 'is_member', 'is_staff',
                  'is_superuser', 'is_banned', 'ban_reason', 'google_id', 'profile_picture', 
                  'total_study_time', 'current_streak', 'longest_streak', 'date_joined', 'last_login')
         read_only_fields = ('id', 'date_joined', 'last_login')
@@ -204,6 +204,26 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         
         return Response({
             'message': f'User {user.username} role updated',
+            'user': self.get_serializer(user).data
+        })
+    
+    @action(detail=True, methods=['post'])
+    def toggle_member(self, request, pk=None):
+        """Toggle member status for a user"""
+        user = self.get_object()
+        is_member = request.data.get('is_member')
+        
+        if is_member is None:
+            # Toggle current status
+            user.is_member = not user.is_member
+        else:
+            user.is_member = is_member
+        
+        user.save()
+        
+        return Response({
+            'message': f'User {user.username} member status updated',
+            'is_member': user.is_member,
             'user': self.get_serializer(user).data
         })
 

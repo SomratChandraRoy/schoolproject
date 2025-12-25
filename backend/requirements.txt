@@ -30,3 +30,14 @@ pytest-django>=4.9.0
 
 # Development utilities
 python-dotenv>=1.0.1
+
+# WebSocket support for real-time chat
+channels>=4.0.0
+channels-redis>=4.2.0
+daphne>=4.1.0
+
+# Google Drive integration for file storage
+google-auth>=2.27.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.116.0
