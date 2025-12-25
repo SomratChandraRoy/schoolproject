@@ -575,3 +575,56 @@ The MedhaBangla Quiz System is now **production-ready** with:
 **Implementation Date**: December 24, 2025  
 **Final Status**: ✅ **COMPLETE & PRODUCTION READY**  
 **Version**: 5.0.0
+
+
+---
+
+## 🆕 Latest Update: Short and Long Answer Support
+
+### 7. ✅ Short and Long Answer Support in Adaptive Quiz
+**Status**: Complete (December 25, 2025)
+**Documentation**: `SHORT_LONG_ANSWER_FIX.md`
+
+**What it does**:
+- Adds text input fields for short and long answer questions in adaptive quiz
+- Provides character limits and counters
+- Shows model answer comparison after submission
+- Brings adaptive quiz to feature parity with regular quiz
+
+**Key Features**:
+- Short answer: 4-row textarea, 500 character limit
+- Long answer: 10-row resizable textarea, 2000 character limit
+- Real-time character counter
+- Helpful tips and placeholders
+- Model answer comparison in results
+- Disabled state after submission
+
+**Files Modified**:
+- `frontend/medhabangla/src/pages/AdaptiveQuiz.tsx` - Added text inputs for short/long questions
+
+**Feature Comparison**:
+| Feature | Quiz.tsx | AdaptiveQuiz.tsx (Before) | AdaptiveQuiz.tsx (After) |
+|---------|----------|---------------------------|--------------------------|
+| MCQ Support | ✅ | ✅ | ✅ |
+| Short Answer Input | ✅ | ❌ | ✅ |
+| Long Answer Input | ✅ | ❌ | ✅ |
+| Character Counter | ✅ | ❌ | ✅ |
+| Model Answer Display | ✅ | ❌ | ✅ |
+
+---
+
+## 📊 Updated Statistics
+
+### Features Implemented
+- **Major features**: 7 (was 6)
+- **All question types supported**: MCQ, Short, Long ✅
+- **Adaptive quiz feature parity**: Complete ✅
+
+### Documentation Files
+- Total documentation files: 12+
+- Latest: `SHORT_LONG_ANSWER_FIX.md`
+
+---
+
+**Last Updated**: December 25, 2025  
+**Version**: 5.1.0

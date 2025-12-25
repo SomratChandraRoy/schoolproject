@@ -18,6 +18,7 @@ class User(AbstractUser):
     is_student = models.BooleanField(default=True)  # Default role is student
     is_teacher = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
+    is_member = models.BooleanField(default=False)  # Member role for chat access
     is_banned = models.BooleanField(default=False)  # Ban status
     ban_reason = models.TextField(blank=True, null=True)  # Reason for ban
     

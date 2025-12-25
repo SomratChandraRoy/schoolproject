@@ -349,53 +349,107 @@ const AdaptiveQuiz: React.FC = () => {
                         {currentQuestion.question_text}
                     </h3>
 
-                    {/* Options */}
-                    <div className="space-y-3 mb-6">
-                        {optionKeys.map((key) => (
-                            <div
-                                key={key}
-                                onClick={() => !showResult && setSelectedAnswer(options[key])}
-                                className={`p-4 border rounded-lg cursor-pointer transition ${showResult
-                                    ? options[key] === correctAnswer
-                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
-                                        : options[key] === selectedAnswer
-                                            ? 'border-red-500 bg-red-50 dark:bg-red-900/30'
-                                            : 'border-gray-300 dark:border-gray-600'
-                                    : selectedAnswer === options[key]
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
-                                        : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                                    }`}
-                            >
-                                <div className="flex items-center">
-                                    <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 ${showResult
+                    {/* MCQ Options */}
+                    {currentQuestion.question_type === 'mcq' && (
+                        <div className="space-y-3 mb-6">
+                            {optionKeys.map((key) => (
+                                <div
+                                    key={key}
+                                    onClick={() => !showResult && setSelectedAnswer(options[key])}
+                                    className={`p-4 border rounded-lg cursor-pointer transition ${showResult
                                         ? options[key] === correctAnswer
-                                            ? 'border-green-500 bg-green-500'
+                                            ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
                                             : options[key] === selectedAnswer
-                                                ? 'border-red-500 bg-red-500'
-                                                : 'border-gray-400'
+                                                ? 'border-red-500 bg-red-50 dark:bg-red-900/30'
+                                                : 'border-gray-300 dark:border-gray-600'
                                         : selectedAnswer === options[key]
-                                            ? 'border-blue-500 bg-blue-500'
-                                            : 'border-gray-400'
-                                        }`}>
-                                        {showResult && options[key] === correctAnswer && (
-                                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        )}
-                                        {showResult && options[key] === selectedAnswer && options[key] !== correctAnswer && (
-                                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                        )}
-                                        {!showResult && selectedAnswer === options[key] && (
-                                            <div className="w-3 h-3 bg-white rounded-full"></div>
-                                        )}
+                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                                            : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                        }`}
+                                >
+                                    <div className="flex items-center">
+                                        <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 ${showResult
+                                            ? options[key] === correctAnswer
+                                                ? 'border-green-500 bg-green-500'
+                                                : options[key] === selectedAnswer
+                                                    ? 'border-red-500 bg-red-500'
+                                                    : 'border-gray-400'
+                                            : selectedAnswer === options[key]
+                                                ? 'border-blue-500 bg-blue-500'
+                                                : 'border-gray-400'
+                                            }`}>
+                                            {showResult && options[key] === correctAnswer && (
+                                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            )}
+                                            {showResult && options[key] === selectedAnswer && options[key] !== correctAnswer && (
+                                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                            )}
+                                            {!showResult && selectedAnswer === options[key] && (
+                                                <div className="w-3 h-3 bg-white rounded-full"></div>
+                                            )}
+                                        </div>
+                                        <span className="text-gray-900 dark:text-white">{key}. {options[key]}</span>
                                     </div>
-                                    <span className="text-gray-900 dark:text-white">{key}. {options[key]}</span>
                                 </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Short Answer Input */}
+                    {currentQuestion.question_type === 'short' && (
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Your Answer (Short Answer):
+                            </label>
+                            <textarea
+                                value={selectedAnswer}
+                                onChange={(e) => !showResult && setSelectedAnswer(e.target.value)}
+                                rows={4}
+                                disabled={showResult}
+                                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+                                placeholder="Type your short answer here (2-3 sentences)..."
+                                maxLength={500}
+                            />
+                            <div className="mt-2 flex justify-between items-center">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    💡 Tip: Write a clear and concise answer
+                                </p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500">
+                                    {selectedAnswer.length}/500 characters
+                                </p>
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    )}
+
+                    {/* Long Answer Input */}
+                    {currentQuestion.question_type === 'long' && (
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Your Answer (Long Answer):
+                            </label>
+                            <textarea
+                                value={selectedAnswer}
+                                onChange={(e) => !showResult && setSelectedAnswer(e.target.value)}
+                                rows={10}
+                                disabled={showResult}
+                                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-y disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+                                placeholder="Type your detailed answer here. Include all relevant points and explanations..."
+                                maxLength={2000}
+                            />
+                            <div className="mt-2 flex justify-between items-center">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    💡 Tip: Provide a comprehensive answer with examples and explanations
+                                </p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500">
+                                    {selectedAnswer.length}/2000 characters
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Result */}
                     {showResult && (
@@ -407,8 +461,30 @@ const AdaptiveQuiz: React.FC = () => {
                                 }`}>
                                 {isCorrect ? '✅ Correct!' : '❌ Incorrect'}
                             </p>
+
+                            {/* Show model answer for short/long questions */}
+                            {(currentQuestion.question_type === 'short' || currentQuestion.question_type === 'long') && (
+                                <div className="mt-3 space-y-2">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Answer:</p>
+                                        <div className="p-3 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                                            <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{selectedAnswer}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model Answer:</p>
+                                        <div className="p-3 rounded bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
+                                            <p className="text-sm text-green-800 dark:text-green-200 whitespace-pre-wrap">{correctAnswer}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {explanation && (
-                                <p className="text-gray-700 dark:text-gray-300 text-sm">{explanation}</p>
+                                <div className="mt-3">
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Explanation:</p>
+                                    <p className="text-gray-700 dark:text-gray-300 text-sm">{explanation}</p>
+                                </div>
                             )}
                         </div>
                     )}
