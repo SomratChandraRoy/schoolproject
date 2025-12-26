@@ -11,14 +11,31 @@ const GameCard: React.FC<GameCardProps> = ({ game, session }) => {
     const navigate = useNavigate();
 
     const handlePlay = () => {
-        navigate(`/games/${game.game_type}`);
+        // Map game types to routes
+        const gameRoutes: { [key: string]: string } = {
+            'memory_pattern': '/games/memory_pattern',
+            'ship_find': '/games/ship_find',
+            'number_hunt': '/games/number_hunt',
+            'memory_matrix': '/games/memory_matrix',
+            'math_quiz': '/games/math_quiz',
+            'equation_storm': '/games/equation_storm',
+            'word_puzzle': '/games/word_puzzle',
+            'pattern_matching': '/games/pattern_matching',
+            'pathfinder': '/games/pathfinder',
+            'infinite_loop': '/games/infinite_loop',
+        };
+
+        const route = gameRoutes[game.game_type] || `/games/${game.game_type}`;
+        navigate(route);
     };
 
     const getGameIcon = (gameType: string) => {
         const icons: { [key: string]: string } = {
             memory_pattern: '🧠',
+            ship_find: '🚢',
+            number_hunt: '🔢',
             memory_matrix: '🎯',
-            math_quiz: '🔢',
+            math_quiz: '➕',
             equation_storm: '⚡',
             word_puzzle: '📝',
             pattern_matching: '🎨',

@@ -17,6 +17,8 @@ import Books from './pages/Books';
 import Games from './pages/Games';
 import GamesHub from './pages/games/GamesHub';
 import MemoryPattern from './pages/games/MemoryPattern';
+import ShipFind from './pages/games/ShipFind';
+import NumberHunt from './pages/games/NumberHunt';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import NotesFileSystem from './pages/NotesFileSystem'; // File system notes with local storage
@@ -111,6 +113,10 @@ function App() {
               {/* New games routes */}
               <Route path="/games" element={<GamesHub />} />
               <Route path="/games/memory_pattern" element={<MemoryPattern />} />
+              <Route path="/games/ship_find" element={<ShipFind />} />
+              <Route path="/games/number_hunt" element={<NumberHunt />} />
+
+              {/* Legacy placeholder routes */}
               <Route path="/games/memory_matrix" element={<MemoryPattern />} />
               <Route path="/games/math_quiz" element={<MemoryPattern />} />
               <Route path="/games/equation_storm" element={<MemoryPattern />} />
