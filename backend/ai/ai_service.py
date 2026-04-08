@@ -9,7 +9,7 @@ import base64
 from django.conf import settings
 
 # Suppress Gemini deprecation warning
-warnings.filterwarnings('ignore', message='.*google.generativeai.*', category=FutureWarning)
+warnings.filterwarnings('ignore', category=FutureWarning)
 
 import google.generativeai as genai
 

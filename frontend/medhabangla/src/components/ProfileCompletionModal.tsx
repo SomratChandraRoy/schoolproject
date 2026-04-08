@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getCurriculumSubjectsForClass } from '../utils/curriculumSubjects';
 
 interface ProfileCompletionModalProps {
     isOpen: boolean;
@@ -15,18 +16,8 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
         interests: [] as string[]
     });
 
-    const subjects = [
-        { id: 'bangla', name: 'বাংলা (Bangla)' },
-        { id: 'english', name: 'ইংরেজি (English)' },
-        { id: 'math', name: 'গণিত (Mathematics)' },
-        { id: 'science', name: 'বিজ্ঞান (Science)' },
-        { id: 'physics', name: 'পদার্থবিজ্ঞান (Physics)' },
-        { id: 'chemistry', name: 'রসায়ন (Chemistry)' },
-        { id: 'biology', name: 'জীববিজ্ঞান (Biology)' },
-        { id: 'ict', name: 'আইসিটি (ICT)' },
-        { id: 'history', name: 'ইতিহাস (History)' },
-        { id: 'geography', name: 'ভূগোল (Geography)' }
-    ];
+    const selectedClassLevel = formData.class_level ? parseInt(formData.class_level, 10) : null;
+    const subjects = getCurriculumSubjectsForClass(selectedClassLevel);
 
     const interestOptions = [
         { id: 'reading', name: '📚 পড়া (Reading)', icon: '📚' },
@@ -180,15 +171,15 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {subjects.map(subject => (
                                         <button
-                                            key={subject.id}
+                                            key={subject.code}
                                             type="button"
-                                            onClick={() => handleSubjectToggle(subject.id, 'fav')}
-                                            className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${formData.fav_subjects.includes(subject.id)
+                                            onClick={() => handleSubjectToggle(subject.code, 'fav')}
+                                            className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${formData.fav_subjects.includes(subject.code)
                                                     ? 'bg-green-600 text-white shadow-md'
                                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                                 }`}
                                         >
-                                            {subject.name}
+                                            {subject.bengaliName} ({subject.name})
                                         </button>
                                     ))}
                                 </div>
@@ -204,15 +195,15 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {subjects.map(subject => (
                                         <button
-                                            key={subject.id}
+                                            key={subject.code}
                                             type="button"
-                                            onClick={() => handleSubjectToggle(subject.id, 'disliked')}
-                                            className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${formData.disliked_subjects.includes(subject.id)
+                                            onClick={() => handleSubjectToggle(subject.code, 'disliked')}
+                                            className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${formData.disliked_subjects.includes(subject.code)
                                                     ? 'bg-orange-600 text-white shadow-md'
                                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                                 }`}
                                         >
-                                            {subject.name}
+                                            {subject.bengaliName} ({subject.name})
                                         </button>
                                     ))}
                                 </div>

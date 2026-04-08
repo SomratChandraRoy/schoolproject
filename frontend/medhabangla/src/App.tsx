@@ -95,7 +95,7 @@ function App() {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/ollama" element={<Ollama />} />
-
+            
 
             {/* Protected Routes for Authenticated Users */}
             <Route element={<ProtectedRoute />}>

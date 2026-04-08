@@ -3,7 +3,7 @@ Multi-API-Key Manager for Gemini API
 Automatically rotates through multiple API keys when quota is exceeded
 """
 import warnings
-warnings.filterwarnings('ignore', message='.*google.generativeai.*', category=FutureWarning)
+warnings.filterwarnings('ignore', category=FutureWarning)
 
 import google.generativeai as genai
 from typing import Optional, List, Tuple

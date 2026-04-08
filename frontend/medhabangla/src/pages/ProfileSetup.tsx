@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getCurriculumSubjectsForClass } from '../utils/curriculumSubjects';
 
 const ProfileSetup: React.FC = () => {
     const navigate = useNavigate();
@@ -10,20 +11,8 @@ const ProfileSetup: React.FC = () => {
     });
     const [loading, setLoading] = useState(false);
 
-    const subjects = [
-        { id: 'bangla', name: 'বাংলা (Bangla)' },
-        { id: 'english', name: 'ইংরেজি (English)' },
-        { id: 'math', name: 'গণিত (Mathematics)' },
-        { id: 'science', name: 'বিজ্ঞান (Science)' },
-        { id: 'physics', name: 'পদার্থবিজ্ঞান (Physics)' },
-        { id: 'chemistry', name: 'রসায়ন (Chemistry)' },
-        { id: 'biology', name: 'জীববিজ্ঞান (Biology)' },
-        { id: 'ict', name: 'আইসিটি (ICT)' },
-        { id: 'history', name: 'ইতিহাস (History)' },
-        { id: 'geography', name: 'ভূগোল (Geography)' },
-        { id: 'religion', name: 'ধর্ম (Religion)' },
-        { id: 'agriculture', name: 'কৃষি (Agriculture)' }
-    ];
+    const selectedClassLevel = formData.class_level ? parseInt(formData.class_level, 10) : null;
+    const subjects = getCurriculumSubjectsForClass(selectedClassLevel);
 
     const handleSubjectToggle = (subjectId: string, type: 'fav' | 'disliked') => {
         if (type === 'fav') {
@@ -120,15 +109,15 @@ const ProfileSetup: React.FC = () => {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {subjects.map(subject => (
                                 <button
-                                    key={subject.id}
+                                    key={subject.code}
                                     type="button"
-                                    onClick={() => handleSubjectToggle(subject.id, 'fav')}
-                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.fav_subjects.includes(subject.id)
+                                    onClick={() => handleSubjectToggle(subject.code, 'fav')}
+                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.fav_subjects.includes(subject.code)
                                         ? 'bg-green-600 text-white'
                                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                         }`}
                                 >
-                                    {subject.name}
+                                    {subject.bengaliName} ({subject.name})
                                 </button>
                             ))}
                         </div>
@@ -142,15 +131,15 @@ const ProfileSetup: React.FC = () => {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {subjects.map(subject => (
                                 <button
-                                    key={subject.id}
+                                    key={subject.code}
                                     type="button"
-                                    onClick={() => handleSubjectToggle(subject.id, 'disliked')}
-                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.disliked_subjects.includes(subject.id)
+                                    onClick={() => handleSubjectToggle(subject.code, 'disliked')}
+                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${formData.disliked_subjects.includes(subject.code)
                                         ? 'bg-red-600 text-white'
                                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                         }`}
                                 >
-                                    {subject.name}
+                                    {subject.bengaliName} ({subject.name})
                                 </button>
                             ))}
                         </div>

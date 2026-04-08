@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { getCurriculumSubjectsForClass } from '../utils/curriculumSubjects';
 
 interface Subject {
     id: number;
@@ -90,12 +91,56 @@ const QuizSelection: React.FC = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                setSubjects(data.subjects);
+                if (Array.isArray(data.subjects) && data.subjects.length > 0) {
+                    setSubjects(data.subjects);
+                } else {
+                    const fallbackSubjects = getCurriculumSubjectsForClass(classLevel).map((subject, index) => ({
+                        id: index + 1,
+                        name: subject.name,
+                        bengali_title: subject.bengaliName,
+                        subject_code: subject.code,
+                        class_level: classLevel,
+                        stream: subject.stream || null,
+                        is_compulsory: subject.isCompulsory,
+                        icon: '📚',
+                        color: 'bg-blue-100',
+                        description: ''
+                    }));
+                    setSubjects(fallbackSubjects);
+                }
             } else {
                 console.error('Failed to fetch subjects');
+                const fallbackSubjects = getCurriculumSubjectsForClass(classLevel).map((subject, index) => ({
+                    id: index + 1,
+                    name: subject.name,
+                    bengali_title: subject.bengaliName,
+                    subject_code: subject.code,
+                    class_level: classLevel,
+                    stream: subject.stream || null,
+                    is_compulsory: subject.isCompulsory,
+                    icon: '📚',
+                    color: 'bg-blue-100',
+                    description: ''
+                }));
+                setSubjects(fallbackSubjects);
             }
         } catch (error) {
             console.error('Error fetching subjects:', error);
+            const userStr = localStorage.getItem('user');
+            const fallbackClass = userStr ? (JSON.parse(userStr).class_level || 9) : 9;
+            const fallbackSubjects = getCurriculumSubjectsForClass(fallbackClass).map((subject, index) => ({
+                id: index + 1,
+                name: subject.name,
+                bengali_title: subject.bengaliName,
+                subject_code: subject.code,
+                class_level: fallbackClass,
+                stream: subject.stream || null,
+                is_compulsory: subject.isCompulsory,
+                icon: '📚',
+                color: 'bg-blue-100',
+                description: ''
+            }));
+            setSubjects(fallbackSubjects);
         } finally {
             setLoading(false);
         }

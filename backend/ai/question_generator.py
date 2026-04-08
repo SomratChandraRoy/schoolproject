@@ -6,6 +6,7 @@ import json
 import re
 from typing import List, Dict, Tuple
 from django.utils import timezone
+from django.conf import settings
 from quizzes.models import Quiz, AIGeneratedQuestion, UserQuizProgress
 from accounts.models import User
 
@@ -24,7 +25,9 @@ class QuestionGenerator:
         class_level: int,
         difficulty: str,
         question_type: str,
-        batch_size: int = 6
+        batch_size: int = 6,
+        timeout_seconds: int = 25,
+        groq_only: bool = True
     ) -> Tuple[bool, List[AIGeneratedQuestion], str]:
         """
         Generate a batch of AI questions for a user
@@ -44,12 +47,19 @@ class QuestionGenerator:
             count=batch_size
         )
         
-        # Generate questions using the shared AI service (Groq first, Gemini fallback)
-        success, response_text, error, source = self.ai_service.generate(
-            prompt=prompt,
-            timeout=90,
-            model_name='gemini-2.5-flash'
-        )
+        if groq_only:
+            success, response_text, error = self.ai_service.generate_with_groq(
+                prompt=prompt,
+                timeout=timeout_seconds,
+                model_name=getattr(settings, 'GROQ_MODEL', None)
+            )
+        else:
+            # Legacy fallback mode if explicitly requested
+            success, response_text, error, _ = self.ai_service.generate(
+                prompt=prompt,
+                timeout=timeout_seconds,
+                model_name='gemini-2.5-flash'
+            )
         
         if not success:
             print(f"[QuestionGenerator] ERROR: {error}")

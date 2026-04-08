@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import { getCurriculumSubjectsForClass, getSubjectNameByCode } from '../utils/curriculumSubjects';
 
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -13,10 +14,7 @@ const Profile: React.FC = () => {
     dislikedSubjects: [] as string[]
   });
 
-  const subjects = [
-    'Mathematics', 'Physics', 'Chemistry', 'Biology', 
-    'English', 'Bangla', 'ICT', 'General Knowledge'
-  ];
+  const subjects = getCurriculumSubjectsForClass(formData.classLevel);
 
   useEffect(() => {
     fetchUserData();
@@ -79,29 +77,31 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleSubjectToggle = (subject: string, type: 'fav' | 'disliked') => {
+  const handleSubjectToggle = (subjectCode: string, type: 'fav' | 'disliked') => {
     if (type === 'fav') {
-      if (formData.favSubjects.includes(subject)) {
+      if (formData.favSubjects.includes(subjectCode)) {
         setFormData({
           ...formData,
-          favSubjects: formData.favSubjects.filter(s => s !== subject)
+          favSubjects: formData.favSubjects.filter(s => s !== subjectCode)
         });
       } else {
         setFormData({
           ...formData,
-          favSubjects: [...formData.favSubjects, subject]
+          favSubjects: [...formData.favSubjects, subjectCode],
+          dislikedSubjects: formData.dislikedSubjects.filter(s => s !== subjectCode)
         });
       }
     } else {
-      if (formData.dislikedSubjects.includes(subject)) {
+      if (formData.dislikedSubjects.includes(subjectCode)) {
         setFormData({
           ...formData,
-          dislikedSubjects: formData.dislikedSubjects.filter(s => s !== subject)
+          dislikedSubjects: formData.dislikedSubjects.filter(s => s !== subjectCode)
         });
       } else {
         setFormData({
           ...formData,
-          dislikedSubjects: [...formData.dislikedSubjects, subject]
+          dislikedSubjects: [...formData.dislikedSubjects, subjectCode],
+          favSubjects: formData.favSubjects.filter(s => s !== subjectCode)
         });
       }
     }
@@ -291,16 +291,16 @@ const Profile: React.FC = () => {
                     {editing ? (
                       <div className="grid grid-cols-2 gap-2">
                         {subjects.map(subject => (
-                          <div key={subject} className="flex items-center">
+                          <div key={subject.code} className="flex items-center">
                             <input
                               type="checkbox"
-                              id={`fav-${subject}`}
-                              checked={formData.favSubjects.includes(subject)}
-                              onChange={() => handleSubjectToggle(subject, 'fav')}
+                              id={`fav-${subject.code}`}
+                              checked={formData.favSubjects.includes(subject.code)}
+                              onChange={() => handleSubjectToggle(subject.code, 'fav')}
                               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             />
-                            <label htmlFor={`fav-${subject}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                              {subject}
+                            <label htmlFor={`fav-${subject.code}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                              {subject.bengaliName} ({subject.name})
                             </label>
                           </div>
                         ))}
@@ -309,7 +309,7 @@ const Profile: React.FC = () => {
                       <div className="flex flex-wrap gap-2">
                         {userData.fav_subjects?.map((subject: string) => (
                           <span key={subject} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
-                            {subject}
+                            {getSubjectNameByCode(userData.class_level, subject)}
                           </span>
                         ))}
                       </div>
@@ -323,16 +323,16 @@ const Profile: React.FC = () => {
                     {editing ? (
                       <div className="grid grid-cols-2 gap-2">
                         {subjects.map(subject => (
-                          <div key={subject} className="flex items-center">
+                          <div key={subject.code} className="flex items-center">
                             <input
                               type="checkbox"
-                              id={`disliked-${subject}`}
-                              checked={formData.dislikedSubjects.includes(subject)}
-                              onChange={() => handleSubjectToggle(subject, 'disliked')}
+                              id={`disliked-${subject.code}`}
+                              checked={formData.dislikedSubjects.includes(subject.code)}
+                              onChange={() => handleSubjectToggle(subject.code, 'disliked')}
                               className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                             />
-                            <label htmlFor={`disliked-${subject}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                              {subject}
+                            <label htmlFor={`disliked-${subject.code}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                              {subject.bengaliName} ({subject.name})
                             </label>
                           </div>
                         ))}
@@ -341,7 +341,7 @@ const Profile: React.FC = () => {
                       <div className="flex flex-wrap gap-2">
                         {userData.disliked_subjects?.map((subject: string) => (
                           <span key={subject} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">
-                            {subject}
+                            {getSubjectNameByCode(userData.class_level, subject)}
                           </span>
                         ))}
                       </div>

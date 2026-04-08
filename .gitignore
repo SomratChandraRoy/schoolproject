@@ -195,7 +195,7 @@ node_modules
 # Temporary folders
 tmp/
 temp/
-
+db.sqlite3
 # IDE
 .idea/
 

@@ -2,10 +2,13 @@
 AI Helper Module for MedhaBangla
 Provides AI-powered features across all sections of the application
 """
+import warnings
 from typing import Dict, List, Optional
 import json
 
 from .ai_service import get_ai_service
+
+warnings.filterwarnings('ignore', category=FutureWarning)
 
 
 class AIHelper:

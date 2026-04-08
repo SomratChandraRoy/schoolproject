@@ -5,6 +5,8 @@ import AILearningModal from '../components/AILearningModal';
 import QuizResultsLoading from '../components/QuizResultsLoading';
 
 const Quiz: React.FC = () => {
+  const QUIZ_CACHE_TTL_MS = 10 * 60 * 1000;
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: string }>({});
   const [quizFinished, setQuizFinished] = useState(false);
@@ -46,6 +48,21 @@ const Quiz: React.FC = () => {
 
         // Use the first selected subject code
         const selectedSubject = subjects[0];
+        const cacheKey = `quiz_cache_${selectedSubject}_${classLevel}_${(questionTypes || []).join('_')}`;
+
+        const cachedRaw = sessionStorage.getItem(cacheKey);
+        if (cachedRaw) {
+          try {
+            const cached = JSON.parse(cachedRaw);
+            if (cached?.timestamp && Date.now() - cached.timestamp < QUIZ_CACHE_TTL_MS && cached?.data) {
+              setQuizData(cached.data);
+              setLoading(false);
+              return;
+            }
+          } catch (cacheErr) {
+            console.warn('Failed to read quiz cache:', cacheErr);
+          }
+        }
 
         console.log('Fetching quiz for:', { subject: selectedSubject, difficulty, classLevel, questionTypes });
 
@@ -59,18 +76,38 @@ const Quiz: React.FC = () => {
 
         console.log('API URL:', `/api/quizzes/?${queryParams}`);
 
-        // Fetch quiz data from backend
-        const response = await fetch(`/api/quizzes/?${queryParams}`, {
-          headers: {
-            'Authorization': `Token ${token}`,
-            'Content-Type': 'application/json'
+        let response: Response | null = null;
+        let data: any = null;
+
+        for (let attempt = 0; attempt < 4; attempt++) {
+          response = await fetch(`/api/quizzes/?${queryParams}`, {
+            headers: {
+              'Authorization': `Token ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          console.log('Response status:', response.status, 'attempt:', attempt + 1);
+
+          if (!response.ok) {
+            break;
           }
-        });
 
-        console.log('Response status:', response.status);
+          data = await response.json();
+          const maybeResults = data?.results || data;
+          const hasResults = Array.isArray(maybeResults) && maybeResults.length > 0;
 
-        if (response.ok) {
-          const data = await response.json();
+          if (hasResults || data?.source !== 'generation_started') {
+            break;
+          }
+
+          await sleep(2000);
+        }
+
+        if (response && response.ok) {
+          if (!data) {
+            data = await response.json();
+          }
 
           console.log('Fetched quiz data:', data);
 
@@ -154,6 +191,10 @@ const Quiz: React.FC = () => {
           console.log('Total questions loaded:', transformedData.questions.length);
 
           setQuizData(transformedData);
+          sessionStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data: transformedData
+          }));
         } else {
           const errorText = await response.text();
           console.error('Failed to fetch quiz data:', response.status, errorText);
@@ -623,10 +664,10 @@ const Quiz: React.FC = () => {
                             <div>
                               <h4 className="font-semibold text-gray-900 dark:text-white">Question {index + 1}</h4>
                               <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${question.type === 'mcq'
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                  : question.type === 'short'
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                : question.type === 'short'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                                 }`}>
                                 {question.type === 'mcq' && 'MCQ'}
                                 {question.type === 'short' && 'Short'}

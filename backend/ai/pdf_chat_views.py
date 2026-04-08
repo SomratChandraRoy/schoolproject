@@ -7,6 +7,10 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 from django.core.cache import cache
 import requests
+import warnings
+
+warnings.filterwarnings('ignore', category=FutureWarning)
+
 from .api_key_manager import get_key_manager
 import google.generativeai as genai
 import PyPDF2

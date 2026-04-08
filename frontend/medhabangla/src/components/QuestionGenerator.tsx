@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getCurriculumSubjectsForClass } from '../utils/curriculumSubjects';
 
 interface QuestionGeneratorProps {
     onQuestionGenerated?: (question: any) => void;
@@ -13,18 +14,13 @@ const QuestionGenerator: React.FC<QuestionGeneratorProps> = ({ onQuestionGenerat
     const [generatedQuestion, setGeneratedQuestion] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const subjects = [
-        'Bangla',
-        'English',
-        'Mathematics',
-        'Science',
-        'Physics',
-        'Chemistry',
-        'Biology',
-        'History',
-        'Geography',
-        'ICT',
-    ];
+    const subjects = getCurriculumSubjectsForClass(parseInt(classLevel, 10));
+
+    useEffect(() => {
+        if (subject && !subjects.some((item) => item.code === subject)) {
+            setSubject('');
+        }
+    }, [classLevel, subject, subjects]);
 
     const handleGenerate = async () => {
         setLoading(true);
@@ -88,8 +84,8 @@ const QuestionGenerator: React.FC<QuestionGeneratorProps> = ({ onQuestionGenerat
                     >
                         <option value="">Select a subject</option>
                         {subjects.map((sub) => (
-                            <option key={sub} value={sub}>
-                                {sub}
+                            <option key={sub.code} value={sub.code}>
+                                {sub.bengaliName} ({sub.name})
                             </option>
                         ))}
                     </select>

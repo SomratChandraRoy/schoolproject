@@ -5,6 +5,7 @@ from .models import Quiz, QuizAttempt, Analytics, UserPerformance, Subject
 from .serializers import QuizSerializer, QuizAttemptSerializer, AnalyticsSerializer, SubjectSerializer
 from accounts.models import User
 from accounts.permissions import IsTeacher, IsTeacherOrAdmin
+from threading import Thread
 
 
 class QuizListCreateView(generics.ListCreateAPIView):
@@ -46,119 +47,79 @@ class QuizListCreateView(generics.ListCreateAPIView):
         return queryset.order_by('-created_at')  # Show newest first
     
     def list(self, request, *args, **kwargs):
-        """Override list to add fallback AI generation when no questions available"""
-        queryset = self.filter_queryset(self.get_queryset())
+        """Fast quiz loading with lightweight filtering and Groq-first generation."""
+        base_queryset = self.filter_queryset(self.get_queryset())
         user = request.user
-        
+
         # Get query parameters for fallback
         subject = request.query_params.get('subject')
         class_level = request.query_params.get('class_level')
         question_types = request.query_params.get('question_types', 'mcq')
-        
-        print(f"[QuizList] Filtering: subject={subject}, class={class_level}, types={question_types}")
-        print(f"[QuizList] Initial queryset count: {queryset.count()}")
-        
+
         # Parse question types
         types_list = [t.strip() for t in question_types.split(',')]
-        
-        # CRITICAL: Exclude questions user has already answered
-        # Get all question IDs this user has attempted
+
         answered_question_ids = QuizAttempt.objects.filter(
             user=user
-        ).values_list('quiz_id', flat=True).distinct()
-        
-        answered_count = len(answered_question_ids)
-        print(f"[QuizList] User has answered {answered_count} questions (excluding them)")
-        
-        # Exclude already answered questions
-        queryset = queryset.exclude(id__in=answered_question_ids)
-        print(f"[QuizList] After excluding answered: {queryset.count()} questions")
-        
-        # Validate MCQ questions have proper options (only if MCQ is in the selected types)
+        ).values_list('quiz_id', flat=True)
+
+        queryset = base_queryset.exclude(id__in=answered_question_ids).filter(question_type__in=types_list)
+
+        # Lightweight option validity guard for MCQ without Python-loop validation on all rows.
         if 'mcq' in types_list:
-            valid_mcq_ids = []
-            invalid_mcq_ids = []
-            
-            for q in queryset.filter(question_type='mcq'):
-                # Check if options is a valid dict with keys
-                if isinstance(q.options, dict) and len(q.options) >= 2:
-                    valid_mcq_ids.append(q.id)
-                else:
-                    invalid_mcq_ids.append(q.id)
-            
-            print(f"[QuizList] MCQ validation: {len(valid_mcq_ids)} valid, {len(invalid_mcq_ids)} invalid")
-            
-            # Remove invalid MCQ questions
-            if invalid_mcq_ids:
-                queryset = queryset.exclude(id__in=invalid_mcq_ids)
-        
-        # Now filter by question types (this was already done in get_queryset, but let's be explicit)
-        queryset = queryset.filter(question_type__in=types_list)
-        
-        print(f"[QuizList] After filtering by types {types_list}: {queryset.count()} questions")
-        
-        # Check if we have enough questions (threshold: 3)
-        # If 0, 1, or 2 questions available, trigger AI generation
-        question_count = queryset.count()
-        
-        if question_count < 3 and subject and class_level:
-            print(f"[QuizList] Only {question_count} questions available (threshold: 3), triggering AI generation...")
-            
-            # Use fallback AI generation
-            from ai.question_generator import get_question_generator
-            
-            generator = get_question_generator()
-            primary_type = types_list[0]  # Use first selected type
-            
-            # Generate enough questions to reach at least 10 total
-            questions_needed = max(10 - question_count, 10)
-            
-            print(f"[QuizList] Generating {questions_needed} AI questions of type '{primary_type}'...")
-            print(f"[QuizList] Parameters: subject={subject}, class={class_level}, type={primary_type}")
-            
-            success, ai_questions, error = generator.generate_batch_questions(
+            queryset = queryset.exclude(question_type='mcq', options={})
+
+        # Return quickly with a bounded result set.
+        fast_queryset = queryset.order_by('-created_at')[:20]
+        if fast_queryset:
+            serializer = self.get_serializer(fast_queryset, many=True)
+
+            # If inventory is low, pre-generate in background for next request.
+            if subject and class_level and len(serializer.data) < 5:
+                def generate_in_background():
+                    try:
+                        from ai.question_generator import get_question_generator
+                        generator = get_question_generator()
+                        generator.generate_batch_questions(
+                            user=request.user,
+                            subject=subject,
+                            class_level=int(class_level),
+                            difficulty='medium',
+                            question_type=types_list[0],
+                            batch_size=6,
+                            timeout_seconds=20,
+                            groq_only=True
+                        )
+                    except Exception as bg_error:
+                        print(f"[QuizList] Background generation failed: {bg_error}")
+
+                Thread(target=generate_in_background, daemon=True).start()
+
+            return Response({
+                'count': len(serializer.data),
+                'next': None,
+                'previous': None,
+                'results': serializer.data,
+                'source': 'database'
+            })
+
+        # If static DB is empty, serve already generated AI questions for this user instantly.
+        if subject and class_level:
+            from .models import AIGeneratedQuestion
+
+            ai_questions = AIGeneratedQuestion.objects.filter(
                 user=request.user,
                 subject=subject,
                 class_level=int(class_level),
-                difficulty='medium',
-                question_type=primary_type,
-                batch_size=questions_needed
-            )
-            
-            if success:
-                print(f"[QuizList] ✅ Successfully generated {len(ai_questions)} AI questions")
-                
-                # Save AI questions to main Quiz database for all users
-                saved_count = 0
-                for ai_q in ai_questions:
-                    # Check if already exists in Quiz table
-                    existing = Quiz.objects.filter(
-                        subject=ai_q.subject,
-                        class_target=ai_q.class_level,
-                        question_text=ai_q.question_text
-                    ).first()
-                    
-                    if not existing:
-                        new_quiz = Quiz.objects.create(
-                            subject=ai_q.subject,
-                            class_target=ai_q.class_level,
-                            difficulty=ai_q.difficulty,
-                            question_text=ai_q.question_text,
-                            question_type=ai_q.question_type,
-                            options=ai_q.options,
-                            correct_answer=ai_q.correct_answer,
-                            explanation=ai_q.explanation
-                        )
-                        saved_count += 1
-                        print(f"[QuizList] Saved question {saved_count}: {ai_q.question_text[:50]}...")
-                
-                print(f"[QuizList] ✅ Saved {saved_count} new questions to database")
-                
-                # Convert AIGeneratedQuestion to response format
+                is_answered=False,
+                question_type__in=types_list
+            ).order_by('generated_at')[:20]
+
+            if ai_questions:
                 ai_data = []
                 for q in ai_questions:
                     ai_data.append({
-                        'id': f'ai_{q.id}',  # Prefix with 'ai_' to distinguish
+                        'id': f'ai_{q.id}',
                         'subject': q.subject,
                         'class_target': q.class_level,
                         'difficulty': q.difficulty,
@@ -168,40 +129,53 @@ class QuizListCreateView(generics.ListCreateAPIView):
                         'correct_answer': q.correct_answer,
                         'explanation': q.explanation
                     })
-                
-                # Combine database questions with AI questions
-                page = self.paginate_queryset(queryset)
-                if page is not None:
-                    serializer = self.get_serializer(page, many=True)
-                    db_data = serializer.data
-                else:
-                    serializer = self.get_serializer(queryset, many=True)
-                    db_data = serializer.data
-                
-                combined_data = db_data + ai_data
-                
-                print(f"[QuizList] Returning {len(combined_data)} total questions ({len(db_data)} DB + {len(ai_data)} AI)")
-                
+
                 return Response({
-                    'count': len(combined_data),
+                    'count': len(ai_data),
                     'next': None,
                     'previous': None,
-                    'results': combined_data,
-                    'source': 'mixed' if db_data else 'ai_generated',
-                    'message': f'AI generated {len(ai_data)} questions' if ai_data else None
+                    'results': ai_data,
+                    'source': 'ai_generated_groq'
                 })
-            else:
-                print(f"[QuizList] AI generation failed: {error}")
-                # Continue with database questions only
-        
-        # Standard pagination response
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        # No DB questions left: start Groq generation in background and return fast.
+        if subject and class_level:
+            def generate_in_background_when_empty():
+                try:
+                    from ai.question_generator import get_question_generator
+                    generator = get_question_generator()
+                    generator.generate_batch_questions(
+                        user=request.user,
+                        subject=subject,
+                        class_level=int(class_level),
+                        difficulty='medium',
+                        question_type=types_list[0],
+                        batch_size=8,
+                        timeout_seconds=20,
+                        groq_only=True
+                    )
+                except Exception as bg_error:
+                    print(f"[QuizList] Empty-case background generation failed: {bg_error}")
+
+            Thread(target=generate_in_background_when_empty, daemon=True).start()
+
+            return Response({
+                'count': 0,
+                'next': None,
+                'previous': None,
+                'results': [],
+                'source': 'generation_started',
+                'message': 'Generating quiz questions with Groq. Please retry shortly.'
+            })
+
+        return Response({
+            'count': 0,
+            'next': None,
+            'previous': None,
+            'results': [],
+            'source': 'empty',
+            'message': 'No quiz questions available yet. Please retry shortly.'
+        })
     
     def perform_create(self, serializer):
         # Only teachers and admins can create quizzes
@@ -434,7 +408,13 @@ class SubjectListView(APIView):
     
     def get(self, request):
         user = request.user
-        class_level = request.query_params.get('class_level', user.class_level)
+        requested_class_level = request.query_params.get('class_level')
+
+        # Students can only access their own class subjects.
+        if not (user.is_admin or user.is_teacher):
+            class_level = user.class_level
+        else:
+            class_level = requested_class_level or user.class_level
         
         if not class_level:
             return Response(
