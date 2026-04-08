@@ -1,5 +1,8 @@
 # Byte-compiled / optimized / DLL files
 */__pycache__/*.*
+__pycache__/
+*/__pycache__/
+**/__pycache__/**
 *.py[cod]
 *$py.class
 
@@ -204,3 +207,76 @@ temp/
 
 # Output files
 *.out
+
+# -----------------------------------------------------------------------------
+# Project-wide additions
+# -----------------------------------------------------------------------------
+
+# Python cache and tooling artifacts (all nested apps)
+**/__pycache__/
+**/__pycache__/**
+/__pycache__/**
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/htmlcov/
+
+# Virtual environments (monorepo-safe)
+**/.venv/
+**/venv/
+**/ENV/
+
+# Django runtime/user-generated files
+**/media/
+**/staticfiles/
+**/*.sqlite3
+**/*.sqlite3-journal
+
+# Django cache/session/temp artifacts
+**/cache/
+**/django_cache/
+**/file_cache/
+**/sessions/
+**/session/
+**/run/
+**/*.pid.lock
+
+# Frontend package manager/build artifacts
+**/node_modules/
+**/.npm/
+**/.pnpm-store/
+**/.yarn/
+**/.next/
+**/.nuxt/
+**/.svelte-kit/
+**/.parcel-cache/
+**/dist/
+**/build/
+**/coverage/
+**/*.tsbuildinfo
+
+# Common environment and secret files
+.env.*
+!.env.example
+!.env.sample
+**/.env.*
+!**/.env.example
+!**/.env.sample
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# OS/editor noise
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+
+# Logs
+logs/
+**/logs/
+*.pid
