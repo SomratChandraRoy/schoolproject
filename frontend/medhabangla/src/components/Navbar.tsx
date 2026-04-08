@@ -119,6 +119,7 @@ const Navbar: React.FC = () => {
     { name: 'Quizzes', path: '/quiz/select' },
     { name: 'Books', path: '/books' },
     { name: 'Games', path: '/games' },
+    { name: 'Drawing', path: '/drawing' },
     { name: 'Leaderboard', path: '/leaderboard' },
     { name: 'Notes', path: '/notes' },
   ];

@@ -32,6 +32,7 @@ import StudyStats from './pages/StudyStats';
 import SuperuserDashboard from './pages/SuperuserDashboard';
 import AdminSettings from './pages/AdminSettings';
 import Chat from './pages/Chat';
+import TldrawPage from './pages/Tldraw';
 
 //import pdfd for cheking pdf viewer ! 
 import Pdfd from './pages/Pdfd'
@@ -95,7 +96,7 @@ function App() {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/ollama" element={<Ollama />} />
-            
+
 
             {/* Protected Routes for Authenticated Users */}
             <Route element={<ProtectedRoute />}>
@@ -132,6 +133,7 @@ function App() {
               <Route path="/study-timer" element={<StudyTimer />} />
               <Route path="/study-stats" element={<StudyStats />} />
               <Route path="/chat" element={<Chat />} />
+              <Route path="/drawing" element={<TldrawPage />} />
             </Route>
 
             {/* Protected Routes for Admin */}
