@@ -40,11 +40,65 @@ class AIService:
             print(f"[AI Service] Could not load settings: {e}, using defaults")
             return {
                 'provider': 'auto',
+                'groq_model': getattr(settings, 'GROQ_MODEL', 'llama-3.3-70b-versatile'),
                 'ollama_base_url': os.getenv('OLLAMA_BASE_URL', 'http://51.21.208.44'),
                 'ollama_username': os.getenv('OLLAMA_USERNAME', 'bipul'),
                 'ollama_password': os.getenv('OLLAMA_PASSWORD', 'Bipul$Ollama$Roy$2026$'),
                 'ollama_model': os.getenv('OLLAMA_MODEL', 'llama3'),
             }
+
+    def generate_with_groq(self, prompt, timeout=120, model_name=None):
+        """Generate using Groq's OpenAI-compatible API"""
+        api_key = getattr(settings, 'GROQ_API_KEY', None)
+        if not api_key:
+            return False, '', 'Groq API key not configured'
+
+        groq_model = model_name or getattr(settings, 'GROQ_MODEL', 'llama-3.3-70b-versatile')
+
+        try:
+            response = requests.post(
+                'https://api.groq.com/openai/v1/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'model': groq_model,
+                    'messages': [
+                        {'role': 'user', 'content': prompt},
+                    ],
+                    'temperature': 0.7,
+                    'stream': False,
+                },
+                timeout=timeout,
+            )
+
+            if response.status_code != 200:
+                try:
+                    error_data = response.json()
+                    error_detail = error_data.get('error', {}).get('message') or error_data.get('message') or response.text
+                except Exception:
+                    error_detail = response.text
+                return False, '', f"Groq API error: {response.status_code} - {error_detail}"
+
+            data = response.json()
+            choices = data.get('choices', [])
+            if not choices:
+                return False, '', 'Groq API returned no choices'
+
+            message = choices[0].get('message', {})
+            content = message.get('content', '')
+            if not content:
+                return False, '', 'Groq API returned an empty response'
+
+            return True, content, None
+
+        except requests.exceptions.Timeout:
+            return False, '', 'Request timeout - Groq server took too long to respond'
+        except requests.exceptions.ConnectionError:
+            return False, '', 'Connection error - Cannot reach Groq server'
+        except Exception as e:
+            return False, '', f'Groq error: {str(e)}'
     
     def generate_with_ollama(self, prompt, timeout=120):
         """
@@ -92,11 +146,19 @@ class AIService:
         Generate using Gemini API
         """
         try:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt)
-            ai_response = response.text
-            return True, ai_response, None
+            try:
+                from .api_key_manager import get_key_manager
+                key_manager = get_key_manager()
+                return key_manager.generate_content(prompt=prompt, model_name=model_name)
+            except Exception:
+                if not settings.GEMINI_API_KEY:
+                    return False, '', 'Gemini API key not configured'
+
+                genai.configure(api_key=settings.GEMINI_API_KEY)
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                ai_response = response.text
+                return True, ai_response, None
         except Exception as e:
             error_msg = f"Gemini error: {str(e)}"
             return False, '', error_msg
@@ -115,55 +177,31 @@ class AIService:
         """
         config = self.get_provider_settings()
         provider = config['provider']
-        
+
         print(f"[AI Service] Provider setting: {provider}")
-        
-        # GEMINI ONLY MODE
-        if provider == 'gemini':
-            print(f"[AI Service] Using Gemini (admin selected)")
-            success, response, error = self.generate_with_gemini(prompt, model_name)
-            if success:
-                print(f"[AI Service] ✅ Gemini responded successfully")
-                return True, response, None, 'gemini'
-            else:
-                print(f"[AI Service] ❌ Gemini failed: {error}")
-                return False, '', error, 'none'
-        
-        # OLLAMA ONLY MODE
-        elif provider == 'ollama':
-            print(f"[AI Service] Using Ollama (admin selected)")
-            success, response, error = self.generate_with_ollama(prompt, timeout)
-            if success:
-                print(f"[AI Service] ✅ Ollama responded successfully")
-                return True, response, None, 'ollama'
-            else:
-                print(f"[AI Service] ❌ Ollama failed: {error}")
-                return False, '', error, 'none'
-        
-        # AUTO MODE (Gemini → Ollama fallback)
-        else:  # provider == 'auto'
-            print(f"[AI Service] Using Auto mode (Gemini → Ollama fallback)")
-            
-            # Try Gemini first
-            print(f"[AI Service] Trying Gemini...")
-            success, response, error = self.generate_with_gemini(prompt, model_name)
-            
-            if success:
-                print(f"[AI Service] ✅ Gemini responded successfully")
-                return True, response, None, 'gemini'
-            else:
-                print(f"[AI Service] ❌ Gemini failed: {error}")
-                
-                # Fallback to Ollama
-                print(f"[AI Service] Falling back to Ollama...")
-                success, response, error = self.generate_with_ollama(prompt, timeout)
-                
-                if success:
-                    print(f"[AI Service] ✅ Ollama responded successfully")
-                    return True, response, None, 'ollama'
-                else:
-                    print(f"[AI Service] ❌ Ollama also failed: {error}")
-                    return False, '', f"Both Gemini and Ollama failed. Last error: {error}", 'none'
+
+        print(f"[AI Service] Trying Groq first...")
+        success, response, error = self.generate_with_groq(prompt, timeout, model_name=config.get('groq_model') or None)
+        if success:
+            print(f"[AI Service] ✅ Groq responded successfully")
+            return True, response, None, 'groq'
+
+        print(f"[AI Service] ❌ Groq failed: {error}")
+        print(f"[AI Service] Falling back to Gemini...")
+        success, response, gemini_error = self.generate_with_gemini(prompt, model_name)
+        if success:
+            print(f"[AI Service] ✅ Gemini responded successfully")
+            return True, response, None, 'gemini'
+
+        print(f"[AI Service] ❌ Gemini failed: {gemini_error}")
+        print(f"[AI Service] Falling back to Ollama...")
+        success, response, ollama_error = self.generate_with_ollama(prompt, timeout)
+        if success:
+            print(f"[AI Service] ✅ Ollama responded successfully")
+            return True, response, None, 'ollama'
+
+        print(f"[AI Service] ❌ Ollama also failed: {ollama_error}")
+        return False, '', f"Groq failed: {error}; Gemini failed: {gemini_error}; Ollama failed: {ollama_error}", 'none'
 
 
 # Global instance

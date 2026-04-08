@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,7 +35,7 @@ const Login: React.FC = () => {
       setLoading(true);
 
       // Get authorization URL from backend
-      const response = await fetch('http://localhost:8000/api/accounts/workos-auth-url/');
+      const response = await fetch(`${API_BASE_URL}/api/accounts/workos-auth-url/`);
 
       if (!response.ok) {
         throw new Error('Failed to get authorization URL from server');

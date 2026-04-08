@@ -38,10 +38,13 @@ const Books: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
+      }
+
       const response = await fetch('/api/books/books/', {
-        headers: {
-          'Authorization': `Token ${token}`
-        }
+        headers
       });
 
       if (response.ok) {

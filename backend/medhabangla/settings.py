@@ -14,10 +14,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Always load backend/.env regardless of process working directory.
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -119,7 +120,7 @@ if os.getenv('USE_SQLITE', 'False') == 'True':
         }
     }
 # Check if using Docker environment
-elif os.getenv('DOCKER_ENV'):
+elif os.getenv('DOCKER_ENV', 'False') == 'True':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -166,14 +167,17 @@ else:
 # Allow all origins for development (restrict in production)
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Load environment variables
-from dotenv import load_dotenv
-load_dotenv()
-
 # WorkOS settings
 WORKOS_API_KEY = os.getenv('WORKOS_API_KEY')
 WORKOS_CLIENT_ID = os.getenv('WORKOS_CLIENT_ID')
-WORKOS_REDIRECT_URI = os.getenv('WORKOS_REDIRECT_URI')
+WORKOS_REDIRECT_URI = os.getenv(
+    'WORKOS_REDIRECT_URI',
+    f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/auth/callback"
+)
+
+# Groq AI settings
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
 
 # Google Gemini API settings
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')  # Legacy single key

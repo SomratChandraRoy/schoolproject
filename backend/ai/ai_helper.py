@@ -2,26 +2,26 @@
 AI Helper Module for MedhaBangla
 Provides AI-powered features across all sections of the application
 """
-import warnings
-
-# Suppress the deprecation warning before importing
-warnings.filterwarnings('ignore', message='.*google.generativeai.*', category=FutureWarning)
-
-import google.generativeai as genai
-from django.conf import settings
 from typing import Dict, List, Optional
 import json
+
+from .ai_service import get_ai_service
 
 
 class AIHelper:
     """
-    Centralized AI helper class using Google Gemini API
+    Centralized AI helper class using the shared AI service
     """
     
     def __init__(self):
-        """Initialize Gemini AI"""
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        """Initialize the shared AI service"""
+        self.ai_service = get_ai_service()
+
+    def _generate_text(self, prompt: str, timeout: int = 120, failure_message: str = 'AI response generation failed') -> str:
+        success, response_text, error, source = self.ai_service.generate(prompt, timeout=timeout)
+        if success:
+            return response_text
+        return f"{failure_message}: {error}"
     
     def generate_remedial_explanation(
         self, 
@@ -52,11 +52,7 @@ class AIHelper:
 
 ব্যাখ্যাটি সহজ, উৎসাহব্যঞ্জক এবং শিক্ষামূলক হতে হবে।"""
         
-        try:
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            return f"দুঃখিত, AI ব্যাখ্যা তৈরি করতে সমস্যা হয়েছে: {str(e)}"
+        return self._generate_text(prompt, timeout=90, failure_message='দুঃখিত, AI ব্যাখ্যা তৈরি করতে সমস্যা হয়েছে')
     
     def generate_quiz_question(
         self,
@@ -95,15 +91,18 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks):
 For non-MCQ questions, set "options" to an empty object {{}}."""
         
         try:
-            response = self.model.generate_content(prompt)
-            response_text = response.text.strip()
-            
+            success, response_text, error, source = self.ai_service.generate(prompt, timeout=120)
+            if not success:
+                raise Exception(error)
+
+            response_text = response_text.strip()
+
             # Remove markdown code blocks if present
             import re
             if response_text.startswith('```'):
                 response_text = re.sub(r'^```(?:json)?\n?', '', response_text)
                 response_text = re.sub(r'\n?```$', '', response_text)
-            
+
             # Parse JSON
             question_data = json.loads(response_text)
             return question_data
@@ -170,11 +169,7 @@ Include:
 
 Make it comprehensive yet easy to understand."""
         
-        try:
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            return f"Error generating notes: {str(e)}"
+        return self._generate_text(prompt, timeout=120, failure_message='Error generating notes')
     
     def generate_book_summary(
         self,
@@ -199,11 +194,7 @@ Make it comprehensive yet easy to understand."""
 
 সারাংশটি বাংলায় এবং সহজবোধ্য হতে হবে।"""
         
-        try:
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            return f"Error generating summary: {str(e)}"
+        return self._generate_text(prompt, timeout=120, failure_message='Error generating summary')
     
     def generate_game_hint(
         self,
@@ -227,11 +218,8 @@ Provide a helpful hint that:
 
 Keep the hint brief (1-2 sentences)."""
         
-        try:
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            return "Keep trying! Think about the pattern and try different approaches."
+        result = self._generate_text(prompt, timeout=120, failure_message='Keep trying! Think about the pattern and try different approaches.')
+        return result
     
     def analyze_study_pattern(
         self,
@@ -265,15 +253,18 @@ Provide personalized recommendations in JSON format:
 }}"""
         
         try:
-            response = self.model.generate_content(prompt)
-            response_text = response.text.strip()
-            
+            success, response_text, error, source = self.ai_service.generate(prompt, timeout=120)
+            if not success:
+                raise Exception(error)
+
+            response_text = response_text.strip()
+
             # Remove markdown if present
             import re
             if response_text.startswith('```'):
                 response_text = re.sub(r'^```(?:json)?\n?', '', response_text)
                 response_text = re.sub(r'\n?```$', '', response_text)
-            
+
             return json.loads(response_text)
         except Exception as e:
             return {
@@ -340,11 +331,7 @@ Student: {message}
 
 AI:"""
         
-        try:
-            response = self.model.generate_content(full_prompt)
-            return response.text
-        except Exception as e:
-            return f"দুঃখিত, আমি এখন সাহায্য করতে পারছি না। অনুগ্রহ করে আবার চেষ্টা করুন। Error: {str(e)}"
+        return self._generate_text(full_prompt, timeout=120, failure_message='দুঃখিত, আমি এখন সাহায্য করতে পারছি না। অনুগ্রহ করে আবার চেষ্টা করুন')
     
     def generate_syllabus_breakdown(
         self,
@@ -378,15 +365,18 @@ Provide a detailed breakdown in JSON format:
 }}"""
         
         try:
-            response = self.model.generate_content(prompt)
-            response_text = response.text.strip()
-            
+            success, response_text, error, source = self.ai_service.generate(prompt, timeout=120)
+            if not success:
+                raise Exception(error)
+
+            response_text = response_text.strip()
+
             # Remove markdown if present
             import re
             if response_text.startswith('```'):
                 response_text = re.sub(r'^```(?:json)?\n?', '', response_text)
                 response_text = re.sub(r'\n?```$', '', response_text)
-            
+
             return json.loads(response_text)
         except Exception as e:
             return {

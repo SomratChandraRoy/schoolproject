@@ -11,7 +11,7 @@ class AIProviderSettings(models.Model):
     PROVIDER_CHOICES = [
         ('gemini', 'Gemini API'),
         ('ollama', 'Ollama (AWS)'),
-        ('auto', 'Auto (Gemini → Ollama fallback)'),
+        ('auto', 'Auto (Groq → Gemini fallback)'),
     ]
     
     provider = models.CharField(

@@ -236,7 +236,7 @@ function AdminSettings() {
                                                 ⚡ Auto (Recommended)
                                             </h3>
                                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                Try Gemini first, automatically fallback to Ollama if Gemini fails. Best reliability.
+                                                Try Groq first, then fallback to Gemini. Ollama remains available for direct use.
                                             </p>
                                         </div>
                                     </div>
@@ -367,7 +367,7 @@ function AdminSettings() {
                     <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-2">
                         <li>• <strong>Gemini Only:</strong> All AI features use Gemini API (fast, but has quota limits)</li>
                         <li>• <strong>Ollama Only:</strong> All AI features use your AWS Ollama server (unlimited, but requires EC2 running)</li>
-                        <li>• <strong>Auto Mode:</strong> Tries Gemini first, falls back to Ollama if Gemini fails (best reliability)</li>
+                        <li>• <strong>Auto Mode:</strong> Tries Groq first, then Gemini. Ollama stays available for direct testing.</li>
                         <li>• <strong>Note:</strong> The /ollama page always uses Ollama directly regardless of this setting</li>
                     </ul>
                 </div>

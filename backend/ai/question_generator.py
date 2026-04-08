@@ -14,12 +14,8 @@ class QuestionGenerator:
     """Service for generating AI questions with adaptive difficulty"""
     
     def __init__(self):
-        from .api_key_manager import get_key_manager
-        try:
-            self.key_manager = get_key_manager()
-        except RuntimeError:
-            print("[QuestionGenerator] WARNING: API key manager not initialized")
-            self.key_manager = None
+        from .ai_service import get_ai_service
+        self.ai_service = get_ai_service()
     
     def generate_batch_questions(
         self,
@@ -36,9 +32,6 @@ class QuestionGenerator:
         Returns:
             (success, questions_list, error_message)
         """
-        if not self.key_manager:
-            return False, [], "API key manager not initialized"
-        
         print(f"[QuestionGenerator] Generating {batch_size} questions for {user.username}")
         print(f"[QuestionGenerator] Subject: {subject}, Class: {class_level}, Difficulty: {difficulty}, Type: {question_type}")
         
@@ -51,9 +44,10 @@ class QuestionGenerator:
             count=batch_size
         )
         
-        # Generate questions using Gemini
-        success, response_text, error = self.key_manager.generate_content(
+        # Generate questions using the shared AI service (Groq first, Gemini fallback)
+        success, response_text, error, source = self.ai_service.generate(
             prompt=prompt,
+            timeout=90,
             model_name='gemini-2.5-flash'
         )
         

@@ -8,7 +8,6 @@ import google.generativeai as genai
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.conf import settings
 from .models import AIChatSession, AIChatMessage, OfflineNote, RemedialExplanation
 from .serializers import AIChatSessionSerializer, AIChatMessageSerializer, OfflineNoteSerializer, RemedialExplanationSerializer
 from .ai_helper import ai_helper
@@ -203,9 +202,9 @@ class RemedialLearningView(APIView):
             if not mistake_details:
                 return Response({'error': 'No mistakes found for analysis'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # Get AI explanation using Google Gemini
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            # Get AI explanation using the shared AI service
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
             
             prompt = f"""You are an expert educational AI tutor for Bangladeshi students. 
 Analyze the following mistakes made by a Class {user.class_level} student and provide remedial guidance.
@@ -221,8 +220,9 @@ Please provide in Bangla:
 
 Make your explanation clear, encouraging, and educational."""
             
-            response = model.generate_content(prompt)
-            explanation = response.text
+            success, explanation, error, source = ai_service.generate(prompt, timeout=90)
+            if not success:
+                return Response({'error': f'Error generating remedial content: {error}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Return the explanation
             return Response({'explanation': explanation})
@@ -252,14 +252,8 @@ class GenerateQuizQuestionView(APIView):
         print(f"[AI Generation] User: {user.username}, Subject: {subject}, Class: {class_level}, Difficulty: {difficulty}, Type: {question_type}")
         
         try:
-            # Import key manager
-            from .api_key_manager import get_key_manager
-            
-            # Get the key manager
-            try:
-                key_manager = get_key_manager()
-            except RuntimeError:
-                return Response({'error': 'API key manager not initialized'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
             
             # Create prompt for generating question
             prompt = f"""You are an expert educational content creator for the Bangladeshi education system.
@@ -283,12 +277,12 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks):
 
 For non-MCQ questions, set "options" to an empty object {{}}."""
             
-            print(f"[AI Generation] Calling Gemini API with key rotation...")
-            
-            # Use key manager to generate content with automatic rotation
-            success, response_text, error_message = key_manager.generate_content(
+            print(f"[AI Generation] Calling shared AI service (Groq first, Gemini fallback)...")
+
+            success, response_text, error_message, source = ai_service.generate(
                 prompt=prompt,
-                model_name='gemini-2.5-flash-lite'  # Using lite version which has better quota
+                timeout=90,
+                model_name='gemini-2.5-flash-lite'
             )
             
             if not success:
@@ -341,10 +335,6 @@ For non-MCQ questions, set "options" to an empty object {{}}."""
             )
             
             print(f"[AI Generation] Quiz created successfully with ID: {quiz_question.id}")
-            
-            # Log key manager status
-            status_info = key_manager.get_status()
-            print(f"[AI Generation] Key Manager Status: {status_info}")
             
             serializer = QuizSerializer(quiz_question)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

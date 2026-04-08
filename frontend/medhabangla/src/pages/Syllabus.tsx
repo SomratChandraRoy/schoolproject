@@ -14,20 +14,27 @@ const Syllabus: React.FC = () => {
   const fetchSyllabusData = async () => {
     try {
       const token = localStorage.getItem('token');
+      let resolvedUserClass: number | null = null;
       
       // Get user class level
       const userStr = localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
-        setUserClass(user.class_level || null);
+        resolvedUserClass = user.class_level || null;
+        setUserClass(resolvedUserClass);
       }
       
-      // Fetch syllabus for user's class
-      const response = await fetch('/api/books/my-syllabus/', {
-        headers: {
-          'Authorization': `Token ${token}`
-        }
-      });
+      const publicSyllabusUrl = resolvedUserClass ? `/api/books/syllabus/?class_level=${resolvedUserClass}` : '/api/books/syllabus/';
+      const privateHeaders: HeadersInit = token ? { 'Authorization': `Token ${token}` } : {};
+
+      // Fetch personalized syllabus when possible, otherwise fall back to public syllabus data
+      let response = token
+        ? await fetch('/api/books/my-syllabus/', { headers: privateHeaders })
+        : await fetch(publicSyllabusUrl);
+
+      if (!response.ok && token) {
+        response = await fetch(publicSyllabusUrl);
+      }
       
       if (response.ok) {
         const data = await response.json();

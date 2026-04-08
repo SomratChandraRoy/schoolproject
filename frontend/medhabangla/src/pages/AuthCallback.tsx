@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,7 +41,7 @@ const AuthCallback: React.FC = () => {
         console.log('Exchanging authorization code with backend...');
 
         // Send the code to our backend to exchange for a token
-        const response = await fetch('http://localhost:8000/api/accounts/workos-auth/', {
+        const response = await fetch(`${API_BASE_URL}/api/accounts/workos-auth/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

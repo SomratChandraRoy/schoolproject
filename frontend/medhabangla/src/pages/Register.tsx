@@ -2,18 +2,28 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const Register: React.FC = () => {
   const navigate = useNavigate();
 
   const handleGoogleSignup = async () => {
     try {
-      // Generate the authorization URL directly for signup
-      const clientId = import.meta.env.VITE_WORKOS_CLIENT_ID || 'client_REDACTED';
-      const redirectUri = import.meta.env.VITE_WORKOS_REDIRECT_URI || 'http://localhost:5173/auth/callback';
-      const authorizationUrl = `https://api.workos.com/user_management/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&provider=Google&response_type=code`;
+      // Get authorization URL from backend so WorkOS parameters remain centralized
+      const response = await fetch(`${API_BASE_URL}/api/accounts/workos-auth-url/`);
+
+      if (!response.ok) {
+        throw new Error('Failed to get authorization URL from server');
+      }
+
+      const data = await response.json();
+
+      if (!data.authorization_url) {
+        throw new Error('No authorization URL received from server');
+      }
       
       // Redirect user to the authorization URL
-      window.location.href = authorizationUrl;
+      window.location.href = data.authorization_url;
     } catch (error) {
       console.error('Google signup error:', error);
     }

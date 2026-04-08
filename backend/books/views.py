@@ -7,9 +7,16 @@ from .serializers import BookSerializer, BookmarkSerializer, SyllabusSerializer
 from accounts.models import User
 
 
+class ReadOnlyOrAuthenticated(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user and request.user.is_authenticated
+
+
 class BookListCreateView(generics.ListCreateAPIView):
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [ReadOnlyOrAuthenticated]
     
     def get_queryset(self):
         queryset = Book.objects.all()
@@ -30,7 +37,7 @@ class BookListCreateView(generics.ListCreateAPIView):
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [ReadOnlyOrAuthenticated]
 
 
 class BookmarkView(APIView):
@@ -67,7 +74,7 @@ class BookmarkView(APIView):
 
 class SyllabusListCreateView(generics.ListCreateAPIView):
     serializer_class = SyllabusSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [ReadOnlyOrAuthenticated]
     
     def get_queryset(self):
         queryset = Syllabus.objects.all()
@@ -85,7 +92,7 @@ class SyllabusListCreateView(generics.ListCreateAPIView):
 class SyllabusDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Syllabus.objects.all()
     serializer_class = SyllabusSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [ReadOnlyOrAuthenticated]
     
     
 # View for getting syllabus for a specific user's class level
