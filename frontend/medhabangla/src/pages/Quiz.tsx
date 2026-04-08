@@ -14,6 +14,7 @@ const Quiz: React.FC = () => {
   const [mistakes, setMistakes] = useState<{ [key: number]: boolean }>({});
   const [quizData, setQuizData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [aiRemediation, setAiRemediation] = useState<string | null>(null);
   const [loadingRemediation, setLoadingRemediation] = useState(false);
   const [finalScore, setFinalScore] = useState<number>(0);
@@ -26,6 +27,7 @@ const Quiz: React.FC = () => {
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
+        setLoadError(null);
         // Get parameters from location state
         const { subjects, difficulty, classLevel, questionTypes } = location.state || {};
 
@@ -79,7 +81,7 @@ const Quiz: React.FC = () => {
         let response: Response | null = null;
         let data: any = null;
 
-        for (let attempt = 0; attempt < 4; attempt++) {
+        for (let attempt = 0; attempt < 15; attempt++) {
           response = await fetch(`/api/quizzes/?${queryParams}`, {
             headers: {
               'Authorization': `Token ${token}`,
@@ -101,7 +103,7 @@ const Quiz: React.FC = () => {
             break;
           }
 
-          await sleep(2000);
+          await sleep(1500);
         }
 
         if (response && response.ok) {
@@ -146,14 +148,15 @@ const Quiz: React.FC = () => {
             // Show helpful message based on source
             const source = data.source || 'database';
 
-            if (source === 'ai_generated' || source === 'mixed') {
+            if (source === 'generation_started' || source === 'empty') {
+              setLoadError(`Questions are being generated for ${selectedSubject} (Class ${classLevel}). Please retry in a few seconds.`);
+            } else if (source === 'ai_generated' || source === 'mixed' || source === 'ai_generated_groq') {
               // AI generated but validation failed
               const message = `AI generated questions for ${selectedSubject} in Class ${classLevel}, but they need validation. Please try again or contact support.`;
-              alert(message);
+              setLoadError(message);
             } else {
               // No questions at all - show generating message
-              const message = `No questions available for ${selectedSubject} in Class ${classLevel}.\n\n🤖 AI is generating questions for you now...\n\nPlease wait a moment and try again.`;
-              alert(message);
+              setLoadError(`No questions are ready yet for ${selectedSubject} (Class ${classLevel}). Please retry.`);
             }
 
             setQuizData(null);
@@ -196,14 +199,15 @@ const Quiz: React.FC = () => {
             data: transformedData
           }));
         } else {
-          const errorText = await response.text();
-          console.error('Failed to fetch quiz data:', response.status, errorText);
-          alert(`Failed to load quiz: ${response.status}. Please try again.`);
+          const errorText = response ? await response.text() : 'No response received';
+          const statusCode = response ? response.status : 'network';
+          console.error('Failed to fetch quiz data:', statusCode, errorText);
+          setLoadError(`Failed to load quiz (${statusCode}). Please try again.`);
           setQuizData(null);
         }
       } catch (error) {
         console.error('Error fetching quiz data:', error);
-        alert('Failed to connect to server. Please check your connection and try again.');
+        setLoadError('Failed to connect to server. Please check your connection and try again.');
         setQuizData(null);
       } finally {
         setLoading(false);
@@ -516,12 +520,18 @@ const Quiz: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500 dark:text-red-400">Failed to load quiz data</p>
+          <p className="text-red-500 dark:text-red-400">{loadError || 'Failed to load quiz data'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 mr-3 inline-block px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition"
+          >
+            Retry Now
+          </button>
           <Link
             to="/quiz/select"
             className="mt-4 inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
           >
-            Try Again
+            Back to Subject Selection
           </Link>
         </div>
       </div>
