@@ -184,8 +184,8 @@ function App() {
           {/* PWA Install Prompt */}
           <PWAInstallPrompt />
 
-          {/* MacDock Navigation - Only show for authenticated users */}
-          {token && <MacDockNav unreadCount={unreadCount} />}
+          {/* MacDock Navigation */}
+          <MacDockNav unreadCount={unreadCount} />
         </div>
       </Router>
     </DarkModeProvider>

@@ -7,11 +7,12 @@ import { useDarkMode } from "../contexts/DarkModeContext";
 interface DockApp {
     id: string;
     name: string;
-    icon: React.ReactNode;
+    icon: React.ReactNode | string;
     path?: string;
     badge?: number;
-    onClick?: () => void;
+    onClick?: (e?: React.MouseEvent) => void;
     isButton?: boolean;
+    isProfile?: boolean;
 }
 
 interface MacOSDockProps {
@@ -181,20 +182,35 @@ const MacOSDock: React.FC<MacOSDockProps> = ({ apps, openApps = [], className = 
     }, []);
 
     const createBounceAnimation = (element: HTMLElement) => {
-        const bounceHeight = Math.max(-12, -baseIconSize * 0.2);
-        element.style.transition = "transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)";
+        const bounceHeight = Math.max(-8, -baseIconSize * 0.15);
+        element.style.transition = "transform 0.2s ease-out";
         element.style.transform = `translateY(${bounceHeight}px)`;
+
         setTimeout(() => {
             element.style.transform = "translateY(0px)";
-        }, 300);
+        }, 200);
     };
 
-    const handleAppClick = (index: number, onClick?: () => void) => {
+    const handleAppClick = (e: React.MouseEvent | undefined, index: number, onClick?: (e?: React.MouseEvent) => void) => {
         if (iconRefs.current[index]) {
-            createBounceAnimation(iconRefs.current[index]!);
+            if (typeof window !== "undefined" && (window as any).gsap) {
+                const gsap = (window as any).gsap;
+                const bounceHeight = currentScales[index] > 1.3 ? -baseIconSize * 0.2 : -baseIconSize * 0.15;
+
+                gsap.to(iconRefs.current[index], {
+                    y: bounceHeight,
+                    duration: 0.2,
+                    ease: "power2.out",
+                    yoyo: true,
+                    repeat: 1,
+                    transformOrigin: "bottom center",
+                });
+            } else {
+                createBounceAnimation(iconRefs.current[index]!);
+            }
         }
         if (onClick) {
-            onClick();
+            onClick(e);
         }
     };
 
@@ -203,25 +219,25 @@ const MacOSDock: React.FC<MacOSDockProps> = ({ apps, openApps = [], className = 
             ? Math.max(...currentPositions.map((pos, index) => pos + (baseIconSize * currentScales[index]) / 2))
             : apps.length * (baseIconSize + baseSpacing) - baseSpacing;
 
-    const padding = Math.max(12, baseIconSize * 0.15);
+    const padding = Math.max(8, baseIconSize * 0.12);
 
     return (
         <div
-            className={cn("backdrop-blur-2xl fixed bottom-6 left-1/2 -translate-x-1/2 z-50", className)}
+            className={cn("backdrop-blur-md fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999]", className)}
             onMouseLeave={handleMouseLeave}
             onMouseMove={handleMouseMove}
             ref={dockRef}
             role="navigation"
             style={{
                 width: `${contentWidth + padding * 2}px`,
-                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))",
-                borderRadius: `${Math.max(16, baseIconSize * 0.45)}px`,
-                border: "1px solid rgba(255, 255, 255, 0.2)",
+                background: "rgba(45, 45, 45, 0.75)",
+                borderRadius: `${Math.max(12, baseIconSize * 0.4)}px`,
+                border: "1px solid rgba(255, 255, 255, 0.15)",
                 boxShadow: `
-          0 ${Math.max(8, baseIconSize * 0.15)}px ${Math.max(32, baseIconSize * 0.6)}px rgba(0, 0, 0, 0.5),
-          0 ${Math.max(4, baseIconSize * 0.08)}px ${Math.max(16, baseIconSize * 0.3)}px rgba(0, 0, 0, 0.4),
-          inset 0 1px 0 rgba(255, 255, 255, 0.2),
-          inset 0 -1px 0 rgba(0, 0, 0, 0.3)
+          0 ${Math.max(4, baseIconSize * 0.1)}px ${Math.max(16, baseIconSize * 0.4)}px rgba(0, 0, 0, 0.4),
+          0 ${Math.max(2, baseIconSize * 0.05)}px ${Math.max(8, baseIconSize * 0.2)}px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.2)
         `,
                 padding: `${padding}px`,
             }}
@@ -239,76 +255,80 @@ const MacOSDock: React.FC<MacOSDockProps> = ({ apps, openApps = [], className = 
                     const scaledSize = baseIconSize * scale;
                     const isActive = app.path && location.pathname === app.path;
 
-                    const content = (
-                        <div
-                            className={cn(
-                                "w-full h-full rounded-[22%] flex items-center justify-center transition-all duration-300 relative overflow-hidden",
-                                isActive
-                                    ? "bg-gradient-to-br from-white/40 via-white/30 to-white/20 shadow-2xl"
-                                    : "bg-gradient-to-br from-white/20 via-white/15 to-white/10 hover:from-white/30 hover:via-white/25 hover:to-white/15"
-                            )}
-                            style={{
-                                filter: `drop-shadow(0 ${scale > 1.2 ? Math.max(4, baseIconSize * 0.08) : Math.max(2, baseIconSize * 0.04)
-                                    }px ${scale > 1.2 ? Math.max(8, baseIconSize * 0.15) : Math.max(4, baseIconSize * 0.08)
-                                    }px rgba(0,0,0,${0.3 + (scale - 1) * 0.2}))`,
-                            }}
-                        >
-                            {/* Gradient overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+                    const iconContent = typeof app.icon === "string" ? (
+                        <div className="relative flex items-center justify-center p-1 w-full h-full">
+                            <img
+                                alt={app.name}
+                                className="object-contain w-full h-full"
+                                src={app.icon}
+                                style={{
+                                    filter: `drop-shadow(0 ${scale > 1.2 ? Math.max(2, baseIconSize * 0.05) : Math.max(1, baseIconSize * 0.03)}px ${scale > 1.2 ? Math.max(4, baseIconSize * 0.1) : Math.max(2, baseIconSize * 0.06)}px rgba(0,0,0,${0.2 + (scale - 1) * 0.15}))`,
+                                }}
+                            />
+                        </div>
+                    ) : (
+                        <div className="text-white relative z-10 w-full h-full flex items-center justify-center p-2">
+                            {app.icon}
+                        </div>
+                    );
 
-                            <div className="text-white relative z-10" style={{ width: `${scaledSize * 0.5}px`, height: `${scaledSize * 0.5}px` }}>
-                                {app.icon}
-                            </div>
-
+                    const innerWrapper = (
+                        <>
+                            {iconContent}
                             {/* Badge */}
                             {app.badge && app.badge > 0 && (
-                                <div className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-2 flex items-center justify-center text-[11px] font-bold text-white bg-gradient-to-br from-red-500 via-red-600 to-pink-600 rounded-full shadow-2xl border-2 border-white/60 animate-pulse">
+                                <div className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1.5 flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-br from-red-500 via-red-600 to-pink-600 rounded-full shadow-2xl border border-white/60 z-20">
                                     {app.badge > 99 ? "99+" : app.badge}
                                 </div>
                             )}
-                        </div>
+                            {/* Tooltip */}
+                            <div
+                                className="absolute -top-12 px-3 py-1.5 bg-black/80 backdrop-blur-xl text-white text-xs font-semibold rounded-lg shadow-xl pointer-events-none whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                style={{
+                                    left: "50%",
+                                    transform: "translateX(-50%)",
+                                    zIndex: 1000,
+                                }}
+                            >
+                                {app.name}
+                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-black/80 rotate-45" />
+                            </div>
+                        </>
                     );
+
+                    const wrapperStyle = {
+                        left: `${position - scaledSize / 2}px`,
+                        bottom: "0px",
+                        width: `${scaledSize}px`,
+                        height: `${scaledSize}px`,
+                        transformOrigin: "bottom center",
+                        zIndex: Math.round(scale * 10),
+                    };
+
+                    const wrapperClass = "absolute cursor-pointer flex flex-col items-center justify-end group focus:outline-none";
 
                     const wrapper = app.isButton ? (
                         <button
                             key={app.id}
-                            className="absolute cursor-pointer flex flex-col items-center justify-end focus:outline-none"
-                            onClick={() => handleAppClick(index, app.onClick)}
-                            ref={(el) => {
-                                iconRefs.current[index] = el;
-                            }}
-                            style={{
-                                left: `${position - scaledSize / 2}px`,
-                                bottom: "0px",
-                                width: `${scaledSize}px`,
-                                height: `${scaledSize}px`,
-                                transformOrigin: "bottom center",
-                                zIndex: Math.round(scale * 10),
-                            }}
+                            className={wrapperClass}
+                            onClick={(e) => handleAppClick(e, index, app.onClick)}
+                            ref={(el) => { iconRefs.current[index] = el; }}
+                            style={wrapperStyle}
                             title={app.name}
                         >
-                            {content}
+                            {innerWrapper}
                         </button>
                     ) : (
                         <Link
                             key={app.id}
                             to={app.path || "#"}
-                            className="absolute cursor-pointer flex flex-col items-center justify-end"
-                            onClick={() => handleAppClick(index)}
-                            ref={(el) => {
-                                iconRefs.current[index] = el;
-                            }}
-                            style={{
-                                left: `${position - scaledSize / 2}px`,
-                                bottom: "0px",
-                                width: `${scaledSize}px`,
-                                height: `${scaledSize}px`,
-                                transformOrigin: "bottom center",
-                                zIndex: Math.round(scale * 10),
-                            }}
+                            className={wrapperClass}
+                            onClick={(e) => handleAppClick(e, index)}
+                            ref={(el) => { iconRefs.current[index] = el; }}
+                            style={wrapperStyle}
                             title={app.name}
                         >
-                            {content}
+                            {innerWrapper}
                         </Link>
                     );
 
@@ -332,19 +352,6 @@ const MacOSDock: React.FC<MacOSDockProps> = ({ apps, openApps = [], className = 
                                     }}
                                 />
                             )}
-
-                            {/* Tooltip */}
-                            <div
-                                className="absolute -top-14 px-4 py-2 bg-gray-900/95 backdrop-blur-xl text-white text-sm font-medium rounded-xl shadow-2xl pointer-events-none whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity duration-200 border border-white/10"
-                                style={{
-                                    left: `${position}px`,
-                                    transform: "translateX(-50%)",
-                                    zIndex: 1000,
-                                }}
-                            >
-                                {app.name}
-                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-gray-900/95 rotate-45 border-r border-b border-white/10" />
-                            </div>
                         </div>
                     );
                 })}
@@ -353,18 +360,39 @@ const MacOSDock: React.FC<MacOSDockProps> = ({ apps, openApps = [], className = 
     );
 };
 
-// Main component with navigation items
 const MacDockNav: React.FC<{ unreadCount?: number }> = ({ unreadCount = 0 }) => {
     const userStr = localStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : null;
     const navigate = useNavigate();
     const { darkMode, toggleDarkMode } = useDarkMode();
 
+    // Profile menu state
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const profileMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+                setShowProfileMenu(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("profilePicture");
+        setShowProfileMenu(false);
         navigate("/login");
+    };
+
+    const handleProfileClick = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setShowProfileMenu(prev => !prev);
     };
 
     const dockApps: DockApp[] = [
@@ -372,167 +400,126 @@ const MacDockNav: React.FC<{ unreadCount?: number }> = ({ unreadCount = 0 }) => 
             id: "dashboard",
             name: "Dashboard",
             path: "/dashboard",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/finder-2021-09-10.png",
         },
         {
             id: "quizzes",
             name: "Quizzes",
             path: "/quiz/select",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/notes-2021-05-25.png",
         },
         {
             id: "books",
             name: "Books",
             path: "/books",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/books-2021-05-26.png",
         },
         {
             id: "videocall",
             name: "Video Call",
             path: "/videocall",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/facetime-2021-05-25.png",
         },
         {
             id: "games",
             name: "Games",
             path: "/games",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/game-center-2021-05-25.png",
         },
         {
             id: "drawing",
             name: "Drawing",
             path: "/drawing",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/preview-2021-05-25.png",
         },
         {
             id: "leaderboard",
             name: "Leaderboard",
             path: "/leaderboard",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/app-store-2021-06-02.png",
         },
         {
             id: "notes",
             name: "Notes",
             path: "/notes",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/reminders-2021-05-25.png",
         },
     ];
 
-    // Add Chat for members
     if (user && user.is_member) {
         dockApps.push({
             id: "chat",
             name: "Chat",
             path: "/chat",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/messages-2021-06-25.png",
             badge: unreadCount,
         });
     }
 
-    // Add Admin for admins
     if (user && user.is_admin) {
         dockApps.push({
             id: "admin",
             name: "Admin",
             path: "/admin-dashboard",
-            icon: (
-                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-            ),
+            icon: "https://cdn.jim-nielsen.com/macos/1024/system-preferences-2021-05-25.png",
         });
     }
 
-    // Add separator (visual only)
-    dockApps.push({
-        id: "separator",
-        name: "",
-        icon: <div className="w-0.5 h-full bg-white/30 rounded-full" />,
-        isButton: true,
-    });
-
-    // Add Dark Mode Toggle
-    dockApps.push({
-        id: "darkmode",
-        name: darkMode ? "Light Mode" : "Dark Mode",
-        icon: darkMode ? (
-            <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-        ) : (
-            <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-        ),
-        onClick: toggleDarkMode,
-        isButton: true,
-    });
-
-    // Add Profile
     if (user) {
         dockApps.push({
             id: "profile",
-            name: `${user.first_name} ${user.last_name}`,
-            path: "/profile",
-            icon: (
-                <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    {user.first_name?.charAt(0)}{user.last_name?.charAt(0) || user.email?.charAt(0)}
-                </div>
-            ),
+            name: "Profile",
+            icon: "https://cdn.jim-nielsen.com/macos/1024/contacts-2021-05-25.png",
+            isButton: true,
+            onClick: handleProfileClick,
+            isProfile: true,
+        });
+    } else {
+        dockApps.push({
+            id: "login",
+            name: "Login",
+            path: "/login",
+            icon: "https://cdn.jim-nielsen.com/macos/1024/keychain-access-2021-05-25.png",
+        });
+        dockApps.push({
+            id: "register",
+            name: "Register",
+            path: "/register",
+            icon: "https://cdn.jim-nielsen.com/macos/1024/feedback-assistant-2021-06-03.png",
         });
     }
 
-    // Add Logout
-    dockApps.push({
-        id: "logout",
-        name: "Logout",
-        icon: (
-            <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-        ),
-        onClick: handleLogout,
-        isButton: true,
-    });
-
-    return <MacOSDock apps={dockApps} openApps={[]} />;
+    return (
+        <div className="relative z-[100]">
+            {showProfileMenu && user && (
+                <div
+                    ref={profileMenuRef}
+                    className="fixed bottom-24 right-4 sm:left-1/2 sm:-translate-x-1/2 bg-gray-900/95 backdrop-blur-3xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] rounded-2xl p-3 w-56 text-white z-[110] animate-in fade-in slide-in-from-bottom-4"
+                >
+                    <div className="px-3 py-2 mb-2 border-b border-white/10">
+                        <p className="font-semibold text-base truncate bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">{user.first_name} {user.last_name}</p>
+                        <p className="text-xs text-gray-400 truncate mt-0.5">{user.email}</p>
+                    </div>
+                    <div className="space-y-1.5 focus:outline-none">
+                        <button
+                            onClick={() => { setShowProfileMenu(false); navigate("/profile"); }}
+                            className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-white/10 transition-all flex items-center justify-between group"
+                        >
+                            <span>View Profile</span>
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-400">→</span>
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all flex items-center justify-between"
+                        >
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+            <MacOSDock apps={dockApps} openApps={[]} />
+        </div>
+    );
 };
 
 export default MacDockNav;
