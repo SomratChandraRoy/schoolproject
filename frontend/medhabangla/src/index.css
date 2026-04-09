@@ -38,9 +38,8 @@ body {
 body {
   min-width: 100%;
   min-height: 100vh;
-  /* Add padding for TopBar and MacDock */
-  padding-top: 56px;
-  padding-bottom: 100px;
+  /* Add padding for MacDock at bottom */
+  padding-bottom: 120px;
 }
 
 @media (prefers-color-scheme: light) {

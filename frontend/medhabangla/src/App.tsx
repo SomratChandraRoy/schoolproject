@@ -43,7 +43,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import BanCheck from './components/BanCheck';
 import MacDockNav from './components/MacDock';
-import TopBar from './components/TopBar';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 
 // Import PWA utilities
@@ -117,9 +116,6 @@ function App() {
         <div className="App">
           {/* Ban Check Component - runs on every page */}
           <BanCheck />
-
-          {/* Top Bar - Only show for authenticated users */}
-          {token && <TopBar />}
 
           <Routes>
             <Route path="/" element={<Home />} />
