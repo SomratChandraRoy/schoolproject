@@ -1,8 +1,9 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 from .models import AIChatSession, AIChatMessage, OfflineNote, RemedialExplanation, AIProviderSettings
 
 @admin.register(AIProviderSettings)
-class AIProviderSettingsAdmin(admin.ModelAdmin):
+class AIProviderSettingsAdmin(ModelAdmin):
     list_display = ('provider', 'ollama_base_url', 'ollama_model', 'updated_at', 'updated_by')
     fieldsets = (
         ('Provider Selection', {
@@ -23,25 +24,25 @@ class AIProviderSettingsAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 @admin.register(AIChatSession)
-class AIChatSessionAdmin(admin.ModelAdmin):
+class AIChatSessionAdmin(ModelAdmin):
     list_display = ('user', 'session_id', 'created_at', 'updated_at')
     list_filter = ('created_at', 'updated_at')
     search_fields = ('user__username', 'session_id')
 
 @admin.register(AIChatMessage)
-class AIChatMessageAdmin(admin.ModelAdmin):
+class AIChatMessageAdmin(ModelAdmin):
     list_display = ('session', 'message_type', 'is_user_message', 'timestamp')
     list_filter = ('message_type', 'is_user_message', 'timestamp')
     search_fields = ('session__user__username', 'message')
 
 @admin.register(OfflineNote)
-class OfflineNoteAdmin(admin.ModelAdmin):
+class OfflineNoteAdmin(ModelAdmin):
     list_display = ('user', 'title', 'created_at', 'updated_at')
     list_filter = ('created_at', 'updated_at')
     search_fields = ('user__username', 'title')
 
 @admin.register(RemedialExplanation)
-class RemedialExplanationAdmin(admin.ModelAdmin):
+class RemedialExplanationAdmin(ModelAdmin):
     list_display = ('user', 'quiz', 'created_at')
     list_filter = ('created_at',)
     search_fields = ('user__username', 'quiz__question_text')

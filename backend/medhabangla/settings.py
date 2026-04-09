@@ -37,6 +37,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
     'daphne',  # Must be first for WebSocket support
+    'unfold',  # Unfold admin theme
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -73,7 +74,7 @@ ROOT_URLCONF = 'medhabangla.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -248,4 +249,31 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20
+}
+
+
+# Unfold UI Config
+UNFOLD = {
+    'SITE_TITLE': 'MedhaBangla Admin',
+    'SITE_HEADER': 'MedhaBangla Administration',
+    'SITE_URL': '/',
+    'SITE_ICON': lambda request: 'https://cdn-icons-png.flaticon.com/512/8066/8066115.png',
+    'DASHBOARD_CALLBACK': 'medhabangla.dashboard.dashboard_callback',
+    'THEME': 'dark',
+    'SHOW_HISTORY': True,
+    'SHOW_VIEW_ON_SITE': True,
+    'COLORS': {
+        'primary': {
+            '50': '239 246 255',
+            '100': '219 234 254',
+            '200': '191 219 254',
+            '300': '147 197 253',
+            '400': '96 165 250',
+            '500': '59 130 246',
+            '600': '37 99 235',
+            '700': '29 78 216',
+            '800': '30 64 175',
+            '900': '30 58 138',
+        },
+    },
 }

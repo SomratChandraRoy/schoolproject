@@ -1,9 +1,10 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 from .models import ChatRoom, Message, MessageReaction, TypingStatus
 
 
 @admin.register(ChatRoom)
-class ChatRoomAdmin(admin.ModelAdmin):
+class ChatRoomAdmin(ModelAdmin):
     list_display = ['id', 'participant1', 'participant2', 'created_at', 'updated_at']
     list_filter = ['created_at', 'updated_at']
     search_fields = ['participant1__username', 'participant2__username']
@@ -11,7 +12,7 @@ class ChatRoomAdmin(admin.ModelAdmin):
 
 
 @admin.register(Message)
-class MessageAdmin(admin.ModelAdmin):
+class MessageAdmin(ModelAdmin):
     list_display = ['id', 'chatroom', 'sender', 'message_type', 'is_read', 'created_at']
     list_filter = ['message_type', 'is_read', 'created_at']
     search_fields = ['sender__username', 'content']
@@ -19,7 +20,7 @@ class MessageAdmin(admin.ModelAdmin):
 
 
 @admin.register(MessageReaction)
-class MessageReactionAdmin(admin.ModelAdmin):
+class MessageReactionAdmin(ModelAdmin):
     list_display = ['id', 'message', 'user', 'emoji', 'created_at']
     list_filter = ['emoji', 'created_at']
     search_fields = ['user__username']
@@ -27,7 +28,7 @@ class MessageReactionAdmin(admin.ModelAdmin):
 
 
 @admin.register(TypingStatus)
-class TypingStatusAdmin(admin.ModelAdmin):
+class TypingStatusAdmin(ModelAdmin):
     list_display = ['id', 'chatroom', 'user', 'is_typing', 'updated_at']
     list_filter = ['is_typing', 'updated_at']
     search_fields = ['user__username']
