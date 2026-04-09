@@ -1,8 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useLocalNotes, Note } from '../hooks/useLocalNotes';
-import Navbar from '../components/Navbar';
-
 const NotesFileSystem: React.FC = () => {
     const {
         notes,
@@ -120,7 +118,6 @@ const NotesFileSystem: React.FC = () => {
     if (storageType === 'indexeddb' && notes.length === 0 && !loading && !isAdding) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 sm:p-12">
                         <div className="text-center">
@@ -201,7 +198,6 @@ const NotesFileSystem: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-center items-center h-64">
                         <div className="text-center">
@@ -216,7 +212,6 @@ const NotesFileSystem: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Navbar />
             <div className="max-w-7xl mx-auto py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-6 sm:mb-8">

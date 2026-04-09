@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import ChatMessage from '../components/chat/ChatMessage';
 import ChatRoomItem from '../components/chat/ChatRoomItem';
 import TypingIndicator from '../components/chat/TypingIndicator';
@@ -418,7 +417,6 @@ const Chat: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="flex items-center justify-center h-screen">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-4"></div>
@@ -431,7 +429,6 @@ const Chat: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Navbar />
             <div className="max-w-7xl mx-auto py-6 px-4">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden" style={{ height: 'calc(100vh - 150px)' }}>
                     <div className="flex h-full">

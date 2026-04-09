@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-
 interface Question {
     id: number;
     question_text: string;
@@ -177,7 +175,6 @@ const AdaptiveQuiz: React.FC = () => {
     if (error) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="max-w-3xl mx-auto py-12 px-4">
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
                         <h2 className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">Error</h2>
@@ -197,7 +194,6 @@ const AdaptiveQuiz: React.FC = () => {
     if (quizComplete) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="max-w-3xl mx-auto py-12 px-4">
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
                         <div className="text-6xl mb-4">🎉</div>
@@ -272,7 +268,6 @@ const AdaptiveQuiz: React.FC = () => {
     if (isMCQ && !hasValidOptions) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="max-w-3xl mx-auto py-12 px-4">
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
                         <h2 className="text-xl font-bold text-yellow-800 dark:text-yellow-200 mb-2">Invalid Question</h2>
@@ -293,7 +288,6 @@ const AdaptiveQuiz: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Navbar />
             <div className="max-w-3xl mx-auto py-12 px-4">
                 {/* Progress Header */}
                 {progress && (

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useOfflineNotes, Note } from '../hooks/useOfflineNotes';
-import Navbar from '../components/Navbar';
-
 const NotesEnhanced: React.FC = () => {
     const { notes, loading, addNote, updateNote, deleteNote, syncNotesWithBackend } = useOfflineNotes();
     const [isAdding, setIsAdding] = useState(false);
@@ -188,7 +186,6 @@ const NotesEnhanced: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-center items-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -200,7 +197,6 @@ const NotesEnhanced: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Navbar />
             <div className="max-w-7xl mx-auto py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-6 sm:mb-8">

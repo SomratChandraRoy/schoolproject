@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import AILearningModal from '../components/AILearningModal';
 import QuizResultsLoading from '../components/QuizResultsLoading';
 
@@ -544,7 +543,6 @@ const Quiz: React.FC = () => {
   if (showContinuePrompt) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Navbar />
         <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
             <div className="px-6 py-8 sm:p-10">
@@ -620,7 +618,6 @@ const Quiz: React.FC = () => {
     console.log('Final score:', finalScore);
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Navbar />
         <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
             <div className="px-6 py-8 sm:p-10">
@@ -782,7 +779,6 @@ const Quiz: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
       <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
           {/* Quiz Header */}

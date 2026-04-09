@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
 import { getCurriculumSubjectsForClass, getSubjectNameByCode } from '../utils/curriculumSubjects';
 
 const Profile: React.FC = () => {
@@ -158,7 +157,6 @@ const Profile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
       <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
           {/* Profile Header */}

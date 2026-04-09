@@ -1,7 +1,5 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
-
 interface AIProviderSettings {
     id: number;
     provider: 'gemini' | 'ollama' | 'auto';
@@ -126,7 +124,6 @@ function AdminSettings() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 </div>
@@ -136,7 +133,6 @@ function AdminSettings() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Navbar />
             <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
                     {/* Header */}

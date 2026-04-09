@@ -42,6 +42,8 @@ import AIChat from './components/AIChat';
 import ProtectedRoute from './components/ProtectedRoute';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import BanCheck from './components/BanCheck';
+import MacDockNav from './components/MacDock';
+import TopBar from './components/TopBar';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 
 // Import PWA utilities
@@ -50,6 +52,32 @@ import { registerServiceWorker, requestPersistentStorage } from './utils/registe
 function App() {
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
+  const token = localStorage.getItem('token');
+  const [unreadCount, setUnreadCount] = React.useState(0);
+
+  // Fetch unread count for members
+  React.useEffect(() => {
+    if (!user || !user.is_member || !token) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/chat/unread-count/', {
+          headers: { Authorization: `Token ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(data.unread_count || 0);
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 15000);
+    return () => clearInterval(interval);
+  }, [user, token]);
 
   // Register service worker and request storage permission
   React.useEffect(() => {
@@ -89,6 +117,9 @@ function App() {
         <div className="App">
           {/* Ban Check Component - runs on every page */}
           <BanCheck />
+
+          {/* Top Bar - Only show for authenticated users */}
+          {token && <TopBar />}
 
           <Routes>
             <Route path="/" element={<Home />} />
@@ -156,6 +187,9 @@ function App() {
 
           {/* PWA Install Prompt */}
           <PWAInstallPrompt />
+
+          {/* MacDock Navigation - Only show for authenticated users */}
+          {token && <MacDockNav unreadCount={unreadCount} />}
         </div>
       </Router>
     </DarkModeProvider>
