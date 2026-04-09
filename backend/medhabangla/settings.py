@@ -252,14 +252,20 @@ REST_FRAMEWORK = {
 }
 
 
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+
 # Unfold UI Config
 UNFOLD = {
     'SITE_TITLE': 'MedhaBangla Admin',
-    'SITE_HEADER': 'MedhaBangla Administration',
+    'SITE_HEADER': 'MedhaBangla',
     'SITE_URL': '/',
     'SITE_ICON': lambda request: 'https://cdn-icons-png.flaticon.com/512/8066/8066115.png',
+    'SITE_SYMBOL': 'school',  # Material symbol
+    'ENVIRONMENT': 'medhabangla.dashboard.environment_callback',
     'DASHBOARD_CALLBACK': 'medhabangla.dashboard.dashboard_callback',
-    'THEME': 'dark',
+    'THEME': 'system',  # 'system' allows light/dark toggle mechanism to appear in unfold
     'SHOW_HISTORY': True,
     'SHOW_VIEW_ON_SITE': True,
     'COLORS': {
@@ -275,5 +281,64 @@ UNFOLD = {
             '800': '30 64 175',
             '900': '30 58 138',
         },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": _("Dashboard & Users"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Dashboard Analytics"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                    {
+                        "title": _("User Accounts"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:accounts_user_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Learning Content"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Books Library"),
+                        "icon": "menu_book",
+                        "link": reverse_lazy("admin:books_book_changelist"),
+                    },
+                    {
+                        "title": _("Quizzes & Tests"),
+                        "icon": "quiz",
+                        "link": reverse_lazy("admin:quizzes_quiz_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Interaction & AI"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("AI Chat Sessions"),
+                        "icon": "smart_toy",
+                        "link": reverse_lazy("admin:ai_aichatsession_changelist"),
+                    },
+                    {
+                        "title": _("Messenger"),
+                        "icon": "chat",
+                        "link": reverse_lazy("admin:chat_message_changelist"),
+                    },
+                    {
+                        "title": _("Gamification"),
+                        "icon": "sports_esports",
+                        "link": reverse_lazy("admin:games_gamesession_changelist"),
+                    },
+                ],
+            },
+        ],
     },
 }

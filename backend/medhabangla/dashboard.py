@@ -1,8 +1,22 @@
 from django.utils import timezone
 from datetime import timedelta
 import json
+import os
 from django.db.models import Count
 from django.db.models.functions import TruncDay
+
+def environment_callback(request):
+    """
+    Callback to show environment status on the top right
+    """
+    is_docker = os.getenv("DOCKER_ENV", "False") == "True"
+    
+    if os.getenv("DB_HOST"):
+        return ["Production", "success"] # success = green
+    elif is_docker:
+        return ["Docker Local", "warning"] # warning = orange
+    else:
+        return ["Development", "info"] # info = blue
 
 # Core Apps
 from accounts.models import User
