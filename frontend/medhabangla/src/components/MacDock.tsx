@@ -406,43 +406,37 @@ const MacDockNav: React.FC<{ unreadCount?: number }> = ({ unreadCount = 0 }) => 
             id: "quizzes",
             name: "Quizzes",
             path: "/quiz/select",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/notes-2021-05-25.png",
+            icon: "/quiz.png",
         },
         {
             id: "books",
             name: "Books",
             path: "/books",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/books-2021-05-26.png",
+            icon: "/book.png",
         },
         {
             id: "videocall",
             name: "Video Call",
             path: "/videocall",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/facetime-2021-05-25.png",
+            icon: "/videcall.png",
         },
         {
             id: "games",
             name: "Games",
             path: "/games",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/game-center-2021-05-25.png",
+            icon: "/games.png",
         },
         {
             id: "drawing",
             name: "Drawing",
             path: "/drawing",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/preview-2021-05-25.png",
-        },
-        {
-            id: "leaderboard",
-            name: "Leaderboard",
-            path: "/leaderboard",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/app-store-2021-06-02.png",
+            icon: "/drawing.png",
         },
         {
             id: "notes",
             name: "Notes",
             path: "/notes",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/reminders-2021-05-25.png",
+            icon: "/notes.png",
         },
     ];
 
@@ -469,7 +463,7 @@ const MacDockNav: React.FC<{ unreadCount?: number }> = ({ unreadCount = 0 }) => 
         dockApps.push({
             id: "profile",
             name: "Profile",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/contacts-2021-05-25.png",
+            icon: "/profile.png",
             isButton: true,
             onClick: handleProfileClick,
             isProfile: true,
@@ -479,14 +473,9 @@ const MacDockNav: React.FC<{ unreadCount?: number }> = ({ unreadCount = 0 }) => 
             id: "login",
             name: "Login",
             path: "/login",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/keychain-access-2021-05-25.png",
+            icon: "/login.png",
         });
-        dockApps.push({
-            id: "register",
-            name: "Register",
-            path: "/register",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/feedback-assistant-2021-06-03.png",
-        });
+
     }
 
     return (
