@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../../components/Navbar';
 import GameBoard from './GameBoard';
 import gameService from '../../../services/gameService';
 
@@ -73,7 +72,6 @@ const ShipFind: React.FC = () => {
     if (loading || !gameSession) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="max-w-7xl mx-auto py-12 px-4 text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
                     <p className="mt-4 text-gray-600 dark:text-gray-400">Loading game...</p>
@@ -84,8 +82,6 @@ const ShipFind: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Navbar />
-
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-8">
                 <div className="max-w-7xl mx-auto px-4">

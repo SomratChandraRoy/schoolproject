@@ -2,7 +2,7 @@
 // AWS EC2-তে hosted Ollama ব্যবহার করার জন্য
 
 // আপনার AWS instance-র public IP এখানে দিন
-const OLLAMA_BASE_URL = process.env.REACT_APP_OLLAMA_URL || 'http://localhost:11434';
+const OLLAMA_BASE_URL = import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434';
 
 export interface OllamaMessage {
     role: 'user' | 'assistant' | 'system';

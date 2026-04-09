@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../../hooks/useGame';
-import Navbar from '../../../components/Navbar';
 import ScoreDisplay from '../../../components/games/ScoreDisplay';
 import GameBoard from './GameBoard'
 
@@ -61,7 +60,6 @@ const MemoryPattern: React.FC = () => {
     if (loading || !gameSession) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <Navbar />
                 <div className="max-w-7xl mx-auto py-12 px-4">
                     <div className="flex justify-center items-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -73,7 +71,6 @@ const MemoryPattern: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <Navbar />
 
             {/* Header */}
             <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">

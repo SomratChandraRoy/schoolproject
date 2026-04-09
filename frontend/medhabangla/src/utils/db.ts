@@ -122,7 +122,7 @@ export async function getAllNotes(): Promise<Note[]> {
  * Get unsynced notes
  */
 export async function getUnsyncedNotes(): Promise<Note[]> {
-    return await db.notes.where('synced').equals(0).or('synced').equals(false).toArray();
+    return await db.notes.where('synced').equals(0).toArray();
 }
 
 /**
@@ -187,7 +187,7 @@ export async function saveQuizAttemptOffline(attempt: Omit<QuizAttempt, 'id'>): 
  * Get unsynced quiz attempts
  */
 export async function getUnsyncedQuizAttempts(): Promise<QuizAttempt[]> {
-    return await db.quizAttempts.where('synced').equals(0).or('synced').equals(false).toArray();
+    return await db.quizAttempts.where('synced').equals(0).toArray();
 }
 
 /**
@@ -208,7 +208,7 @@ export async function saveStudySessionOffline(session: Omit<StudySession, 'id'>)
  * Get unsynced study sessions
  */
 export async function getUnsyncedStudySessions(): Promise<StudySession[]> {
-    return await db.studySessions.where('synced').equals(0).or('synced').equals(false).toArray();
+    return await db.studySessions.where('synced').equals(0).toArray();
 }
 
 /**
@@ -259,7 +259,7 @@ export async function getBookmarkForBook(bookId: number): Promise<Bookmark | und
  * Get unsynced bookmarks
  */
 export async function getUnsyncedBookmarks(): Promise<Bookmark[]> {
-    return await db.bookmarks.where('synced').equals(0).or('synced').equals(false).toArray();
+    return await db.bookmarks.where('synced').equals(0).toArray();
 }
 
 /**
