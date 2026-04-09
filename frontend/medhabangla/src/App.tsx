@@ -14,6 +14,7 @@ import Quiz from './pages/Quiz';
 import QuizSelection from './pages/QuizSelection';
 import AdaptiveQuiz from './pages/AdaptiveQuiz';
 import Books from './pages/Books';
+import VideoCall from './pages/VideoCall';
 import Games from './pages/Games';
 import GamesHub from './pages/games/GamesHub';
 import MemoryPattern from './pages/games/MemoryPattern';
@@ -107,6 +108,7 @@ function App() {
               <Route path="/quiz/adaptive" element={<AdaptiveQuiz />} />
               <Route path="/books" element={<Books />} />
               <Route path="/pdfd" element={<Pdfd />} />
+              <Route path="/videocall" element={<VideoCall />} />
 
               {/* Legacy games route */}
               <Route path="/games-old" element={<Games />} />
