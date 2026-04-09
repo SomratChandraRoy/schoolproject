@@ -400,7 +400,7 @@ const MacDockNav: React.FC<{ unreadCount?: number }> = ({ unreadCount = 0 }) => 
             id: "dashboard",
             name: "Dashboard",
             path: "/dashboard",
-            icon: "https://cdn.jim-nielsen.com/macos/1024/finder-2021-09-10.png",
+            icon: "/logo.png",
         },
         {
             id: "quizzes",
