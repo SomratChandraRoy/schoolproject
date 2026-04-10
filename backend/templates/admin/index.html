@@ -1,17 +1,14 @@
-{% extends 'admin/base.html' %} {% load i18n unfold %} {% block breadcrumbs %}{%
-endblock %} {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{
-title }} | {{ site_title|default:_('Django site admin') }}{% endblock %} {%
-block content %}
+{% extends 'admin/base.html' %} {% load unfold %} {% block content %}
 <div class="flex flex-col gap-8 mb-8">
   {% if kpi %}
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8">
     {% for item in kpi %}
     <div
-      class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+      class="bg-white dark:bg-base-800 rounded-lg p-6 shadow-sm border border-base-200 dark:border-base-700">
+      <h3 class="text-sm font-medium text-base-500 dark:text-base-400 mb-2">
         {{ item.title }}
       </h3>
-      <p class="text-3xl font-bold text-gray-900 dark:text-white">
+      <p class="text-3xl font-bold text-base-900 dark:text-base-100">
         {{ item.metric }}
       </p>
       <p class="text-sm mt-2 text-primary-600 dark:text-primary-400">
@@ -24,32 +21,32 @@ block content %}
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
     <div
-      class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      class="bg-white dark:bg-base-800 rounded-lg p-6 shadow-sm border border-base-200 dark:border-base-700">
+      <h3 class="text-lg font-medium text-base-900 dark:text-base-100 mb-4">
         User Growth (Last 7 Days)
       </h3>
       {% include "unfold/components/chart/line.html" with data=users_chart %}
     </div>
 
     <div
-      class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      class="bg-white dark:bg-base-800 rounded-lg p-6 shadow-sm border border-base-200 dark:border-base-700">
+      <h3 class="text-lg font-medium text-base-900 dark:text-base-100 mb-4">
         Quiz Activity (Last 7 Days)
       </h3>
       {% include "unfold/components/chart/bar.html" with data=quiz_chart %}
     </div>
 
     <div
-      class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      class="bg-white dark:bg-base-800 rounded-lg p-6 shadow-sm border border-base-200 dark:border-base-700">
+      <h3 class="text-lg font-medium text-base-900 dark:text-base-100 mb-4">
         AI Chat Usage (Last 7 Days)
       </h3>
       {% include "unfold/components/chart/line.html" with data=ai_chart %}
     </div>
 
     <div
-      class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      class="bg-white dark:bg-base-800 rounded-lg p-6 shadow-sm border border-base-200 dark:border-base-700">
+      <h3 class="text-lg font-medium text-base-900 dark:text-base-100 mb-4">
         Games Played (Last 7 Days)
       </h3>
       {% include "unfold/components/chart/bar.html" with data=games_chart %}
@@ -57,7 +54,6 @@ block content %}
   </div>
 </div>
 
-<!-- Original Unfold Index block with applications loop -->
 <div class="flex flex-col lg:flex-row lg:gap-8">
   <div class="flex-grow">
     {% include "unfold/helpers/app_list_default.html" %}
@@ -65,4 +61,5 @@ block content %}
 
   {% include "unfold/helpers/history.html" %}
 </div>
+
 {% endblock %}
