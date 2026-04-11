@@ -8,9 +8,14 @@ from .views import (
     AnalyzeQuizResultsView, GeneratePersonalizedLearningView
 )
 from .pdf_chat_views import AnalyzePDFView, ChatWithPDFView, ClearPDFCacheView
+from .voice_views import VoiceTutorView
+from .document_vision_views import DocumentVisionView
 from .admin_views import AIProviderSettingsView, TestAIProviderView
 
 urlpatterns = [
+    path('document/analyze/', DocumentVisionView.as_view(), name='document-analyze'),
+    path('voice-tutor/', VoiceTutorView.as_view(), name='voice-tutor'),
+
     # Admin endpoints (NEW)
     path('admin/provider-settings/', AIProviderSettingsView.as_view(), name='ai-provider-settings'),
     path('admin/test-provider/', TestAIProviderView.as_view(), name='test-ai-provider'),

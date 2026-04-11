@@ -4,10 +4,24 @@ from .models import AIChatSession, AIChatMessage, OfflineNote, RemedialExplanati
 
 @admin.register(AIProviderSettings)
 class AIProviderSettingsAdmin(ModelAdmin):
-    list_display = ('provider', 'ollama_base_url', 'ollama_model', 'updated_at', 'updated_by')
+    list_display = ('provider', 'updated_at', 'updated_by')
     fieldsets = (
-        ('Provider Selection', {
+        ('Global / Fallback Provider', {
             'fields': ('provider',)
+        }),
+        ('Feature-Specific Providers', {
+            'fields': (
+                'voice_ai_provider', 
+                'study_plan_provider', 
+                'quiz_flashcard_provider', 
+                'doc_vision_provider', 
+                'general_chat_provider'
+            ),
+            'description': 'Configure which specific AI model provider should run for which feature.'
+        }),
+        ('API Keys (Gemini, Groq, Alibaba)', {
+            'fields': ('gemini_api_key', 'groq_api_key', 'alibaba_api_key'),
+            'description': 'Keys here will override default application keys.'
         }),
         ('Ollama Configuration', {
             'fields': ('ollama_base_url', 'ollama_username', 'ollama_password', 'ollama_model')

@@ -228,6 +228,22 @@ const Dashboard: React.FC = () => {
                   <div className="text-2xl">📖</div>
                   <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Syllabus</span>
                 </Link>
+                <Link to="/study-plan" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-2xl">??</div>
+                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">AI Study Plan</span>
+                </Link>
+                <Link to="/voice-tutor" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-2xl">???</div>
+                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Voice Tutor</span>
+                </Link>
+                <Link to="/document-vision" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-2xl">??</div>
+                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Doc Vision</span>
+                </Link>
+                <Link to="/flashcards" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="text-2xl">??</div>
+                  <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Flashcards</span>
+                </Link>
                 <Link to="/study-timer" className="flex flex-col items-center justify-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <div className="text-2xl">⏱️</div>
                   <span className="mt-2 text-sm font-medium text-gray-900 dark:text-white">Study Timer</span>
@@ -246,3 +262,6 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
+
+

@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import * as React from "react";
+import OfflineIndicator from './components/OfflineIndicator';
+
 
 // Import page components
 import Ollama from "./pages/Ollama";
@@ -32,6 +34,11 @@ import SuperuserDashboard from "./pages/SuperuserDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import Chat from "./pages/Chat";
 import TldrawPage from "./pages/Tldraw";
+import AcademicsDashboard from "./pages/AcademicsDashboard";
+import StudyPlan from "./pages/StudyPlan";
+import VoiceTutor from "./pages/VoiceTutor";
+import DocumentAnalysis from "./pages/DocumentAnalysis";
+import Flashcards from "./pages/Flashcards";
 
 //import pdfd for cheking pdf viewer !
 import Pdfd from "./pages/Pdfd";
@@ -183,6 +190,11 @@ function App() {
                 <Route path="/study-stats" element={<StudyStats />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/drawing" element={<TldrawPage />} />
+                <Route path="/academics" element={<AcademicsDashboard />} />
+          <Route path="/study-plan" element={<StudyPlan />} />
+          <Route path="/voice-tutor" element={<VoiceTutor />} />
+          <Route path="/document-vision" element={<DocumentAnalysis />} />
+          <Route path="/flashcards" element={<Flashcards />} />
               </Route>
 
               {/* Protected Routes for Admin */}
@@ -222,7 +234,8 @@ function App() {
           {/* MacDock Navigation */}
           <MacDockNav unreadCount={unreadCount} />
         </div>
-      </Router>
+        <OfflineIndicator />
+    </Router>
     </DarkModeProvider>
   );
 }

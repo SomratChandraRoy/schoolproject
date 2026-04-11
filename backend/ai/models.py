@@ -4,23 +4,65 @@ from quizzes.models import Quiz
 
 
 class AIProviderSettings(models.Model):
+    elevenlabs_api_key = models.CharField(max_length=255, blank=True, null=True, help_text='API Key for ElevenLabs Voice Synthesis (leave blank to use browser native voice)')
     """
     Global AI provider settings (singleton model)
     Allows admin to configure which AI provider to use
     """
     PROVIDER_CHOICES = [
-        ('gemini', 'Gemini API'),
+        ('gemini', 'Google Gemini API'),
+        ('groq', 'Groq API'),
+        ('alibaba', 'Alibaba Cloud (Qwen)'),
         ('ollama', 'Ollama (AWS)'),
         ('auto', 'Auto (Groq → Gemini fallback)'),
     ]
-    
+
+    # Global fallback provider
     provider = models.CharField(
         max_length=20,
         choices=PROVIDER_CHOICES,
         default='auto',
-        help_text='Select which AI provider to use for all AI features'
+        help_text='Select which AI provider to use as the default/global fallback.'
     )
-    
+
+    # Feature-specific Providers
+    voice_ai_provider = models.CharField(
+        max_length=20, choices=PROVIDER_CHOICES, default='auto',
+        help_text='AI Model Provider for AI Voice Tutor and Conversation.'
+    )
+    study_plan_provider = models.CharField(
+        max_length=20, choices=PROVIDER_CHOICES, default='auto',
+        help_text='AI Model Provider for generating Study Plans and Suggestions.'
+    )
+    quiz_flashcard_provider = models.CharField(
+        max_length=20, choices=PROVIDER_CHOICES, default='auto',
+        help_text='AI Model Provider for generating Quizzes and Flashcards.'
+    )
+    doc_vision_provider = models.CharField(
+        max_length=20, choices=PROVIDER_CHOICES, default='gemini',
+        help_text='AI Model Provider for processing PDFs, Documents, and Images (Vision).'
+    )
+    general_chat_provider = models.CharField(
+        max_length=20, choices=PROVIDER_CHOICES, default='auto',
+        help_text='AI Model Provider for General Text Chat and Note taking.'
+    )
+
+    # API Keys Configuration
+    gemini_api_key = models.CharField(
+        max_length=255, 
+        blank=True, null=True,
+        help_text='Google Gemini API Key'
+    )
+    groq_api_key = models.CharField(
+        max_length=255, 
+        blank=True, null=True,
+        help_text='Groq API Key'
+    )
+    alibaba_api_key = models.CharField(
+        max_length=255, 
+        blank=True, null=True,
+        help_text='Alibaba Cloud DashScope API Key'
+    )
     # Ollama configuration
     ollama_base_url = models.CharField(
         max_length=255,

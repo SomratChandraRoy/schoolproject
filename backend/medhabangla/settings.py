@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'games',
     'ai',
     'chat',
+    'academics',
 ]
 
 # Custom user model

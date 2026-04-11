@@ -1,8 +1,10 @@
+import re
 
-"""
+new_code = '''
+\"\"\"
 AI Service - Configurable AI Provider
 Supports Gemini, Ollama, Groq, Alibaba Cloud (Qwen) based on admin settings
-"""
+\"\"\"
 import os
 import warnings
 import requests
@@ -16,9 +18,9 @@ import google.generativeai as genai
 
 
 class AIService:
-    """
+    \"\"\"
     Configurable AI service that uses admin-selected provider
-    """
+    \"\"\"
 
     def __init__(self):
         self.gemini_configured = False
@@ -26,7 +28,7 @@ class AIService:
         self.provider_setting = 'auto'  # Default
 
     def get_provider_settings(self):
-        """Get current AI provider settings from database"""
+        \"\"\"Get current AI provider settings from database\"\"\"
         try:
             from .models import AIProviderSettings
             settings_obj = AIProviderSettings.get_settings()
@@ -187,3 +189,8 @@ def get_ai_service():
     global _ai_service
     if _ai_service is None: _ai_service = AIService()
     return _ai_service
+'''
+
+with open('ai/ai_service.py', 'w', encoding='utf-8') as f:
+    f.write(new_code)
+print("File updated successfully.")
