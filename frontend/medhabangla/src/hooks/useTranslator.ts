@@ -63,32 +63,7 @@ export function useTranslator(
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [dictionaryStats, setDictionaryStats] = useState({ totalEntries: 0 });
 
-  // Monitor online/offline status
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
-  // Auto-load dictionary if nearby
-  useEffect(() => {
-    if (autoLoadDictionary && isOnline) {
-      loadDictionary();
-    }
-  }, [autoLoadDictionary, isOnline]);
-
-  // Update dictionary stats on mount
-  useEffect(() => {
-    updateStats();
-  }, []);
-
+  // Declare all callbacks first (before useEffects)
   const updateStats = useCallback(async () => {
     try {
       const stats = await OfflineTranslatorService.getDictionaryStats();
@@ -223,6 +198,32 @@ export function useTranslator(
       return [];
     }
   }, []);
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Auto-load dictionary if nearby
+  useEffect(() => {
+    if (autoLoadDictionary && isOnline) {
+      downloadOfflineDictionary();
+    }
+  }, [autoLoadDictionary, isOnline, downloadOfflineDictionary]);
+
+  // Update dictionary stats on mount
+  useEffect(() => {
+    updateStats();
+  }, [updateStats]);
 
   return {
     // State

@@ -171,7 +171,7 @@ export const BulkFlashcardImporter: React.FC<BulkFlashcardImporterProps> = ({
         {importFormat === 'json' && (
           <>
             <p className="font-medium mb-1">JSON Format:</p>
-            <p>[{"'{\"front\": \"...\", \"back\": \"...\"}'}, ...]</p>
+            <p>{`[{\"front\": \"...\", \"back\": \"...\"}, ...]`}</p>
             <p className="text-xs mt-1">Keys can also be: question/answer or just front/back</p>
           </>
         )}

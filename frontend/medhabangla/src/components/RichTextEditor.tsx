@@ -121,8 +121,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
       // Re-select the formatted text
       setTimeout(() => {
-        textarea.setSelectionStart(start);
-        textarea.setSelectionEnd(start + formatted.length);
+        textarea.selectionStart = start;
+        textarea.selectionEnd = start + formatted.length;
         textarea.focus();
       }, 0);
     }

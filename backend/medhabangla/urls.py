@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/ai/', include('ai.urls')),
     path('api/chat/', include('chat.urls')),
     path('api/academics/', include('academics.urls')),
+    path('api/translator/', include('translator.urls')),  # English-Bangla Translator
     # Admin API endpoints
     path('api/superuser/accounts/', include('accounts.admin_urls')),
     path('api/superuser/quizzes/', include('quizzes.admin_urls')),

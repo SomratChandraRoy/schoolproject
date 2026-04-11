@@ -46,6 +46,7 @@ import TranslatorPage from "./pages/Translator";
 import Pdfd from "./pages/Pdfd";
 // Import components
 import AIChat from "./components/AIChat";
+import AIVoiceConversation from "./components/AIVoiceConversation";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import BanCheck from "./components/BanCheck";
@@ -233,6 +234,9 @@ function App() {
 
           {/* PWA Install Prompt */}
           <PWAInstallPrompt />
+
+          {/* AI Voice Tutor Widget - Floating on all pages */}
+          <AIVoiceConversation isFloating={true} />
 
           {/* MacDock Navigation */}
           <MacDockNav unreadCount={unreadCount} />

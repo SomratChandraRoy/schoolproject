@@ -14,8 +14,8 @@ export interface ModelPackage {
   optional: boolean;
 }
 
-const MODEL_CACHE_NAME = "medhabangla-ai-models-v1";
-const MODEL_METADATA_KEY = "medhabangla-model-metadata";
+const MODEL_CACHE_NAME = "sopan-ai-models-v1";
+const MODEL_METADATA_KEY = "sopan-model-metadata";
 
 // Available model packages
 const AVAILABLE_MODELS: ModelPackage[] = [
@@ -227,7 +227,7 @@ export class PWAModelPrefetcher {
 
     await readChunk();
 
-    const body = new Blob(chunks);
+    const body = new Blob(chunks as BlobPart[]);
     return new Response(body, response);
   }
 

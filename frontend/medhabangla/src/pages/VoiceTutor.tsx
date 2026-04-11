@@ -79,7 +79,7 @@ const VoiceTutor: React.FC = () => {
             const token = localStorage.getItem('token');
             const res = await axios.post('/api/ai/voice-tutor/', 
                 { message: text }, 
-                { headers: { Authorization: \Token \\ } }
+                { headers: { Authorization: `Token ${token}` } }
             );
             
             const replyText = res.data.text;
@@ -91,7 +91,7 @@ const VoiceTutor: React.FC = () => {
             if (audioBase64) {
                 // Play ElevenLabs audio
                 if (audioRef.current) {
-                    audioRef.current.src = \data:audio/mp3;base64,\\;
+                    audioRef.current.src = `data:audio/mp3;base64,${audioBase64}`;
                     audioRef.current.play();
                 }
             } else {
@@ -124,8 +124,8 @@ const VoiceTutor: React.FC = () => {
                         </div>
                     ) : (
                         messages.map((msg, idx) => (
-                            <div key={idx} className={\lex \\}>
-                                <div className={\max-w-[70%] p-4 rounded-2xl \\}>
+                            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700'} max-w-[70%] p-4 rounded-2xl`}>
                                     <p className="whitespace-pre-wrap">{msg.text}</p>
                                 </div>
                             </div>
@@ -146,9 +146,9 @@ const VoiceTutor: React.FC = () => {
                         onMouseUp={stopListening}
                         onTouchStart={startListening}
                         onTouchEnd={stopListening}
-                        className={\w-24 h-24 rounded-full flex items-center justify-center text-4xl shadow-lg transition-transform transform hover:scale-105 \\}
+                        className="w-24 h-24 rounded-full flex items-center justify-center text-4xl shadow-lg transition-transform transform hover:scale-105 bg-red-500 text-white"
                     >
-                        ???
+                        🎤
                     </button>
                     <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                         {isListening ? 'Listening... release to send' : 'Hold to speak'}

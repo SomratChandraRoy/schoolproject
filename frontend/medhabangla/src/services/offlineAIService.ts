@@ -81,6 +81,7 @@ export class OfflineAIService {
         "chlorophyll",
       ],
       category: "Biology",
+      createdAt: new Date(),
     },
     {
       question: "What is the water cycle?",
@@ -95,6 +96,7 @@ export class OfflineAIService {
         "hydrologic",
       ],
       category: "Environmental Science",
+      createdAt: new Date(),
     },
     {
       question: "What is the Pythagorean theorem?",
@@ -109,6 +111,7 @@ export class OfflineAIService {
         "mathematics",
       ],
       category: "Mathematics",
+      createdAt: new Date(),
     },
     {
       question: "What is respiration?",
@@ -124,6 +127,7 @@ export class OfflineAIService {
         "glucose",
       ],
       category: "Biology",
+      createdAt: new Date(),
     },
     {
       question: "What is the capital of Bangladesh?",
@@ -132,6 +136,7 @@ export class OfflineAIService {
       subject: "Geography",
       keywords: ["Bangladesh", "capital", "Dhaka", "city"],
       category: "Geography",
+      createdAt: new Date(),
     },
     {
       question: "How do I study effectively?",
@@ -147,6 +152,7 @@ export class OfflineAIService {
         "retention",
       ],
       category: "Learning",
+      createdAt: new Date(),
     },
   ];
 
@@ -311,7 +317,7 @@ Topics I know about:
 
     const id = await this.db.knowledgeBase.add(newEntry);
     await this.buildKnowledgeIndex();
-    return id;
+    return id as number;
   }
 
   /**
@@ -321,10 +327,10 @@ Topics I know about:
     userId: string,
     conversation: Omit<OfflineConversation, "id">,
   ): Promise<number> {
-    return await this.db.conversations.add({
+    return (await this.db.conversations.add({
       ...conversation,
       id: undefined,
-    } as OfflineConversation);
+    } as OfflineConversation)) as number;
   }
 
   /**

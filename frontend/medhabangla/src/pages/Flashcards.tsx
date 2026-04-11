@@ -35,15 +35,15 @@ const Flashcards: React.FC = () => {
             const deckRes = await axios.post('/api/academics/flashcards/', {
                 title: deckTitle
             }, {
-                headers: { Authorization: \Token \\ }
+                headers: { Authorization: `Token ${token}` }
             });
             const newDeckId = deckRes.data.id;
 
             // Generate cards for the deck
-            const generateRes = await axios.post(\/api/academics/flashcards/\/generate_cards/\, {
+            const generateRes = await axios.post('/api/academics/flashcards/' + newDeckId + '/generate_cards/', {
                 instruction: instruction
             }, {
-                headers: { Authorization: \Token \\ }
+                headers: { Authorization: `Token ${token}` }
             });
 
             setDecks([generateRes.data, ...decks]);
@@ -66,9 +66,9 @@ const Flashcards: React.FC = () => {
             const currentCard = selectedDeck.cards[currentCardIndex];
             const token = localStorage.getItem('token');
             const res = await axios.post(
-                \/api/academics/flashcards/\/cards/\/toggle/\,
+                `/api/academics/flashcards/${selectedDeck.id}/cards/${currentCard.id}/toggle/`,
                 {}, 
-                { headers: { Authorization: \Token \\ } }
+                { headers: { Authorization: `Token ${token}` } }
             );
             
             // Update local state
@@ -143,14 +143,14 @@ const Flashcards: React.FC = () => {
                                         setCurrentCardIndex(0);
                                         setIsFlipped(false);
                                     }}
-                                    className={\p-4 rounded-xl cursor-pointer transition-colors shadow-sm \\}
+                                    className="p-4 rounded-xl cursor-pointer transition-colors shadow-sm hover:shadow-md dark:hover:shadow-lg transition-shadow"
                                 >
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="font-semibold text-gray-900 dark:text-white truncate block mr-2">{deck.title}</span>
                                         <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 px-2 py-1 rounded-full whitespace-nowrap">{deck.cards_count} cards</span>
                                     </div>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
-                                        <div className="bg-green-500 h-1.5 rounded-full" style={{ width: \\%\ }}></div>
+                                        <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${Math.round((deck.cards.filter((c: any) => c.is_known).length / deck.cards_count) * 100)}%` }}></div>
                                     </div>
                                 </li>
                             ))}
@@ -175,7 +175,7 @@ const Flashcards: React.FC = () => {
                             className="flex-1 min-h-[300px] perspective-1000 cursor-pointer"
                             onClick={() => setIsFlipped(!isFlipped)}
                         >
-                            <div className={\w-full h-full duration-500 preserve-3d relative \\}>
+                            <div className="w-full h-full duration-500 preserve-3d relative">
                                 {/* Front */}
                                 <div className="absolute w-full h-full backface-hidden bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl shadow-md border-2 border-dashed border-blue-200 dark:border-gray-600 flex flex-col items-center justify-center p-8 text-center preserve-3d">
                                     <span className="absolute top-4 left-4 text-xs font-bold uppercase tracking-widest text-blue-400 dark:text-gray-500">Question</span>
@@ -202,9 +202,12 @@ const Flashcards: React.FC = () => {
                             
                             <button 
                                 onClick={toggleKnown}
-                                className={\px-6 py-2.5 rounded-full font-bold transition-all shadow-sm \\}
+                                className={selectedDeck.cards[currentCardIndex].is_known ? 
+                                    "px-6 py-2.5 rounded-full font-bold transition-all shadow-sm bg-green-500 text-white hover:bg-green-600" : 
+                                    "px-6 py-2.5 rounded-full font-bold transition-all shadow-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                }
                             >
-                                {selectedDeck.cards[currentCardIndex].is_known ? '? I know this' : 'Needs Review'}
+                                {selectedDeck.cards[currentCardIndex].is_known ? '✓ I know this' : '◌ Needs Review'}
                             </button>
 
                             <button 

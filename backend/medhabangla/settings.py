@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'ai',
     'chat',
     'academics',
+    'translator',  # English-Bangla Translator with PWA support
 ]
 
 # Custom user model

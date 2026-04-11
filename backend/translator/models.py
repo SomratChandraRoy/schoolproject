@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class TranslationDictionary(models.Model):
@@ -102,7 +102,7 @@ class UserTranslationHistory(models.Model):
     """
     Stores user's translation history for personalization.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='translation_history')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='translation_history')
     
     # Original text
     source_text = models.CharField(max_length=500)
@@ -150,7 +150,7 @@ class TranslatorSession(models.Model):
     """
     Stores translator sessions for offline sync.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='translator_sessions')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='translator_sessions')
     
     # Session info
     session_id = models.CharField(max_length=100, unique=True)

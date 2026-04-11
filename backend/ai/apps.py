@@ -12,8 +12,8 @@ class AiConfig(AppConfig):
         if hasattr(settings, 'GEMINI_API_KEYS') and settings.GEMINI_API_KEYS:
             from .api_key_manager import initialize_key_manager
             initialize_key_manager(settings.GEMINI_API_KEYS)
-            print(f"✅ Initialized Gemini API Key Manager with {len(settings.GEMINI_API_KEYS)} keys")
+            print(f"[OK] Initialized Gemini API Key Manager with {len(settings.GEMINI_API_KEYS)} keys")
         elif getattr(settings, 'GROQ_API_KEY', None):
-            print("✅ Groq API key configured")
+            print("[OK] Groq API key configured")
         else:
-            print("⚠️  Warning: No AI API keys configured")
+            print("[WARNING] Warning: No AI API keys configured")
