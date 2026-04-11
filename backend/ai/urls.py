@@ -5,7 +5,8 @@ from .views import (
     GenerateQuizQuestionView, ManageClassQuestionsView,
     GenerateStudyNotesView, GenerateBookSummaryView, GenerateGameHintView,
     AnalyzeStudyPatternView, GenerateSyllabusBreakdownView, ImprovedRemedialLearningView,
-    AnalyzeQuizResultsView, GeneratePersonalizedLearningView
+    AnalyzeQuizResultsView, GeneratePersonalizedLearningView,
+    AnalyzeWebsiteView, SearchEducationalResourcesView, AIWebIntegrationChatView
 )
 from .pdf_chat_views import AnalyzePDFView, ChatWithPDFView, ClearPDFCacheView
 from .voice_views import VoiceTutorView
@@ -75,4 +76,9 @@ urlpatterns = [
     path('voice-quiz/start/', VoiceQuizStartView.as_view(), name='voice-quiz-start'),
     path('voice-quiz/answer/', VoiceQuizAnswerView.as_view(), name='voice-quiz-answer'),
     path('voice-quiz/<int:quiz_session_id>/results/', VoiceQuizResultsView.as_view(), name='voice-quiz-results'),
+    
+    # 🌐 Web Scraping & Integration Endpoints (NEW FEATURE)
+    path('analyze-website/', AnalyzeWebsiteView.as_view(), name='analyze-website'),
+    path('search-resources/', SearchEducationalResourcesView.as_view(), name='search-resources'),
+    path('web-integrated-chat/', AIWebIntegrationChatView.as_view(), name='web-integrated-chat'),
 ]

@@ -762,3 +762,246 @@ class GeneratePersonalizedLearningView(APIView):
                 return Response({'error': 'API permission denied. Please contact support.'}, status=status.HTTP_403_FORBIDDEN)
             else:
                 return Response({'error': f'Error generating learning plan: {error_message}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ==========================================
+# Web Scraping & Website Analysis Features
+# ==========================================
+
+class AnalyzeWebsiteView(APIView):
+    """
+    Analyze a website or URL for educational content
+    Endpoint: POST /api/ai/analyze-website/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        url = request.data.get('url', '').strip()
+        query = request.data.get('query', '').strip()
+        
+        if not url:
+            return Response(
+                {'error': 'URL is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from .web_scraping_service import WebScrapingService
+            
+            # Analyze the website
+            success, analysis, error = WebScrapingService.analyze_url_for_education(url, query)
+            
+            if not success:
+                return Response(
+                    {'error': error},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Now use AI to generate insights from the extracted content
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
+            
+            user_class = f"Class {request.user.class_level}" if request.user.class_level else "General"
+            
+            ai_prompt = f"""You are an educational AI assistant helping a {user_class} student understand web content.
+
+Here is content extracted from {url}:
+
+{analysis}
+
+Please provide:
+1. **Summary**: A concise summary of the main concepts (2-3 sentences)
+2. **Key Concepts**: Most important learning points (bullet list)
+3. **Educational Value**: How this content helps their studies
+4. **Practice Task**: A simple exercise based on this content
+5. **Related Topics**: Other related topics they should explore
+
+{'Query Focus: ' + query if query else 'Provide general educational insights.'}
+
+Write in a clear, student-friendly manner. Use Bangla for explanations if helpful."""
+            
+            success, insights, error, source = ai_service.generate(ai_prompt, timeout=60)
+            
+            if not success:
+                # Return analysis without AI insights if AI generation fails
+                return Response({
+                    'analysis': analysis,
+                    'insights': None,
+                    'warning': f'Could not generate AI insights: {error}'
+                })
+            
+            return Response({
+                'url': url,
+                'analysis': analysis,
+                'insights': insights,
+                'ai_source': source
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error analyzing website: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class SearchEducationalResourcesView(APIView):
+    """
+    Search for educational resources online
+    Endpoint: GET /api/ai/search-resources/?query=...
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        query = request.query_params.get('query', '').strip()
+        search_type = request.query_params.get('type', 'wikipedia')  # wikipedia, web
+        
+        if not query or len(query) < 3:
+            return Response(
+                {'error': 'Search query must be at least 3 characters'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from .web_scraping_service import SearchService
+            
+            if search_type == 'wikipedia':
+                success, results, error = SearchService.search_wikipedia(query)
+            else:
+                # Default to Wikipedia
+                success, results, error = SearchService.search_wikipedia(query)
+            
+            if not success:
+                return Response(
+                    {'error': error},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Add AI-generated context for each result
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
+            
+            for result in results[:3]:  # Get context for top 3 results
+                try:
+                    prompt = f"""For a Class 6-12 Bangladeshi student learning about "{query}":
+                    
+Summary to expand: {result.get('snippet', '')}
+
+Provide 2-3 educational context points that would help them understand why this is relevant to their studies."""
+                    
+                    success, context, _, _ = ai_service.generate(prompt, timeout=30)
+                    if success:
+                        result['context'] = context
+                except:
+                    pass  # Skip if AI context generation fails
+            
+            return Response({
+                'query': query,
+                'results': results,
+                'total': len(results)
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error searching resources: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class AIWebIntegrationChatView(APIView):
+    """
+    Chat with AI, enhanced with web search capability
+    Allows the AI to search the web if needed for current information
+    Endpoint: POST /api/ai/web-integrated-chat/
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        session_id = request.data.get('session_id')
+        message = request.data.get('message')
+        include_web_search = request.data.get('search_web', False)
+        
+        try:
+            session = AIChatSession.objects.get(session_id=session_id, user=user)
+            
+            # Save user message
+            user_message = AIChatMessage.objects.create(
+                session=session,
+                message=message,
+                is_user_message=True,
+                message_type='web_integrated_chat'
+            )
+            
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
+            
+            # If web search is requested, search for current information
+            search_results = None
+            if include_web_search:
+                try:
+                    from .web_scraping_service import SearchService
+                    _, results, _ = SearchService.search_wikipedia(message)
+                    search_results = results[:3]  # Get top 3 results
+                except:
+                    pass  # Gracefully handle search failures
+            
+            # Build enhanced prompt with search results if available
+            class_info = f"Class {user.class_level}" if user.class_level else "Classes 6-12"
+            
+            if search_results:
+                search_context = "\n\nRelated Resources Found:\n"
+                for i, result in enumerate(search_results, 1):
+                    search_context += f"\n{i}. {result.get('title', 'Resource')} \n   {result.get('snippet', '')[0:200]}..."
+                
+                prompt = f"""You are an AI education assistant for {class_info} students in Bangladesh.
+
+Here are search results related to their question:
+{search_context}
+
+Student's Question: {message}
+
+Use the search results to provide accurate, current information. 
+However, rely on your core knowledge too. Provide helpful, educational response suitable for their class level.
+
+Respond in Bangla when possible for clarity."""
+            else:
+                prompt = f"""You are an AI education assistant for {class_info} students in Bangladesh.
+
+Student's Question: {message}
+
+Provide a helpful, educational response.
+- Break down complex topics into simple parts
+- Use examples when helpful
+- Respond in Bangla for clarity when needed
+- Keep it suitable for their class level"""
+            
+            success, ai_response, error, source = ai_service.generate(prompt, timeout=60)
+            
+            if not success:
+                ai_response = f"দুঃখিত, উত্তর তৈরিতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।\n\nError: {error}"
+            
+            # Save AI message
+            ai_message = AIChatMessage.objects.create(
+                session=session,
+                message=ai_response,
+                is_user_message=False,
+                message_type='web_integrated_chat'
+            )
+            
+            return Response({
+                'user_message': AIChatMessageSerializer(user_message).data,
+                'ai_message': ai_response,
+                'search_sources': len(search_results) if search_results else 0,
+                'ai_source': source
+            })
+            
+        except AIChatSession.DoesNotExist:
+            return Response(
+                {'error': 'Chat session not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error in web-integrated chat: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

@@ -153,74 +153,7 @@ Respond in strict JSON format:
         except Exception as e:
             return Response({'error': f'Failed to parse AI output: {str(e)}', 'raw_output': response_text}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=['post'], url_path='cards/(?P<card_id>\d+)/toggle')
-    def toggle_card(self, request, pk=None, card_id=None):
-        deck = self.get_object()
-        try:
-            card = deck.cards.get(id=card_id)
-            card.is_known = not card.is_known
-            card.save()
-            return Response({'status': 'toggled', 'is_known': card.is_known})
-        except Flashcard.DoesNotExist:
-            return Response({'error': 'Card not found'}, status=status.HTTP_404_NOT_FOUND)
-
-
-class FlashcardDeckViewSet(viewsets.ModelViewSet):
-    serializer_class = FlashcardDeckSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return FlashcardDeck.objects.filter(user=self.request.user).prefetch_related('cards')
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-    @action(detail=True, methods=['post'])
-    def generate_cards(self, request, pk=None):
-        deck = self.get_object()
-        instruction = request.data.get('instruction', 'Generate study flashcards')
-        
-        prompt = f"""You are a helpful AI tutor. Create exactly 5 flashcards for: {instruction}.
-Respond in strict JSON format:
-[
-  {{"front": "Question 1?", "back": "Answer 1"}},
-  {{"front": "Question 2?", "back": "Answer 2"}}
-]
-"""
-        from ai.ai_service import get_ai_service
-        import json
-        import re
-        
-        ai_service = get_ai_service()
-        success, response_text, error, source = ai_service.generate(prompt=prompt, feature_type='quiz_flashcard_provider')
-
-        if not success:
-            return Response({'error': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        try:
-            # Extract JSON block
-            json_match = re.search(r'\[\s*\{.*?\}\s*\]', response_text, re.DOTALL)
-            if json_match:
-                cards_data = json.loads(json_match.group(0))
-            else:
-                cards_data = json.loads(response_text)
-                
-            for card in cards_data:
-                Flashcard.objects.create(
-                    deck=deck,
-                    front=card.get('front', 'Q?'),
-                    back=card.get('back', 'A')
-                )
-            
-            # Refresh from DB
-            deck = self.get_object()
-            serializer = self.get_serializer(deck)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-            
-        except Exception as e:
-            return Response({'error': f'Failed to parse AI output: {str(e)}', 'raw_output': response_text}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    @action(detail=True, methods=['post'], url_path='cards/(?P<card_id>\d+)/toggle')
+    @action(detail=True, methods=['post'], url_path=r'cards/(?P<card_id>\d+)/toggle')
     def toggle_card(self, request, pk=None, card_id=None):
         deck = self.get_object()
         try:

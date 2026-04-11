@@ -40,6 +40,7 @@ import DocumentAnalysis from "./pages/DocumentAnalysis";
 import Flashcards from "./pages/Flashcards";
 import StudentDashboard from "./pages/StudentDashboard";
 import OfflineAIPage from "./pages/OfflineAIPage";
+import TranslatorPage from "./pages/Translator";
 
 //import pdfd for cheking pdf viewer !
 import Pdfd from "./pages/Pdfd";
@@ -192,6 +193,7 @@ function App() {
                 />{" "}
                 <Route path="/study-dashboard" element={<StudentDashboard />} />{" "}
                 <Route path="/offline-ai" element={<OfflineAIPage />} />
+                <Route path="/translator" element={<TranslatorPage />} />
                 <Route path="/study-plan" element={<StudyPlan />} />
                 <Route path="/voice-tutor" element={<VoiceTutor />} />
                 <Route path="/document-vision" element={<DocumentAnalysis />} />

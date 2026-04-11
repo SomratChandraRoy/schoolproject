@@ -1,6 +1,7 @@
 
 import json
 import uuid
+import logging
 from datetime import datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -21,11 +22,19 @@ from .serializers import (
     VoiceQuizAnswerSerializer, ConversationSummarySerializer
 )
 from .ai_service import get_ai_service
+from .voice_conversation_service import (
+    VoiceConversationContextManager,
+    DoubtSolvingAIPromptBuilder,
+    ConversationSummaryGenerator,
+    VoiceQuizEvaluator
+)
 from accounts.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class StartVoiceConversationView(APIView):
-    """Start a new voice conversation session"""
+    """Start a new voice conversation session with full context awareness"""
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
@@ -35,17 +44,18 @@ class StartVoiceConversationView(APIView):
         
         session_id = str(uuid.uuid4())
         
+        # Build comprehensive student context from past conversations
+        context = VoiceConversationContextManager.get_student_context(
+            user=request.user,
+            subject=subject,
+            topic=topic
+        )
+        
         # Retrieve context from past sessions if available
-        previous_context = None
-        if subject:
-            past_session = VoiceConversationSession.objects.filter(
-                user=request.user,
-                subject=subject,
-                is_active=False
-            ).order_by("-ended_at").first()
-            
-            if past_session and past_session.conversation_summary:
-                previous_context = past_session.conversation_summary
+        previous_context = VoiceConversationContextManager.get_previous_session_summary(
+            user=request.user,
+            subject=subject
+        )
         
         session = VoiceConversationSession.objects.create(
             user=request.user,
@@ -56,12 +66,22 @@ class StartVoiceConversationView(APIView):
             previous_session_context=previous_context
         )
         
+        # Store context info for this session
+        session.key_points = context  # Store as metadata
+        session.save()
+        
         serializer = VoiceConversationSessionSerializer(session)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({
+            **serializer.data,
+            'student_context': context,
+            'has_previous_learning': context.get('has_prior_context', False),
+            'weak_areas_to_focus': context.get('weak_areas', []),
+            'strong_areas_to_build_on': context.get('strong_areas', [])
+        }, status=status.HTTP_201_CREATED)
 
 
 class VoiceMessageView(APIView):
-    """Send a voice/text message and get AI response"""
+    """Send a voice/text message and get intelligent AI response based on context"""
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
@@ -79,10 +99,14 @@ class VoiceMessageView(APIView):
             return Response({"error": "Session not found"}, 
                           status=status.HTTP_404_NOT_FOUND)
         
+        final_message = message_text or transcript
+        if not final_message.strip():
+            return Response({"error": "Empty message"}, status=status.HTTP_400_BAD_REQUEST)
+        
         # Store user message
         user_msg = VoiceConversationMessage.objects.create(
             session=session,
-            message_text=message_text or transcript,
+            message_text=final_message,
             message_type="question" if session.mode == "tutor" else "quiz_question",
             is_user_message=True,
             audio_url=audio_url,
@@ -90,100 +114,96 @@ class VoiceMessageView(APIView):
         )
         
         # Build context for AI
-        context = f"""You are an expert AI teacher helping a student in Class {request.user.class_level or 9}.
-        
-Mode: {session.get_mode_display()}
-Subject: {session.subject or "General"}
-Topic: {session.topic or "Various"}
-
-Previous Context: {session.previous_session_context or "No previous context"}
-
-"""
+        context = VoiceConversationContextManager.get_student_context(
+            user=request.user,
+            subject=session.subject,
+            topic=session.topic
+        )
         
         # Generate AI response based on mode
         ai_service = get_ai_service()
+        ai_response = None
+        confidence_score = 0.85
         
-        if session.mode == "exam":
-            prompt = context + f"""The student asking: {message_text or transcript}
-            
-As their exam proctor and teacher, provide a detailed, educational response that:
-1. Clarifies their doubt if needed
-2. Provides step-by-step explanation
-3. Evaluates their understanding
-4. Motivates them positively
+        try:
+            if session.mode == "exam":
+                # Exam proctoring mode - detailed evaluation and teaching
+                prompt = DoubtSolvingAIPromptBuilder.build_exam_prompt(
+                    message=final_message,
+                    context=context,
+                    subject=session.subject or "General",
+                    question_number=session.messages.filter(is_user_message=True).count(),
+                    total_questions=session.total_questions_asked or None
+                )
+            elif session.mode == "quiz":
+                # Quiz mode with evaluation
+                prompt = f"""You are evaluating a student's quiz answer.
 
-Keep the tone supportive but academically rigorous."""
-        
-        elif session.mode == "quiz":
-            prompt = context + f"""The student's answer to the question: {message_text or transcript}
-            
-Please evaluate their answer for correctness and provide:
-1. Whether the answer is correct (YES/NO)
-2. Score out of 10
-3. Detailed explanation of the concept
-4. If incorrect, explain the correct answer
-5. Provide a tip for similar problems
+Student Class: {request.user.class_level or 9}
+Subject: {session.subject or "General"}
+Student's Answer: {final_message}
 
-Format your response as JSON:
+Evaluate for correctness and provide feedback in JSON format:
 {{
   "is_correct": true/false,
-  "score": number,
-  "explanation": "string",
-  "feedback": "string",
-  "tip": "string"
-}}"""
-        
-        else:
-            prompt = context + f"""Student's question/doubt: {message_text or transcript}
-            
-As a caring and knowledgeable tutor, provide:
-1. A clear, simple explanation
-2. Real-world examples if possible
-3. Common mistakes to avoid
-4. Practice suggestion
-5. Related concept to explore next
+  "score": 0-10,
+  "explanation": "Why correct/incorrect",
+  "feedback": "Encouraging feedback",
+  "tip": "Helpful tip for similar questions"
+}}
 
-Make it engaging and easy to understand."""
-        
-        success, ai_response, error, source = ai_service.generate(
-            prompt=prompt,
-            feature_type="voice_ai_provider"
-        )
-        
-        if not success:
-            return Response({"error": error}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # Parse response if quiz mode
-        if session.mode == "quiz":
-            try:
-                json_response = json.loads(ai_response)
-                is_correct = json_response.get("is_correct", False)
-                if is_correct:
-                    session.correct_answers += 1
-                session.total_questions_asked += 1
-            except:
-                is_correct = False
+Be supportive but honest about correctness."""
+            else:
+                # Default tutor mode with context and doubt-solving
+                prompt = DoubtSolvingAIPromptBuilder.build_tutor_prompt(
+                    message=final_message,
+                    context=context,
+                    subject=session.subject or "General",
+                    topic=session.topic or "Various",
+                    previous_context=session.previous_session_context
+                )
+            
+            success, ai_response, error, source = ai_service.generate(
+                prompt=prompt,
+                timeout=60,
+                feature_type="voice_ai_provider"
+            )
+            
+            if not success:
+                ai_response = f"I apologize, I'm having difficulty responding right now. Please try again. Error: {error}"
+                confidence_score = 0
+            
+        except Exception as e:
+            logger.error(f"Error generating AI response: {e}")
+            ai_response = f"An error occurred while processing your question. Please try again."
+            confidence_score = 0
         
         # Store AI response
         ai_msg = VoiceConversationMessage.objects.create(
             session=session,
-            message_text=ai_response,
+            message_text=ai_response or "Unable to generate response",
             message_type="answer",
             is_user_message=False,
             ai_response=ai_response,
-            confidence_score=0.85
+            confidence_score=confidence_score
         )
+        
+        # Update session metrics
+        session.total_questions_asked += 1
+        session.save()
         
         serializer = VoiceConversationMessageSerializer(ai_msg)
         return Response({
             "message": serializer.data,
-            "session_id": session_id
+            "session_id": session_id,
+            "mode": session.mode,
+            "exchange_count": session.total_questions_asked,
+            "response_quality": "high" if confidence_score > 0.8 else "low"
         })
 
 
 class EndVoiceConversationView(APIView):
-    """End conversation session and generate summary"""
+    """End conversation session and generate comprehensive summary with learning insights"""
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
@@ -200,44 +220,30 @@ class EndVoiceConversationView(APIView):
         
         session.is_active = False
         session.ended_at = datetime.now()
-        
-        # Generate summary using AI
-        all_messages = session.messages.all()
-        messages_text = "\n".join([
-            f"{'User' if m.is_user_message else 'AI'}: {m.message_text[:200]}..."
-            for m in all_messages[:20]
-        ])
-        
-        ai_service = get_ai_service()
-        summary_prompt = f"""Based on this educational conversation, create a structured summary:
-
-{messages_text}
-
-Generate a JSON response with:
-{{
-  "summary": "Brief overall summary",
-  "key_concepts": ["concept1", "concept2"],
-  "doubts_cleared": ["doubt1", "doubt2"],
-  "weak_areas": ["area1"],
-  "strong_areas": ["area1"],
-  "next_topics": ["topic1", "topic2"],
-  "recommendations": "Study recommendations"
-}}"""
-        
-        success, summary_response, error, _ = ai_service.generate(summary_prompt)
-        
-        if success:
-            try:
-                summary_data = json.loads(summary_response)
-                session.conversation_summary = summary_data.get("summary", "")
-                session.key_points = summary_data.get("key_concepts", [])
-            except:
-                session.conversation_summary = summary_response
-        
         session.save()
         
-        # Create detailed summary record
-        if success:
+        # Build student context
+        context = VoiceConversationContextManager.get_student_context(
+            user=request.user,
+            subject=session.subject,
+            topic=session.topic
+        )
+        
+        # Generate comprehensive summary
+        ai_service = get_ai_service()
+        summary_data = ConversationSummaryGenerator.generate_session_summary(
+            session=session,
+            context=context,
+            ai_service=ai_service
+        )
+        
+        if summary_data:
+            # Store summary in session
+            session.conversation_summary = summary_data.get("summary", "")
+            session.key_points = summary_data.get("key_concepts", [])
+            session.save()
+            
+            # Create detailed summary record for future reference
             ConversationSummary.objects.create(
                 user=request.user,
                 voice_session=session,
@@ -246,12 +252,22 @@ Generate a JSON response with:
                 doubts_cleared=summary_data.get("doubts_cleared", []),
                 weak_concepts=summary_data.get("weak_areas", []),
                 strong_concepts=summary_data.get("strong_areas", []),
-                next_topics_to_study=summary_data.get("next_topics", []),
-                study_recommendations=summary_data.get("recommendations", "")
+                next_topics_to_study=summary_data.get("next_topics_recommended", []),
+                learning_insights=summary_data.get("learning_insights", ""),
+                study_recommendations=summary_data.get("study_recommendations", ""),
+                practice_questions_suggested=summary_data.get("practice_suggestions", [])
             )
-        
-        serializer = VoiceConversationSessionSerializer(session)
-        return Response(serializer.data)
+            
+            return Response({
+                "session": VoiceConversationSessionSerializer(session).data,
+                "summary": summary_data,
+                "message": "Session ended successfully. Summary has been saved to your learning profile."
+            })
+        else:
+            return Response({
+                "session": VoiceConversationSessionSerializer(session).data,
+                "message": "Session ended. Summary generation encountered an issue, but your conversation has been saved."
+            })
 
 
 class VoiceQuizStartView(APIView):

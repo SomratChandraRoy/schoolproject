@@ -18,7 +18,7 @@ const Flashcards: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             const res = await axios.get('/api/academics/flashcards/', {
-                headers: { Authorization: \Token \\ }
+                headers: { Authorization: `Token ${token}` }
             });
             setDecks(res.data);
         } catch (error) {
