@@ -2,8 +2,8 @@ from ai.ai_service import get_ai_service
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Subject, SyllabusTopic, StudyPlan, FlashcardDeck, Flashcard, FlashcardDeck, Flashcard
-from .serializers import SubjectSerializer, SyllabusTopicSerializer, StudyPlanSerializer
+from .models import Subject, SyllabusTopic, StudyPlan, FlashcardDeck, Flashcard
+from .serializers import SubjectSerializer, SyllabusTopicSerializer, StudyPlanSerializer, FlashcardDeckSerializer, FlashcardSerializer
 
 class SubjectViewSet(viewsets.ModelViewSet):
     serializer_class = SubjectSerializer

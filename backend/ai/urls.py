@@ -11,6 +11,11 @@ from .pdf_chat_views import AnalyzePDFView, ChatWithPDFView, ClearPDFCacheView
 from .voice_views import VoiceTutorView
 from .document_vision_views import DocumentVisionView
 from .admin_views import AIProviderSettingsView, TestAIProviderView
+from .voice_conversation_views import (
+    StartVoiceConversationView, VoiceMessageView, EndVoiceConversationView,
+    VoiceQuizStartView, VoiceQuizAnswerView, VoiceSessionHistoryView,
+    VoiceSessionDetailsView, VoiceQuizResultsView
+)
 
 urlpatterns = [
     path('document/analyze/', DocumentVisionView.as_view(), name='document-analyze'),
@@ -58,4 +63,16 @@ urlpatterns = [
     
     # Study analytics
     path('study/analyze/', AnalyzeStudyPatternView.as_view(), name='analyze-study-pattern'),
+    
+    # Voice Conversation Endpoints (NEW COMPREHENSIVE FEATURE)
+    path('voice-conversation/start/', StartVoiceConversationView.as_view(), name='start-voice-conversation'),
+    path('voice-conversation/message/', VoiceMessageView.as_view(), name='voice-message'),
+    path('voice-conversation/end/', EndVoiceConversationView.as_view(), name='end-voice-conversation'),
+    path('voice-conversation/history/', VoiceSessionHistoryView.as_view(), name='voice-session-history'),
+    path('voice-conversation/<str:session_id>/', VoiceSessionDetailsView.as_view(), name='voice-session-details'),
+    
+    # Voice Quiz/Exam Endpoints
+    path('voice-quiz/start/', VoiceQuizStartView.as_view(), name='voice-quiz-start'),
+    path('voice-quiz/answer/', VoiceQuizAnswerView.as_view(), name='voice-quiz-answer'),
+    path('voice-quiz/<int:quiz_session_id>/results/', VoiceQuizResultsView.as_view(), name='voice-quiz-results'),
 ]

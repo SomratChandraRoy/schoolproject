@@ -1,0 +1,106 @@
+{
+  "version": "1.0.0",
+  "description": "Core knowledge base for offline AI",
+  "language": "en",
+  "totalEntries": 50,
+  "categories": {
+    "biology": {
+      "description": "Biology topics",
+      "entries": [
+        {
+          "id": 1,
+          "question": "What is photosynthesis?",
+          "answer": "Photosynthesis is the process by which plants, algae, and some bacteria convert light energy into chemical energy. It occurs mainly in leaves using chlorophyll and produces oxygen and glucose.",
+          "keywords": [
+            "photosynthesis",
+            "plants",
+            "light",
+            "energy",
+            "chlorophyll"
+          ]
+        },
+        {
+          "id": 2,
+          "question": "What is cellular respiration?",
+          "answer": "Cellular respiration is the breakdown of glucose to produce energy (ATP) in cells. It can be aerobic (with oxygen) or anaerobic (without oxygen).",
+          "keywords": ["respiration", "ATP", "energy", "glucose", "cells"]
+        },
+        {
+          "id": 3,
+          "question": "What is the water cycle?",
+          "answer": "The water cycle involves evaporation, condensation, precipitation, and collection. Water from oceans and lakes evaporates, forms clouds, and falls as rain.",
+          "keywords": [
+            "water",
+            "cycle",
+            "evaporation",
+            "precipitation",
+            "hydrologic"
+          ]
+        }
+      ]
+    },
+    "mathematics": {
+      "description": "Mathematics topics",
+      "entries": [
+        {
+          "id": 4,
+          "question": "What is the Pythagorean theorem?",
+          "answer": "In a right triangle, the square of the hypotenuse equals the sum of squares of the other two sides: a² + b² = c²",
+          "keywords": [
+            "Pythagorean",
+            "geometry",
+            "right triangle",
+            "hypotenuse",
+            "theorem"
+          ]
+        },
+        {
+          "id": 5,
+          "question": "What is algebra?",
+          "answer": "Algebra is the branch of mathematics dealing with symbols and equations. It helps solve unknown quantities using variables and mathematical operations.",
+          "keywords": [
+            "algebra",
+            "equations",
+            "variables",
+            "mathematics",
+            "symbols"
+          ]
+        }
+      ]
+    },
+    "geography": {
+      "description": "Geography topics",
+      "entries": [
+        {
+          "id": 6,
+          "question": "What is the capital of Bangladesh?",
+          "answer": "Dhaka is the capital and largest city of Bangladesh. It is located on the Ganges Delta and serves as the political, economic, and cultural center of the country.",
+          "keywords": ["Bangladesh", "Dhaka", "capital", "city", "country"]
+        }
+      ]
+    },
+    "study_tips": {
+      "description": "Study tips and learning strategies",
+      "entries": [
+        {
+          "id": 7,
+          "question": "How do I study effectively?",
+          "answer": "Effective study tips: 1) Use active learning, 2) Practice spaced repetition, 3) Use the Pomodoro technique, 4) Test yourself, 5) Get adequate sleep, 6) Organize your notes",
+          "keywords": ["study", "learning", "effective", "tips", "techniques"]
+        },
+        {
+          "id": 8,
+          "question": "What is the Pomodoro Technique?",
+          "answer": "The Pomodoro Technique is a time management method using 25-minute focused work intervals (pomodoros) followed by 5-minute breaks. After 4 pomodoros, take a longer 15-30 minute break.",
+          "keywords": [
+            "pomodoro",
+            "time",
+            "management",
+            "focus",
+            "productivity"
+          ]
+        }
+      ]
+    }
+  }
+}

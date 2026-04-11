@@ -1,8 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import * as React from "react";
-import OfflineIndicator from './components/OfflineIndicator';
-
+import OfflineIndicator from "./components/OfflineIndicator";
 
 // Import page components
 import Ollama from "./pages/Ollama";
@@ -39,6 +38,8 @@ import StudyPlan from "./pages/StudyPlan";
 import VoiceTutor from "./pages/VoiceTutor";
 import DocumentAnalysis from "./pages/DocumentAnalysis";
 import Flashcards from "./pages/Flashcards";
+import StudentDashboard from "./pages/StudentDashboard";
+import OfflineAIPage from "./pages/OfflineAIPage";
 
 //import pdfd for cheking pdf viewer !
 import Pdfd from "./pages/Pdfd";
@@ -141,17 +142,14 @@ function App() {
               {/* Protected Routes for Authenticated Users */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
-
                 <Route path="/quiz/select" element={<QuizSelection />} />
                 <Route path="/quiz" element={<Quiz />} />
                 <Route path="/quiz/adaptive" element={<AdaptiveQuiz />} />
                 <Route path="/books" element={<Books />} />
                 <Route path="/pdfd" element={<Pdfd />} />
                 <Route path="/videocall" element={<VideoCall />} />
-
                 {/* Legacy games route */}
                 <Route path="/games-old" element={<Games />} />
-
                 {/* New games routes */}
                 <Route path="/games" element={<GamesHub />} />
                 <Route
@@ -160,7 +158,6 @@ function App() {
                 />
                 <Route path="/games/ship_find" element={<ShipFind />} />
                 <Route path="/games/number_hunt" element={<NumberHunt />} />
-
                 {/* Legacy placeholder routes */}
                 <Route
                   path="/games/memory_matrix"
@@ -181,7 +178,6 @@ function App() {
                   path="/games/infinite_loop"
                   element={<MemoryPattern />}
                 />
-
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/notes" element={<NotesFileSystem />} />
@@ -190,11 +186,16 @@ function App() {
                 <Route path="/study-stats" element={<StudyStats />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/drawing" element={<TldrawPage />} />
-                <Route path="/academics" element={<AcademicsDashboard />} />
-          <Route path="/study-plan" element={<StudyPlan />} />
-          <Route path="/voice-tutor" element={<VoiceTutor />} />
-          <Route path="/document-vision" element={<DocumentAnalysis />} />
-          <Route path="/flashcards" element={<Flashcards />} />
+                <Route
+                  path="/academics"
+                  element={<AcademicsDashboard />}
+                />{" "}
+                <Route path="/study-dashboard" element={<StudentDashboard />} />{" "}
+                <Route path="/offline-ai" element={<OfflineAIPage />} />
+                <Route path="/study-plan" element={<StudyPlan />} />
+                <Route path="/voice-tutor" element={<VoiceTutor />} />
+                <Route path="/document-vision" element={<DocumentAnalysis />} />
+                <Route path="/flashcards" element={<Flashcards />} />
               </Route>
 
               {/* Protected Routes for Admin */}
@@ -235,7 +236,7 @@ function App() {
           <MacDockNav unreadCount={unreadCount} />
         </div>
         <OfflineIndicator />
-    </Router>
+      </Router>
     </DarkModeProvider>
   );
 }
