@@ -49,7 +49,7 @@ import Pdfd from "./pages/Pdfd";
 import AIChat from "./components/AIChat";
 import EnhancedAIChat from "./components/EnhancedAIChat";
 import AIVoiceConversation from "./components/AIVoiceConversation";
-import PremiumAIChat from "./components/PremiumAIChat";
+import PremiumAIChatWithElevenLabsUI from "./components/PremiumAIChatWithElevenLabsUI";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import BanCheck from "./components/BanCheck";
@@ -233,8 +233,8 @@ function App() {
 
           <Footer />
 
-          {/* Premium AI Chat - With ElevenLabs UI Design Patterns */}
-          <PremiumAIChat />
+          {/* Premium AI Chat with ElevenLabs UI Components */}
+          <PremiumAIChatWithElevenLabsUI />
 
           {/* Enhanced AI Chat Assistant with ElevenLabs-inspired UI */}
           {/* <EnhancedAIChat /> */}
