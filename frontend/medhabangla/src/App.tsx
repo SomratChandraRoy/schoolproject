@@ -47,7 +47,9 @@ import HeroPage from "./pages/HeroPage";
 import Pdfd from "./pages/Pdfd";
 // Import components
 import AIChat from "./components/AIChat";
+import EnhancedAIChat from "./components/EnhancedAIChat";
 import AIVoiceConversation from "./components/AIVoiceConversation";
+import PremiumAIChat from "./components/PremiumAIChat";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import BanCheck from "./components/BanCheck";
@@ -231,14 +233,17 @@ function App() {
 
           <Footer />
 
-          {/* AI Chat Assistant */}
-          <AIChat />
+          {/* Premium AI Chat - With ElevenLabs UI Design Patterns */}
+          <PremiumAIChat />
+
+          {/* Enhanced AI Chat Assistant with ElevenLabs-inspired UI */}
+          {/* <EnhancedAIChat /> */}
 
           {/* PWA Install Prompt */}
           <PWAInstallPrompt />
 
           {/* AI Voice Tutor Widget - Floating on all pages */}
-          <AIVoiceConversation isFloating={true} />
+          {/* <AIVoiceConversation isFloating={true} /> */}
 
           {/* MacDock Navigation */}
           <MacDockNav unreadCount={unreadCount} />
