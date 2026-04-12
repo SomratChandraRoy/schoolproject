@@ -16,7 +16,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const userStr = localStorage.getItem('user');
 
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login?unauthorized=true" replace />;
   }
 
   // Check if user is banned

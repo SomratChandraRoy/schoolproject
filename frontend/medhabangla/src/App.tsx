@@ -41,6 +41,7 @@ import Flashcards from "./pages/Flashcards";
 import StudentDashboard from "./pages/StudentDashboard";
 import OfflineAIPage from "./pages/OfflineAIPage";
 import TranslatorPage from "./pages/Translator";
+import HeroPage from "./pages/HeroPage";
 
 //import pdfd for cheking pdf viewer !
 import Pdfd from "./pages/Pdfd";
@@ -135,6 +136,7 @@ function App() {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/hero" element={<HeroPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
