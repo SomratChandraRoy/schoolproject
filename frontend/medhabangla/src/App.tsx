@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
-import * as React from "react";
+import React from "react";
 import OfflineIndicator from "./components/OfflineIndicator";
 
 // Import page components
