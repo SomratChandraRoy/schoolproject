@@ -30,6 +30,7 @@ Student says: {user_message}"""
 
         # 2. Try ElevenLabs TTS
         audio_base64 = None
+        tts_error = None
         try:
             settings = AIProviderSettings.objects.first()
             if settings and getattr(settings, 'elevenlabs_api_key', None):
@@ -46,22 +47,28 @@ Student says: {user_message}"""
                 
                 data = {
                     "text": text_response,
-                    "model_id": "eleven_monolingual_v1",
+                    "model_id": "eleven_multilingual_v2",
                     "voice_settings": {
                         "stability": 0.5,
                         "similarity_boost": 0.5
                     }
                 }
                 
-                response = requests.post(url, json=data, headers=headers)
+                response = requests.post(url, json=data, headers=headers, timeout=25)
                 if response.status_code == 200:
                     audio_base64 = base64.b64encode(response.content).decode('utf-8')
                 else:
+                    tts_error = f"ElevenLabs error: {response.status_code}"
                     print("ElevenLabs error:", response.text)
+            else:
+                tts_error = "ElevenLabs key is not configured"
         except Exception as e:
+            tts_error = str(e)
             print("TTS Exception:", str(e))
 
         return Response({
             'text': text_response,
-            'audio_base64': audio_base64
+            'audio_base64': audio_base64,
+            'tts_provider': 'elevenlabs' if audio_base64 else 'browser_fallback',
+            'tts_error': tts_error
         })

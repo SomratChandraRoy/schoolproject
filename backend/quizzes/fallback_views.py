@@ -13,6 +13,30 @@ from .serializers import QuizSerializer
 from accounts.models import User
 
 
+VALID_QUESTION_TYPES = {'mcq', 'short', 'long'}
+
+
+def parse_question_types(raw_types, fallback='mcq'):
+    if isinstance(raw_types, list):
+        candidates = raw_types
+    elif isinstance(raw_types, str):
+        candidates = raw_types.split(',')
+    elif raw_types is None:
+        candidates = [fallback]
+    else:
+        candidates = [str(raw_types)]
+
+    parsed = []
+    seen = set()
+    for raw_value in candidates:
+        question_type = str(raw_value or '').strip().lower()
+        if question_type in VALID_QUESTION_TYPES and question_type not in seen:
+            parsed.append(question_type)
+            seen.add(question_type)
+
+    return parsed or [fallback]
+
+
 class FallbackQuizView(APIView):
     """
     Fallback view that generates AI questions when database has no questions
@@ -34,8 +58,7 @@ class FallbackQuizView(APIView):
         print(f"[FallbackQuiz] Checking questions for {subject}, Class {class_level}, Types: {question_types}")
         
         # Parse question types
-        types_list = [t.strip() for t in question_types.split(',')]
-        primary_type = types_list[0]  # Use first type for generation
+        types_list = parse_question_types(question_types)
         
         # Check if questions exist in database
         existing_questions = Quiz.objects.filter(
@@ -77,28 +100,46 @@ class FallbackQuizView(APIView):
         
         generator = get_question_generator()
         
-        # Generate 10 questions for a good quiz experience
-        success, questions, error = generator.generate_batch_questions(
-            user=user,
-            subject=subject,
-            class_level=int(class_level),
-            difficulty='medium',  # Start with medium
-            question_type=primary_type,
-            batch_size=10
-        )
-        
-        if not success:
-            print(f"[FallbackQuiz] Failed to generate questions: {error}")
+        # Generate a balanced batch for all selected question types.
+        target_total = max(9, len(types_list) * 3)
+        base_count = target_total // len(types_list)
+        remainder = target_total % len(types_list)
+
+        generated_questions = []
+        generation_errors = []
+
+        for index, selected_type in enumerate(types_list):
+            batch_size = base_count + (1 if index < remainder else 0)
+            if batch_size <= 0:
+                continue
+
+            success, questions, error = generator.generate_batch_questions(
+                user=user,
+                subject=subject,
+                class_level=int(class_level),
+                difficulty='medium',  # Start with medium
+                question_type=selected_type,
+                batch_size=batch_size
+            )
+
+            if not success:
+                generation_errors.append(f"{selected_type}: {error}")
+                continue
+
+            generated_questions.extend(questions)
+
+        if not generated_questions:
+            print(f"[FallbackQuiz] Failed to generate questions: {generation_errors}")
             return Response(
-                {'error': f'No questions available and AI generation failed: {error}'},
+                {'error': f'No questions available and AI generation failed: {" | ".join(generation_errors)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-        print(f"[FallbackQuiz] Successfully generated {len(questions)} AI questions")
+        print(f"[FallbackQuiz] Successfully generated {len(generated_questions)} AI questions")
         
         # Convert AIGeneratedQuestion to Quiz-like format
         quiz_data = []
-        for q in questions:
+        for q in generated_questions:
             quiz_data.append({
                 'id': q.id,
                 'subject': q.subject,
@@ -115,6 +156,7 @@ class FallbackQuizView(APIView):
             'source': 'ai_generated',
             'count': len(quiz_data),
             'results': quiz_data,
+            'selected_question_types': types_list,
             'message': 'No questions found in database. AI generated questions for you!'
         })
 

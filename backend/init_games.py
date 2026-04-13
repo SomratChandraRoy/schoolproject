@@ -40,6 +40,15 @@ games_data = [
         'base_points': 120,
         'is_active': True
     },
+    {
+        'game_type': 'image_dragger',
+        'name': 'Image Dragger',
+        'description': 'Drag puzzle pieces into the right place before the timer ends.',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 180,
+        'is_active': True
+    },
 ]
 
 print("🎮 Initializing games in database...")

@@ -8,6 +8,9 @@ class Game(models.Model):
     """Master game configuration"""
     GAME_TYPES = [
         ('memory_pattern', 'Memory Pattern'),
+        ('ship_find', 'Ship Find'),
+        ('number_hunt', 'Number Hunt'),
+        ('image_dragger', 'Image Dragger'),
         ('memory_matrix', 'Memory Matrix'),
         ('math_quiz', 'Math Challenge'),
         ('equation_storm', 'Equation Storm'),

@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "description": "Reasoning and study strategy pack for offline mini AI",
+  "language": "en",
+  "categories": {
+    "mathematics": {
+      "entries": [
+        {
+          "question": "How do I solve linear equations?",
+          "answer": "To solve a linear equation: move variable terms to one side, constants to the other side, simplify both sides, then divide by the coefficient of the variable. Always check by substituting your answer.",
+          "keywords": ["linear", "equation", "solve", "algebra", "variable"]
+        },
+        {
+          "question": "How do I find area of a triangle?",
+          "answer": "Use Area = 1/2 × base × height. Make sure base and height are in the same unit before multiplying.",
+          "keywords": ["area", "triangle", "base", "height", "formula"]
+        }
+      ]
+    },
+    "science": {
+      "entries": [
+        {
+          "question": "Why does the moon change shape?",
+          "answer": "The moon appears to change shape because of lunar phases. As the moon orbits Earth, we see different portions of the sunlit side.",
+          "keywords": ["moon", "phase", "orbit", "sunlight", "shape"]
+        },
+        {
+          "question": "What is density?",
+          "answer": "Density is mass per unit volume. Formula: Density = Mass / Volume. Dense objects have more mass in the same space.",
+          "keywords": ["density", "mass", "volume", "formula", "science"]
+        }
+      ]
+    },
+    "study_skills": {
+      "entries": [
+        {
+          "question": "How can I remember long answers?",
+          "answer": "Break long answers into short keywords, make a small outline, revise with spaced repetition, and explain the topic aloud in your own words.",
+          "keywords": [
+            "remember",
+            "revision",
+            "long answer",
+            "spaced repetition"
+          ]
+        },
+        {
+          "question": "How do I prepare one day before exam?",
+          "answer": "Focus on high-yield topics, revise formulas and definitions, solve 1-2 past papers, avoid new chapters, and sleep at least 6-7 hours.",
+          "keywords": ["exam", "one day", "revision", "past paper", "sleep"]
+        }
+      ]
+    }
+  }
+}

@@ -16,43 +16,26 @@ export interface ModelPackage {
 
 const MODEL_CACHE_NAME = "sopan-ai-models-v1";
 const MODEL_METADATA_KEY = "sopan-model-metadata";
+const MODEL_AUTO_INSTALL_KEY = "sopan-models-auto-installed";
 
 // Available model packages
 const AVAILABLE_MODELS: ModelPackage[] = [
   {
-    name: "knowledge-base",
+    name: "mini-qa-core",
     version: "1.0.0",
-    description: "Core knowledge base with Q&A pairs",
-    size: 2, // 2 MB
+    description: "Core offline Q&A model pack",
+    size: 2,
     url: "/models/knowledge-base-v1.json",
     checksum: "sha256-abc123",
     optional: false,
   },
   {
-    name: "study-tips",
+    name: "reasoning-pack",
     version: "1.0.0",
-    description: "Study techniques and learning strategies",
+    description: "Extra problem-solving and study strategy pack",
     size: 1,
-    url: "/models/study-tips-v1.json",
+    url: "/models/reasoning-pack-v1.json",
     checksum: "sha256-def456",
-    optional: true,
-  },
-  {
-    name: "subject-guide-math",
-    version: "1.0.0",
-    description: "Mathematics guide and solutions",
-    size: 3,
-    url: "/models/subject-guide-math-v1.json",
-    checksum: "sha256-ghi789",
-    optional: true,
-  },
-  {
-    name: "subject-guide-science",
-    version: "1.0.0",
-    description: "Science guide (physics, chemistry, biology)",
-    size: 4,
-    url: "/models/subject-guide-science-v1.json",
-    checksum: "sha256-jkl012",
     optional: true,
   },
 ];
@@ -76,6 +59,30 @@ export class PWAModelPrefetcher {
 
   constructor() {
     this.initializeCache();
+  }
+
+  /**
+   * Auto-install essential models once the app is installed as a PWA.
+   * Safe to call repeatedly; it will run only once unless force=true.
+   */
+  async autoInstallForInstalledPWA(force: boolean = false): Promise<void> {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+
+    if (!isStandalone) return;
+    if (!force && localStorage.getItem(MODEL_AUTO_INSTALL_KEY) === "1") return;
+
+    try {
+      const status = await this.getInstallationStatus();
+      if (!status.isInstalled) {
+        await this.downloadEssentialModels();
+        this.downloadOptionalModels();
+      }
+      localStorage.setItem(MODEL_AUTO_INSTALL_KEY, "1");
+    } catch (error) {
+      console.error("[Model Prefetcher] Auto-install failed:", error);
+    }
   }
 
   /**
@@ -433,3 +440,5 @@ export const downloadOptionalModels = () =>
 export const getAvailableModels = () => modelPrefetcher.getAvailableModels();
 export const getInstallationStatus = () =>
   modelPrefetcher.getInstallationStatus();
+export const autoInstallForInstalledPWA = (force = false) =>
+  modelPrefetcher.autoInstallForInstalledPWA(force);

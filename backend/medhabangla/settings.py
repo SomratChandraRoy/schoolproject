@@ -182,6 +182,9 @@ WORKOS_REDIRECT_URI = os.getenv(
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
 
+# Alibaba DashScope (Qwen) settings
+ALIBABA_API_KEY = os.getenv('ALIBABA_API_KEY')
+
 # Google Gemini API settings
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')  # Legacy single key
 

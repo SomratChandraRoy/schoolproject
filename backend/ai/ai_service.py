@@ -149,38 +149,32 @@ class AIService:
         api_keys = {'gemini': config.get('gemini_api_key'), 'groq': config.get('groq_api_key'), 'alibaba': config.get('alibaba_api_key')}
         print(f"[AI Service] Keys overrides found: {[(k, bool(v)) for k, v in api_keys.items()]}")
 
-        if target_provider == 'groq':
-            success, response, error = self.generate_with_groq(prompt, timeout, api_key_override=api_keys['groq'])
-            if success: return True, response, None, 'groq'
-            return False, '', error, 'groq'
-        
-        if target_provider == 'alibaba':
-            success, response, error = self.generate_with_alibaba(prompt, timeout, api_key_override=api_keys['alibaba'])
-            if success: return True, response, None, 'alibaba'
-            return False, '', error, 'alibaba'
+        def _try_provider(provider_name):
+            if provider_name == 'groq':
+                return self.generate_with_groq(prompt, timeout, api_key_override=api_keys['groq'])
+            if provider_name == 'gemini':
+                return self.generate_with_gemini(prompt, model_name, api_key_override=api_keys['gemini'])
+            if provider_name == 'alibaba':
+                return self.generate_with_alibaba(prompt, timeout, api_key_override=api_keys['alibaba'])
+            if provider_name == 'ollama':
+                return self.generate_with_ollama(prompt, timeout)
+            return False, '', f'Unknown provider: {provider_name}'
 
-        if target_provider == 'gemini':
-            success, response, error = self.generate_with_gemini(prompt, model_name, api_key_override=api_keys['gemini'])
-            if success: return True, response, None, 'gemini'
-            return False, '', error, 'gemini'
+        provider_order = ['groq', 'gemini', 'alibaba', 'ollama']
+        if target_provider == 'auto':
+            ordered_providers = provider_order
+        else:
+            ordered_providers = [target_provider] + [p for p in provider_order if p != target_provider]
 
-        if target_provider == 'ollama':
-            success, response, error = self.generate_with_ollama(prompt, timeout)
-            if success: return True, response, None, 'ollama'
-            return False, '', error, 'ollama'
+        errors = {}
+        for provider_name in ordered_providers:
+            success, response, error = _try_provider(provider_name)
+            if success:
+                return True, response, None, provider_name
+            errors[provider_name] = error
 
-        # Auto Fallback (Groq -> Gemini -> Alibaba -> Ollama)
-        success, response, error = self.generate_with_groq(prompt, timeout, api_key_override=api_keys['groq'])
-        if success: return True, response, None, 'groq'
-
-        success, response, gemini_error = self.generate_with_gemini(prompt, model_name, api_key_override=api_keys['gemini'])
-        if success: return True, response, None, 'gemini'
-
-        success, response, alibaba_error = self.generate_with_alibaba(prompt, timeout, api_key_override=api_keys['alibaba'])
-        if success: return True, response, None, 'alibaba'
-
-        success, response, ollama_error = self.generate_with_ollama(prompt, timeout)
-        return success, response, f"Groq fail: {error}; Gemini fail: {gemini_error}; Alibaba fail: {alibaba_error}; Ollama fail: {ollama_error}", 'none'
+        error_message = '; '.join([f"{name} fail: {err}" for name, err in errors.items()])
+        return False, '', error_message, 'none'
 
 _ai_service = None
 def get_ai_service():

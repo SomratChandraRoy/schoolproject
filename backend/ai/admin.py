@@ -19,8 +19,8 @@ class AIProviderSettingsAdmin(ModelAdmin):
             ),
             'description': 'Configure which specific AI model provider should run for which feature.'
         }),
-        ('API Keys (Gemini, Groq, Alibaba)', {
-            'fields': ('gemini_api_key', 'groq_api_key', 'alibaba_api_key'),
+        ('API Keys (Gemini, Groq, Alibaba, ElevenLabs)', {
+            'fields': ('gemini_api_key', 'groq_api_key', 'alibaba_api_key', 'elevenlabs_api_key'),
             'description': 'Keys here will override default application keys.'
         }),
         ('Ollama Configuration', {

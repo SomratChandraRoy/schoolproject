@@ -58,6 +58,7 @@ class TestAIProviderView(APIView):
             )
         
         provider = request.data.get('provider', 'auto')
+        settings_obj = AIProviderSettings.get_settings()
         
         from .ai_service import get_ai_service
         ai_service = get_ai_service()
@@ -66,8 +67,23 @@ class TestAIProviderView(APIView):
         test_prompt = "Say 'Hello' in one word"
         
         if provider == 'gemini':
-            success, response, error = ai_service.generate_with_gemini(test_prompt)
+            success, response, error = ai_service.generate_with_gemini(
+                test_prompt,
+                api_key_override=settings_obj.gemini_api_key
+            )
             source = 'gemini'
+        elif provider == 'groq':
+            success, response, error = ai_service.generate_with_groq(
+                test_prompt,
+                api_key_override=settings_obj.groq_api_key
+            )
+            source = 'groq'
+        elif provider == 'alibaba':
+            success, response, error = ai_service.generate_with_alibaba(
+                test_prompt,
+                api_key_override=settings_obj.alibaba_api_key
+            )
+            source = 'alibaba'
         elif provider == 'ollama':
             success, response, error = ai_service.generate_with_ollama(test_prompt, timeout=30)
             source = 'ollama'

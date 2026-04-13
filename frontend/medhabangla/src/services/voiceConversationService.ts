@@ -24,13 +24,62 @@ interface ConversationSummary {
 
 class AIVoiceConversationService {
   private mediaRecorder: MediaRecorder | null = null;
+  private speechRecognition: any | null = null;
+  private latestTranscript: string = "";
   private audioChunks: Blob[] = [];
   private conversationHistory: VoiceMessage[] = [];
   private conversationId: string | null = null;
-  private token: string | null = null;
+  private activeMode: "tutor" | "exam" | "quiz" | "general" = "tutor";
 
-  constructor() {
-    this.token = localStorage.getItem("token");
+  private async fetchWithTimeout(
+    input: RequestInfo | URL,
+    init: RequestInit = {},
+    timeoutMs: number = 20000,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(input, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private getToken(): string {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not authenticated");
+    return token;
+  }
+
+  private async ensureConversation(
+    mode: "tutor" | "exam" | "quiz" | "general" = "tutor",
+  ): Promise<string> {
+    if (this.conversationId && this.activeMode === mode)
+      return this.conversationId;
+
+    if (this.conversationId && this.activeMode !== mode) {
+      this.conversationId = null;
+    }
+
+    const token = this.getToken();
+    const response = await this.fetchWithTimeout(
+      "/api/ai/voice-conversation/start/",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mode }),
+      },
+    );
+
+    if (!response.ok) throw new Error("Failed to start voice conversation");
+
+    const data = await response.json();
+    this.conversationId = data.session_id;
+    this.activeMode = mode;
+    return this.conversationId;
   }
 
   /**
@@ -38,16 +87,36 @@ class AIVoiceConversationService {
    */
   async startRecording(): Promise<void> {
     try {
+      this.latestTranscript = "";
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        this.speechRecognition = new SpeechRecognition();
+        this.speechRecognition.lang = "bn-BD";
+        this.speechRecognition.interimResults = true;
+        this.speechRecognition.continuous = false;
+        this.speechRecognition.onresult = (event: any) => {
+          const transcript = Array.from(event.results)
+            .map((r: any) => r?.[0]?.transcript || "")
+            .join(" ")
+            .trim();
+          this.latestTranscript = transcript;
+        };
+        this.speechRecognition.start();
+        console.log("[Voice] Speech recognition started");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mediaRecorder = new MediaRecorder(stream);
       this.audioChunks = [];
-
       this.mediaRecorder.ondataavailable = (event) => {
         this.audioChunks.push(event.data);
       };
-
       this.mediaRecorder.start();
-      console.log("[Voice] Recording started");
+      console.log("[Voice] Media recording started");
     } catch (error) {
       console.error("[Voice] Error accessing microphone:", error);
       throw new Error("Microphone access denied");
@@ -59,6 +128,32 @@ class AIVoiceConversationService {
    */
   async stopRecording(): Promise<Blob> {
     return new Promise((resolve, reject) => {
+      if (this.speechRecognition) {
+        let settled = false;
+        const resolveOnce = () => {
+          if (settled) return;
+          settled = true;
+          const transcriptBlob = new Blob([this.latestTranscript], {
+            type: "text/plain",
+          });
+          this.speechRecognition = null;
+          resolve(transcriptBlob);
+        };
+
+        this.speechRecognition.onend = resolveOnce;
+        this.speechRecognition.onerror = resolveOnce;
+
+        try {
+          this.speechRecognition.stop();
+        } catch {
+          resolveOnce();
+        }
+
+        // Some browsers can miss onend; hard-stop the pending state.
+        setTimeout(resolveOnce, 1200);
+        return;
+      }
+
       if (!this.mediaRecorder) {
         reject(new Error("No recording in progress"));
         return;
@@ -93,44 +188,70 @@ class AIVoiceConversationService {
   /**
    * Send voice message to AI backend
    */
-  async sendVoiceMessage(audioBlob: Blob): Promise<VoiceMessage> {
+  async sendVoiceMessage(
+    audioBlob: Blob,
+    mode: "tutor" | "exam" | "quiz" | "general" = "tutor",
+  ): Promise<VoiceMessage> {
     try {
-      if (!this.token) throw new Error("Not authenticated");
+      const token = this.getToken();
+      const sessionId = await this.ensureConversation(mode);
 
-      const audioBase64 = await this.blobToBase64(audioBlob);
+      let transcript = this.latestTranscript?.trim() || "";
+      if (!transcript) {
+        try {
+          transcript = (await audioBlob.text()).trim();
+        } catch {
+          transcript = "";
+        }
+      }
 
-      const response = await fetch("/api/ai/voice-conversation/", {
-        method: "POST",
-        headers: {
-          Authorization: `Token ${this.token}`,
-          "Content-Type": "application/json",
+      if (!transcript) {
+        throw new Error("Could not detect speech. Please try again.");
+      }
+
+      const response = await this.fetchWithTimeout(
+        "/api/ai/voice-conversation/message/",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            transcript,
+            message_text: transcript,
+          }),
         },
-        body: JSON.stringify({
-          audio_data: audioBase64,
-          conversation_id: this.conversationId,
-          mode: "teaching", // or "exam", "doubt-solving"
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to process voice message");
+        25000,
+      );
 
       const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Failed to process voice message");
+
+      const backendMessage = data.message || {};
+      const responseText =
+        backendMessage.message_text ||
+        backendMessage.ai_response ||
+        "No response";
 
       const assistantMessage: VoiceMessage = {
-        id: data.id,
+        id: backendMessage.id || Date.now().toString(),
         role: "assistant",
-        text: data.transcript,
-        audioUrl: data.audio_url,
-        timestamp: new Date(data.timestamp),
+        text: responseText,
+        audioUrl: undefined,
+        timestamp: new Date(),
         type: "voice",
       };
 
       // Store conversation ID for future messages
-      if (!this.conversationId && data.conversation_id) {
-        this.conversationId = data.conversation_id;
+      if (!this.conversationId && data.session_id) {
+        this.conversationId = data.session_id;
       }
 
       this.conversationHistory.push(assistantMessage);
+      this.latestTranscript = "";
       return assistantMessage;
     } catch (error) {
       console.error("[Voice] Error sending message:", error);
@@ -141,38 +262,50 @@ class AIVoiceConversationService {
   /**
    * Send text message to AI (for typing instead of voice)
    */
-  async sendTextMessage(text: string): Promise<VoiceMessage> {
+  async sendTextMessage(
+    text: string,
+    mode: "tutor" | "exam" | "quiz" | "general" = "tutor",
+  ): Promise<VoiceMessage> {
     try {
-      if (!this.token) throw new Error("Not authenticated");
+      const token = this.getToken();
+      const sessionId = await this.ensureConversation(mode);
 
-      const response = await fetch("/api/ai/voice-conversation/", {
-        method: "POST",
-        headers: {
-          Authorization: `Token ${this.token}`,
-          "Content-Type": "application/json",
+      const response = await this.fetchWithTimeout(
+        "/api/ai/voice-conversation/message/",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            message_text: text,
+          }),
         },
-        body: JSON.stringify({
-          text: text,
-          conversation_id: this.conversationId,
-          mode: "teaching",
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to process message");
+        25000,
+      );
 
       const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Failed to process message");
+
+      const backendMessage = data.message || {};
 
       const assistantMessage: VoiceMessage = {
-        id: data.id,
+        id: backendMessage.id || Date.now().toString(),
         role: "assistant",
-        text: data.response_text,
-        audioUrl: data.audio_url,
-        timestamp: new Date(data.timestamp),
+        text:
+          backendMessage.message_text ||
+          backendMessage.ai_response ||
+          "No response",
+        audioUrl: undefined,
+        timestamp: new Date(),
         type: "voice",
       };
 
-      if (!this.conversationId && data.conversation_id) {
-        this.conversationId = data.conversation_id;
+      if (!this.conversationId && data.session_id) {
+        this.conversationId = data.session_id;
       }
 
       this.conversationHistory.push(assistantMessage);
@@ -202,13 +335,13 @@ class AIVoiceConversationService {
     limit: number = 10,
   ): Promise<ConversationSummary[]> {
     try {
-      if (!this.token) throw new Error("Not authenticated");
+      const token = this.getToken();
 
       const response = await fetch(
-        `/api/ai/voice-conversations/?limit=${limit}`,
+        `/api/ai/voice-conversation/history/?limit=${limit}`,
         {
           headers: {
-            Authorization: `Token ${this.token}`,
+            Authorization: `Token ${token}`,
           },
         },
       );
@@ -216,7 +349,16 @@ class AIVoiceConversationService {
       if (!response.ok) throw new Error("Failed to fetch conversations");
 
       const data = await response.json();
-      return data.results || [];
+      if (!Array.isArray(data)) return [];
+      return data.map((session: any) => ({
+        id: session.session_id,
+        title: `${session.mode || "tutor"} - ${session.subject || "General"}`,
+        summary: session.conversation_summary || "",
+        keyTopics: Array.isArray(session.key_points) ? session.key_points : [],
+        createdAt: new Date(session.created_at),
+        updatedAt: new Date(session.updated_at || session.created_at),
+        messageCount: session.total_questions_asked || 0,
+      }));
     } catch (error) {
       console.error("[Voice] Error fetching past conversations:", error);
       return [];
@@ -228,13 +370,13 @@ class AIVoiceConversationService {
    */
   async loadConversation(conversationId: string): Promise<VoiceMessage[]> {
     try {
-      if (!this.token) throw new Error("Not authenticated");
+      const token = this.getToken();
 
       const response = await fetch(
-        `/api/ai/voice-conversations/${conversationId}/`,
+        `/api/ai/voice-conversation/${conversationId}/`,
         {
           headers: {
-            Authorization: `Token ${this.token}`,
+            Authorization: `Token ${token}`,
           },
         },
       );
@@ -243,7 +385,15 @@ class AIVoiceConversationService {
 
       const data = await response.json();
       this.conversationId = conversationId;
-      this.conversationHistory = data.messages || [];
+
+      const backendMessages = data.messages || [];
+      this.conversationHistory = backendMessages.map((m: any) => ({
+        id: m.id?.toString?.() || Date.now().toString(),
+        role: m.is_user_message ? "user" : "assistant",
+        text: m.message_text || m.ai_response || "",
+        timestamp: new Date(m.timestamp || Date.now()),
+        type: "text",
+      }));
       return this.conversationHistory;
     } catch (error) {
       console.error("[Voice] Error loading conversation:", error);
@@ -256,22 +406,20 @@ class AIVoiceConversationService {
    */
   async saveConversationSummary(title?: string): Promise<void> {
     try {
-      if (!this.token || !this.conversationId) return;
+      if (!this.conversationId) return;
+      const token = this.getToken();
 
-      await fetch(
-        `/api/ai/voice-conversations/${this.conversationId}/summary/`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Token ${this.token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: title || "Voice Conversation",
-            messages: this.conversationHistory,
-          }),
+      await fetch(`/api/ai/voice-conversation/end/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          session_id: this.conversationId,
+          title: title || "Voice Conversation",
+        }),
+      });
 
       console.log("[Voice] Conversation saved");
     } catch (error) {
@@ -284,15 +432,16 @@ class AIVoiceConversationService {
    */
   async startExamMode(subject: string, topic: string): Promise<void> {
     try {
-      if (!this.token) throw new Error("Not authenticated");
+      const token = this.getToken();
 
-      const response = await fetch("/api/ai/voice-conversation/exam/", {
+      const response = await fetch("/api/ai/voice-conversation/start/", {
         method: "POST",
         headers: {
-          Authorization: `Token ${this.token}`,
+          Authorization: `Token ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          mode: "exam",
           subject,
           topic,
         }),
@@ -301,7 +450,7 @@ class AIVoiceConversationService {
       if (!response.ok) throw new Error("Failed to start exam");
 
       const data = await response.json();
-      this.conversationId = data.conversation_id;
+      this.conversationId = data.session_id;
 
       console.log("[Voice] Exam mode started");
     } catch (error) {
@@ -323,6 +472,7 @@ class AIVoiceConversationService {
   clearHistory(): void {
     this.conversationHistory = [];
     this.conversationId = null;
+    this.activeMode = "tutor";
   }
 }
 

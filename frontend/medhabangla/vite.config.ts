@@ -9,12 +9,44 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      injectRegister: false, // Don't inject registration code
-      manifest: false, // Use our custom manifest.webmanifest
+      injectRegister: "auto",
+      manifest: false,
       workbox: {
-        // Disable workbox - we use custom sw.js by providing dummy config
-        globPatterns: [],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        globPatterns: [
+          "**/*.{js,css,html,ico,png,svg,webmanifest,json,woff,woff2}",
+        ],
         runtimeCaching: [
+          {
+            urlPattern: ({ request }) =>
+              request.destination === "document" ||
+              request.destination === "script" ||
+              request.destination === "style" ||
+              request.destination === "image" ||
+              request.destination === "font",
+            handler: "CacheFirst",
+            options: {
+              cacheName: "app-shell-cache",
+              expiration: {
+                maxEntries: 300,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+            },
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/models/"),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "offline-model-pack-cache",
+              expiration: {
+                maxEntries: 40,
+                maxAgeSeconds: 60 * 60 * 24 * 90,
+              },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
@@ -22,10 +54,22 @@ export default defineConfig({
               cacheName: "google-fonts-cache",
             },
           },
+          {
+            urlPattern:
+              /^https:\/\/(huggingface\.co|cdn-lfs\.huggingface\.co|cdn\.jsdelivr\.net)\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "transformers-remote-model-cache",
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 90,
+              },
+            },
+          },
         ],
       },
       devOptions: {
-        enabled: false, // Disable in dev mode
+        enabled: false,
       },
     }),
   ],

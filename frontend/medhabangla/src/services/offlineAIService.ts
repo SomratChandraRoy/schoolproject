@@ -59,6 +59,16 @@ export interface ModelMetadata {
   description: string;
 }
 
+interface ModelPackEntry {
+  question: string;
+  answer: string;
+  keywords?: string[];
+}
+
+interface ModelPackFile {
+  categories?: Record<string, { entries?: ModelPackEntry[] }>;
+}
+
 // Offline AI Service Class
 export class OfflineAIService {
   private db: OfflineAIDB;
@@ -170,6 +180,9 @@ export class OfflineAIService {
     try {
       console.log("[Offline AI] Initializing...");
 
+      // Load PWA model packs (downloaded/cached JSON files) into local DB.
+      await this.loadModelPacksIntoDB();
+
       // Load knowledge base from database
       const entries = await this.db.knowledgeBase.toArray();
 
@@ -187,6 +200,63 @@ export class OfflineAIService {
     } catch (error) {
       console.error("[Offline AI] Initialization error:", error);
       throw error;
+    }
+  }
+
+  private async loadModelPacksIntoDB(): Promise<void> {
+    const packUrls = [
+      "/models/knowledge-base-v1.json",
+      "/models/reasoning-pack-v1.json",
+    ];
+
+    for (const url of packUrls) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) continue;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          const preview = (await response.text()).slice(0, 80);
+          throw new Error(
+            `Expected JSON model pack from ${url} but got ${contentType || "unknown"}: ${preview}`,
+          );
+        }
+
+        const pack = (await response.json()) as ModelPackFile;
+        const entries: KnowledgeEntry[] = [];
+
+        const categories = pack.categories || {};
+        for (const [categoryName, categoryData] of Object.entries(categories)) {
+          const categoryEntries = categoryData?.entries || [];
+          for (const entry of categoryEntries) {
+            if (!entry?.question || !entry?.answer) continue;
+            entries.push({
+              question: entry.question,
+              answer: entry.answer,
+              subject: categoryName,
+              keywords: entry.keywords || this.extractKeywords(entry.question),
+              category: categoryName,
+              createdAt: new Date(),
+            });
+          }
+        }
+
+        if (entries.length > 0) {
+          const existing = await this.db.knowledgeBase
+            .where("question")
+            .anyOf(entries.map((e) => e.question))
+            .toArray();
+          const existingQuestions = new Set(existing.map((e) => e.question));
+          const newEntries = entries.filter(
+            (e) => !existingQuestions.has(e.question),
+          );
+          if (newEntries.length > 0) {
+            await this.db.knowledgeBase.bulkAdd(newEntries);
+          }
+        }
+      } catch (error) {
+        console.warn(`[Offline AI] Failed to load model pack ${url}:`, error);
+      }
     }
   }
 
@@ -283,6 +353,11 @@ export class OfflineAIService {
    * Generate a response (with fallback if no match found)
    */
   async generateResponse(question: string): Promise<string> {
+    const mathResult = this.trySolveSimpleMath(question);
+    if (mathResult) {
+      return `Offline mini model calculation: ${mathResult}`;
+    }
+
     const answer = await this.findAnswer(question);
 
     if (answer) {
@@ -290,18 +365,39 @@ export class OfflineAIService {
     }
 
     // Fallback response
-    return `I'm an offline AI assistant with limited knowledge. I couldn't find a specific answer to "${question}" in my local database. 
+    return `I'm your offline mini AI model. I could not find an exact match for "${question}" in the local packs.
 
 To get help with this question:
-1. Check your internet connection to use the online AI
-2. Try asking a different question
-3. Check the knowledge base in the settings
+1. Ask the same question in a shorter sentence
+2. Add subject keywords (math, biology, geography, study tips)
+3. Connect to internet for full online AI
 
 Topics I know about:
 - Biology (photosynthesis, respiration, etc.)
 - Mathematics (Pythagorean theorem, etc.)
 - Geography (capitals, water cycle, etc.)
 - Study tips and learning strategies`;
+  }
+
+  private trySolveSimpleMath(question: string): string | null {
+    const sanitized = question
+      .toLowerCase()
+      .replace(/what is|calculate|solve|equals|\?/g, "")
+      .replace(/[^0-9+\-*/(). ]/g, "")
+      .trim();
+
+    if (!sanitized) return null;
+    if (!/^[0-9+\-*/(). ]+$/.test(sanitized)) return null;
+
+    try {
+      const result = Function(`"use strict"; return (${sanitized})`)();
+      if (typeof result === "number" && Number.isFinite(result)) {
+        return `${sanitized} = ${result}`;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   /**

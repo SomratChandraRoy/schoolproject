@@ -1,375 +1,387 @@
-import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Separator } from "../components/ui/separator";
+
+type Provider = "gemini" | "groq" | "alibaba" | "ollama" | "auto";
+
 interface AIProviderSettings {
-    id: number;
-    provider: 'gemini' | 'ollama' | 'auto';
-    provider_display: string;
-    ollama_base_url: string;
-    ollama_username: string;
-    ollama_model: string;
-    updated_at: string;
-    updated_by_username: string | null;
+  id: number;
+  provider: Provider;
+  provider_display: string;
+  voice_ai_provider: Provider;
+  study_plan_provider: Provider;
+  quiz_flashcard_provider: Provider;
+  doc_vision_provider: Provider;
+  general_chat_provider: Provider;
+  ollama_base_url: string;
+  ollama_username: string;
+  ollama_model: string;
+  updated_at: string;
+  updated_by_username: string | null;
+}
+
+const providerOptions: Array<{ value: Provider; label: string }> = [
+  { value: "auto", label: "Auto (recommended)" },
+  { value: "groq", label: "Groq" },
+  { value: "gemini", label: "Gemini" },
+  { value: "alibaba", label: "Alibaba (Qwen)" },
+  { value: "ollama", label: "Ollama" },
+];
+
+function ProviderSelect({
+  value,
+  onChange,
+}: {
+  value: Provider;
+  onChange: (v: Provider) => void;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as Provider)}
+      className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+      {providerOptions.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
 }
 
 function AdminSettings() {
-    const [settings, setSettings] = useState<AIProviderSettings | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [testing, setTesting] = useState(false);
-    const [testResult, setTestResult] = useState<{ success: boolean; message: string; source?: string } | null>(null);
-    const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<AIProviderSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+    source?: string;
+    error?: string;
+  } | null>(null);
 
-    // Form state
-    const [provider, setProvider] = useState<'gemini' | 'ollama' | 'auto'>('auto');
-    const [ollamaUrl, setOllamaUrl] = useState('http://51.21.208.44');
-    const [ollamaUsername, setOllamaUsername] = useState('bipul');
-    const [ollamaPassword, setOllamaPassword] = useState('');
-    const [ollamaModel, setOllamaModel] = useState('llama3');
+  const [provider, setProvider] = useState<Provider>("auto");
+  const [voiceProvider, setVoiceProvider] = useState<Provider>("auto");
+  const [studyProvider, setStudyProvider] = useState<Provider>("auto");
+  const [quizProvider, setQuizProvider] = useState<Provider>("auto");
+  const [visionProvider, setVisionProvider] = useState<Provider>("gemini");
+  const [chatProvider, setChatProvider] = useState<Provider>("auto");
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [groqApiKey, setGroqApiKey] = useState("");
+  const [alibabaApiKey, setAlibabaApiKey] = useState("");
+  const [elevenlabsApiKey, setElevenlabsApiKey] = useState("");
 
-    const fetchSettings = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/ai/admin/provider-settings/', {
-                headers: {
-                    'Authorization': `Token ${token}`
-                }
-            });
+  const [ollamaUrl, setOllamaUrl] = useState("http://51.21.208.44");
+  const [ollamaUsername, setOllamaUsername] = useState("bipul");
+  const [ollamaPassword, setOllamaPassword] = useState("");
+  const [ollamaModel, setOllamaModel] = useState("llama3");
 
-            if (response.ok) {
-                const data = await response.json();
-                setSettings(data);
-                setProvider(data.provider);
-                setOllamaUrl(data.ollama_base_url);
-                setOllamaUsername(data.ollama_username);
-                setOllamaModel(data.ollama_model);
-            } else {
-                setError('Failed to load settings');
-            }
-        } catch (err) {
-            setError('Error loading settings');
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    void fetchSettings();
+  }, []);
 
-    const handleSave = async () => {
-        setSaving(true);
-        setError(null);
+  const fetchSettings = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/ai/admin/provider-settings/", {
+        headers: {
+          Authorization: `Token ${token}`,
+        },
+      });
 
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/ai/admin/provider-settings/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${token}`
-                },
-                body: JSON.stringify({
-                    provider,
-                    ollama_base_url: ollamaUrl,
-                    ollama_username: ollamaUsername,
-                    ollama_password: ollamaPassword || undefined,
-                    ollama_model: ollamaModel
-                })
-            });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load AI settings");
+      }
 
-            if (response.ok) {
-                const data = await response.json();
-                setSettings(data.settings);
-                alert('✅ Settings saved successfully!');
-                setOllamaPassword(''); // Clear password field
-            } else {
-                const errorData = await response.json();
-                setError(errorData.error || 'Failed to save settings');
-            }
-        } catch (err) {
-            setError('Error saving settings');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleTest = async () => {
-        setTesting(true);
-        setTestResult(null);
-        setError(null);
-
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/ai/admin/test-provider/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${token}`
-                },
-                body: JSON.stringify({ provider })
-            });
-
-            const data = await response.json();
-            setTestResult(data);
-        } catch (err) {
-            setTestResult({
-                success: false,
-                message: 'Error testing provider'
-            });
-        } finally {
-            setTesting(false);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                </div>
-            </div>
-        );
+      setSettings(data);
+      setProvider(data.provider);
+      setVoiceProvider(data.voice_ai_provider);
+      setStudyProvider(data.study_plan_provider);
+      setQuizProvider(data.quiz_flashcard_provider);
+      setVisionProvider(data.doc_vision_provider);
+      setChatProvider(data.general_chat_provider);
+      setOllamaUrl(data.ollama_base_url);
+      setOllamaUsername(data.ollama_username);
+      setOllamaModel(data.ollama_model);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load AI settings",
+      );
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-                    {/* Header */}
-                    <div className="px-6 py-8 border-b border-gray-200 dark:border-gray-700">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                            🤖 AI Provider Settings
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400">
-                            Configure which AI provider to use for all AI features
-                        </p>
-                    </div>
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    setNotice(null);
 
-                    {/* Error Message */}
-                    {error && (
-                        <div className="mx-6 mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                            <p className="text-red-800 dark:text-red-200">{error}</p>
-                        </div>
-                    )}
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/ai/admin/provider-settings/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify({
+          provider,
+          voice_ai_provider: voiceProvider,
+          study_plan_provider: studyProvider,
+          quiz_flashcard_provider: quizProvider,
+          doc_vision_provider: visionProvider,
+          general_chat_provider: chatProvider,
+          gemini_api_key: geminiApiKey || undefined,
+          groq_api_key: groqApiKey || undefined,
+          alibaba_api_key: alibabaApiKey || undefined,
+          elevenlabs_api_key: elevenlabsApiKey || undefined,
+          ollama_base_url: ollamaUrl,
+          ollama_username: ollamaUsername,
+          ollama_password: ollamaPassword || undefined,
+          ollama_model: ollamaModel,
+        }),
+      });
 
-                    {/* Settings Form */}
-                    <div className="px-6 py-8 space-y-6">
-                        {/* Provider Selection */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                AI Provider
-                            </label>
-                            <div className="space-y-3">
-                                {/* Gemini Option */}
-                                <div
-                                    onClick={() => setProvider('gemini')}
-                                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${provider === 'gemini'
-                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
-                                        }`}
-                                >
-                                    <div className="flex items-start">
-                                        <input
-                                            type="radio"
-                                            checked={provider === 'gemini'}
-                                            onChange={() => setProvider('gemini')}
-                                            className="mt-1 mr-3"
-                                        />
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">
-                                                🌟 Gemini API Only
-                                            </h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                Use Google Gemini API for all AI features. Fast and reliable, but has quota limits.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save AI settings");
+      }
 
-                                {/* Ollama Option */}
-                                <div
-                                    onClick={() => setProvider('ollama')}
-                                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${provider === 'ollama'
-                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
-                                        }`}
-                                >
-                                    <div className="flex items-start">
-                                        <input
-                                            type="radio"
-                                            checked={provider === 'ollama'}
-                                            onChange={() => setProvider('ollama')}
-                                            className="mt-1 mr-3"
-                                        />
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">
-                                                🦙 Ollama (AWS) Only
-                                            </h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                Use your AWS-hosted Ollama server. Unlimited requests, but requires EC2 instance running.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+      setSettings(data.settings);
+      setNotice("Settings saved.");
+      setGeminiApiKey("");
+      setGroqApiKey("");
+      setAlibabaApiKey("");
+      setElevenlabsApiKey("");
+      setOllamaPassword("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to save AI settings",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
-                                {/* Auto Option */}
-                                <div
-                                    onClick={() => setProvider('auto')}
-                                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${provider === 'auto'
-                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
-                                        }`}
-                                >
-                                    <div className="flex items-start">
-                                        <input
-                                            type="radio"
-                                            checked={provider === 'auto'}
-                                            onChange={() => setProvider('auto')}
-                                            className="mt-1 mr-3"
-                                        />
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">
-                                                ⚡ Auto (Recommended)
-                                            </h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                Try Groq first, then fallback to Gemini. Ollama remains available for direct use.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+  const handleTest = async () => {
+    setTesting(true);
+    setError(null);
+    setTestResult(null);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/ai/admin/test-provider/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify({ provider }),
+      });
+      const data = await response.json();
+      setTestResult(data);
+    } catch {
+      setTestResult({ success: false, message: "Provider test failed" });
+    } finally {
+      setTesting(false);
+    }
+  };
 
-                        {/* Ollama Configuration */}
-                        {(provider === 'ollama' || provider === 'auto') && (
-                            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                    Ollama Configuration
-                                </h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Server URL
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={ollamaUrl}
-                                            onChange={(e) => setOllamaUrl(e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                                            placeholder="http://51.21.208.44"
-                                        />
-                                    </div>
+  if (loading) {
+    return <div className="p-6">Loading AI settings...</div>;
+  }
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                Username
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={ollamaUsername}
-                                                onChange={(e) => setOllamaUsername(e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                Password
-                                            </label>
-                                            <input
-                                                type="password"
-                                                value={ollamaPassword}
-                                                onChange={(e) => setOllamaPassword(e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Leave empty to keep current"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Model
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={ollamaModel}
-                                            onChange={(e) => setOllamaModel(e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Test Result */}
-                        {testResult && (
-                            <div className={`p-4 rounded-lg ${testResult.success
-                                    ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                                    : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
-                                }`}>
-                                <p className={testResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}>
-                                    {testResult.success ? '✅' : '❌'} {testResult.message}
-                                </p>
-                                {testResult.source && (
-                                    <p className="text-sm mt-1 text-gray-600 dark:text-gray-400">
-                                        Source: {testResult.source.toUpperCase()}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Current Settings Info */}
-                        {settings && (
-                            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-                                    Current Settings
-                                </h4>
-                                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                                    <p>Provider: <span className="font-medium">{settings.provider_display}</span></p>
-                                    <p>Last updated: {new Date(settings.updated_at).toLocaleString()}</p>
-                                    {settings.updated_by_username && (
-                                        <p>Updated by: {settings.updated_by_username}</p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-between">
-                        <button
-                            onClick={handleTest}
-                            disabled={testing}
-                            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                        >
-                            {testing ? 'Testing...' : 'Test Connection'}
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
-                        >
-                            {saving ? 'Saving...' : 'Save Settings'}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Info Box */}
-                <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-                    <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-3">
-                        ℹ️ How It Works
-                    </h3>
-                    <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-2">
-                        <li>• <strong>Gemini Only:</strong> All AI features use Gemini API (fast, but has quota limits)</li>
-                        <li>• <strong>Ollama Only:</strong> All AI features use your AWS Ollama server (unlimited, but requires EC2 running)</li>
-                        <li>• <strong>Auto Mode:</strong> Tries Groq first, then Gemini. Ollama stays available for direct testing.</li>
-                        <li>• <strong>Note:</strong> The /ollama page always uses Ollama directly regardless of this setting</li>
-                    </ul>
-                </div>
-            </div>
+  return (
+    <div className="mx-auto w-full max-w-5xl space-y-4 p-4 md:p-8">
+      <Card className="space-y-5 p-5">
+        <div>
+          <h1 className="text-2xl font-semibold">AI Provider Settings</h1>
+          <p className="text-sm text-muted-foreground">
+            Configure model routing, API keys, and ElevenLabs voice synthesis.
+          </p>
         </div>
-    );
+
+        {error && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {notice && (
+          <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+            {notice}
+          </div>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Global provider</label>
+            <ProviderSelect value={provider} onChange={setProvider} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Voice conversation provider
+            </label>
+            <ProviderSelect value={voiceProvider} onChange={setVoiceProvider} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">General chat provider</label>
+            <ProviderSelect value={chatProvider} onChange={setChatProvider} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Study plan provider</label>
+            <ProviderSelect value={studyProvider} onChange={setStudyProvider} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Quiz/flashcard provider
+            </label>
+            <ProviderSelect value={quizProvider} onChange={setQuizProvider} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Document vision provider
+            </label>
+            <ProviderSelect
+              value={visionProvider}
+              onChange={setVisionProvider}
+            />
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Gemini API key</label>
+            <input
+              type="password"
+              value={geminiApiKey}
+              onChange={(e) => setGeminiApiKey(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              placeholder="Leave empty to keep current"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Groq API key</label>
+            <input
+              type="password"
+              value={groqApiKey}
+              onChange={(e) => setGroqApiKey(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              placeholder="Leave empty to keep current"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Alibaba DashScope API key
+            </label>
+            <input
+              type="password"
+              value={alibabaApiKey}
+              onChange={(e) => setAlibabaApiKey(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              placeholder="Leave empty to keep current"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">ElevenLabs API key</label>
+            <input
+              type="password"
+              value={elevenlabsApiKey}
+              onChange={(e) => setElevenlabsApiKey(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              placeholder="Leave empty to keep current"
+            />
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ollama URL</label>
+            <input
+              type="text"
+              value={ollamaUrl}
+              onChange={(e) => setOllamaUrl(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ollama username</label>
+            <input
+              type="text"
+              value={ollamaUsername}
+              onChange={(e) => setOllamaUsername(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ollama password</label>
+            <input
+              type="password"
+              value={ollamaPassword}
+              onChange={(e) => setOllamaPassword(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              placeholder="Leave empty to keep current"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ollama model</label>
+            <input
+              type="text"
+              value={ollamaModel}
+              onChange={(e) => setOllamaModel(e.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            />
+          </div>
+        </div>
+
+        {testResult && (
+          <div
+            className={`rounded-md border p-3 text-sm ${
+              testResult.success
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                : "border-destructive/40 bg-destructive/10 text-destructive"
+            }`}>
+            <div>{testResult.message}</div>
+            {testResult.error && <div>{testResult.error}</div>}
+            {testResult.source && <div>Source: {testResult.source}</div>}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={handleTest} variant="outline" disabled={testing}>
+            {testing ? "Testing..." : "Test Provider"}
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : "Save Settings"}
+          </Button>
+        </div>
+      </Card>
+
+      {settings && (
+        <Card className="p-5 text-sm text-muted-foreground">
+          <div>Current provider: {settings.provider_display}</div>
+          <div>
+            Last updated: {new Date(settings.updated_at).toLocaleString()}
+          </div>
+          {settings.updated_by_username && (
+            <div>Updated by: {settings.updated_by_username}</div>
+          )}
+        </Card>
+      )}
+    </div>
+  );
 }
 
 export default AdminSettings;

@@ -1,341 +1,333 @@
-/**
- * Offline AI Chat Component
- * Provides offline question-answering interface
- * Uses local models and knowledge base, works without internet
- */
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import React, { useState, useEffect, useRef } from "react";
-import { offlineAIService, OfflineMessage } from "../services/offlineAIService";
-import { modelPrefetcher } from "../services/modelPrefetcher";
+type AppState =
+  | "initializing"
+  | "downloading"
+  | "ready"
+  | "processing"
+  | "error";
 
-interface Message extends OfflineMessage {
+interface ChatMessage {
   id: string;
-}
-
-interface InstallationStatus {
-  isInstalled: boolean;
-  progressPercent: number;
-  missingModels: string[];
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
 }
 
 export const OfflineAIChat: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [initialized, setInitialized] = useState(false);
-  const [installStatus, setInstallStatus] = useState<InstallationStatus>({
-    isInstalled: false,
-    progressPercent: 0,
-    missingModels: [],
-  });
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [stats, setStats] = useState({
-    totalConversations: 0,
-    totalKnowledgeEntries: 0,
-  });
+  const workerRef = useRef<Worker | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom
+  const [state, setState] = useState<AppState>("initializing");
+  const [statusText, setStatusText] = useState("লোকাল AI মডেল চালু হচ্ছে...");
+  const [activeModelLabel, setActiveModelLabel] = useState("লোড হয়নি");
+  const [downloadPercent, setDownloadPercent] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Initialize offline AI on mount
   useEffect(() => {
-    const initializeAI = async () => {
-      try {
-        console.log("[OfflineAIChat] Initializing...");
-        await offlineAIService.initialize();
+    const worker = new Worker(
+      new URL("../workers/offlineAIWorker.ts", import.meta.url),
+      { type: "module" },
+    );
+    workerRef.current = worker;
 
-        const status = await modelPrefetcher.getInstallationStatus();
-        setInstallStatus({
-          isInstalled: status.isInstalled,
-          progressPercent: status.installedModels.length === 0 ? 0 : 100,
-          missingModels: status.missingModels,
+    worker.onmessage = (event: MessageEvent) => {
+      const msg = event.data || {};
+
+      if (msg.type === "loading-start") {
+        setState("downloading");
+        setStatusText("লোকাল মডেল ফাইল প্রস্তুত হচ্ছে...");
+        setErrorMessage("");
+        setDownloadPercent(0);
+        return;
+      }
+
+      if (msg.type === "loading-progress") {
+        if (msg?.modelLabel) {
+          setActiveModelLabel(String(msg.modelLabel));
+        }
+
+        const loaded = Number(msg?.progress?.loaded ?? 0);
+        const total = Number(msg?.progress?.total ?? 0);
+        const reported = Number(
+          msg?.progress?.progress ?? msg?.progress?.percentage ?? 0,
+        );
+
+        let raw = 0;
+        if (Number.isFinite(loaded) && Number.isFinite(total) && total > 0) {
+          raw = (loaded / total) * 100;
+        } else if (Number.isFinite(reported)) {
+          raw = reported <= 1 ? reported * 100 : reported;
+        }
+
+        const pct = Number.isFinite(raw)
+          ? Math.max(0, Math.min(100, Math.round(raw)))
+          : downloadPercent;
+
+        const statusHint = msg?.progress?.status
+          ? ` (${String(msg.progress.status)})`
+          : "";
+        setState("downloading");
+        setDownloadPercent(pct);
+        setStatusText(`মডেল ডাউনলোড হচ্ছে: ${pct}%${statusHint}`);
+        return;
+      }
+
+      if (msg.type === "ready") {
+        const modelName = String(msg?.modelLabel || "লোকাল মডেল");
+        setActiveModelLabel(modelName);
+        setState("ready");
+        setStatusText(`প্রস্তুত - অফলাইন মোড চালু (${modelName})`);
+        setDownloadPercent(100);
+        setErrorMessage("");
+
+        setMessages((prev) => {
+          if (prev.length > 0) return prev;
+          return [
+            {
+              id: `welcome-${Date.now()}`,
+              role: "assistant",
+              content:
+                "অফলাইন AI প্রস্তুত। এখন ইন্টারনেট বন্ধ থাকলেও আপনি প্রশ্ন করতে পারবেন।",
+              timestamp: new Date(),
+            },
+          ];
         });
+        return;
+      }
 
-        const aiStats = await offlineAIService.getStatistics();
-        setStats(aiStats);
+      if (msg.type === "generating") {
+        setState("processing");
+        setStatusText("AI উত্তর তৈরি করছে...");
+        return;
+      }
 
-        setInitialized(true);
-        console.log("[OfflineAIChat] ✅ Ready for offline AI");
-      } catch (error) {
-        console.error("[OfflineAIChat] Initialization error:", error);
-        setInitialized(true); // Still allow usage even if initialization fails
+      if (msg.type === "result") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: msg.answer || "কোনো উত্তর পাওয়া যায়নি।",
+            timestamp: new Date(),
+          },
+        ]);
+        setState("ready");
+        setStatusText("প্রস্তুত - অফলাইন মোড চালু");
+        return;
+      }
+
+      if (msg.type === "error") {
+        setState("error");
+        setStatusText("অফলাইন মডেল ত্রুটি");
+        setErrorMessage(msg.message || "অজানা ত্রুটি");
       }
     };
 
-    initializeAI();
+    worker.onerror = (event) => {
+      setState("error");
+      setStatusText("ওয়ার্কার ক্র্যাশ করেছে");
+      setErrorMessage(event.message || "ওয়ার্কার রানটাইম ত্রুটি");
+    };
+
+    worker.postMessage({ type: "load" });
+
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
   }, []);
 
-  /**
-   * Monitor model downloads
-   */
-  useEffect(() => {
-    const unsubscribe = modelPrefetcher.onProgressUpdate((progress) => {
-      console.log(
-        `[OfflineAIChat] Downloading ${progress.modelName}: ${progress.percentage}%`,
-      );
-    });
-
-    return unsubscribe;
-  }, []);
-
-  /**
-   * Load a welcome message
-   */
-  const loadWelcomeMessage = () => {
-    if (messages.length === 0) {
-      const welcomeMessage: Message = {
-        id: "welcome-" + Date.now(),
-        role: "assistant",
-        content: `👋 Welcome to Offline AI Chat!
-
-I'm an AI assistant that works completely offline. You can ask me questions about:
-• 📚 Biology (photosynthesis, respiration, etc.)
-• 🔢 Mathematics (geometry, theorems, etc.)
-• 🌍 Geography (capitals, climate, etc.)
-• 📖 Study tips and learning strategies
-
-Just type your question below and I'll help you!
-
-💡 Note: I have limited knowledge and may not answer complex questions. For more advanced topics, use the online AI when you have internet.`,
-        timestamp: new Date(),
-        offline: true,
-      };
-      setMessages([welcomeMessage]);
+  const badgeClasses = useMemo(() => {
+    if (state === "downloading") {
+      return "bg-yellow-100 text-yellow-800 border-yellow-300";
     }
-  };
+    if (state === "ready") {
+      return "bg-green-100 text-green-800 border-green-300";
+    }
+    if (state === "processing") {
+      return "bg-blue-100 text-blue-800 border-blue-300";
+    }
+    if (state === "error") {
+      return "bg-red-100 text-red-800 border-red-300";
+    }
+    return "bg-slate-100 text-slate-700 border-slate-300";
+  }, [state]);
 
-  useEffect(() => {
-    loadWelcomeMessage();
-  }, []);
+  const canAsk = state === "ready";
+  const busy = state === "processing" || state === "downloading";
 
-  /**
-   * Handle sending a message
-   */
-  const handleSendMessage = async () => {
-    if (!input.trim() || loading) return;
+  const handleAsk = () => {
+    const question = input.trim();
+    if (!question || !workerRef.current || !canAsk) return;
 
-    try {
-      setLoading(true);
-
-      // Add user message
-      const userMessage: Message = {
-        id: "msg-" + Date.now(),
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `user-${Date.now()}`,
         role: "user",
-        content: input,
+        content: question,
         timestamp: new Date(),
-        offline: true,
-      };
+      },
+    ]);
 
-      setMessages((prev) => [...prev, userMessage]);
-      setInput("");
-
-      // Get AI response
-      const response = await offlineAIService.generateResponse(input);
-
-      const assistantMessage: Message = {
-        id: "msg-" + (Date.now() + 1),
-        role: "assistant",
-        content: response,
-        timestamp: new Date(),
-        offline: true,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("[OfflineAIChat] Error:", error);
-      const errorMessage: Message = {
-        id: "error-" + Date.now(),
-        role: "assistant",
-        content:
-          "❌ An error occurred while processing your question. Please try again.",
-        timestamp: new Date(),
-        offline: true,
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
-    }
+    setInput("");
+    workerRef.current.postMessage({
+      type: "generate",
+      payload: { question },
+    });
   };
 
-  /**
-   * Handle installing models
-   */
-  const handleInstallModels = async () => {
+  const handleRetryLoad = () => {
+    if (!workerRef.current) return;
+    setErrorMessage("");
+    setState("downloading");
+    setStatusText("মডেল আবার ডাউনলোড করা হচ্ছে...");
+    setDownloadPercent(0);
+    workerRef.current.postMessage({ type: "load" });
+  };
+
+  const handleHardReset = async () => {
     try {
-      setInstallStatus((prev) => ({ ...prev, progressPercent: 10 }));
-
-      const results = await modelPrefetcher.downloadEssentialModels();
-
-      if (results.failed.length === 0) {
-        setInstallStatus({
-          isInstalled: true,
-          progressPercent: 100,
-          missingModels: [],
-        });
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(
+          registrations.map((registration) => registration.unregister()),
+        );
       }
 
-      // Download optional models in background
-      modelPrefetcher.downloadOptionalModels();
-    } catch (error) {
-      console.error("[OfflineAIChat] Installation error:", error);
-    }
-  };
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      }
 
-  /**
-   * Clear chat
-   */
-  const handleClearChat = () => {
-    setMessages([]);
-    loadWelcomeMessage();
+      localStorage.removeItem("sopan-models-auto-installed");
+      localStorage.removeItem("sopan-model-metadata");
+      window.location.reload();
+    } catch {
+      window.location.reload();
+    }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="text-3xl">🤖</div>
+    <div className="flex h-screen flex-col bg-slate-50 dark:bg-slate-950">
+      <div className="border-b border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold">Offline AI Chat</h1>
-              <p className="text-blue-100">
-                💾 No internet? No problem! Ask away offline.
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                অফলাইন AI প্রশ্নোত্তর
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                সম্পূর্ণ ব্রাউজারভিত্তিক লোকাল মডেল, প্রথম ডাউনলোডের পর
+                ব্যাকএন্ড ছাড়াই চলবে।
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                সক্রিয় মডেল: {activeModelLabel}
               </p>
             </div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm opacity-90">
-              {initialized ? "✅ Ready" : "⏳ Loading..."}
-            </div>
-            {!installStatus.isInstalled && (
-              <div className="text-xs font-semibold mt-1 bg-red-500 px-2 py-1 rounded">
-                Models: {installStatus.progressPercent}%
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Installation Status */}
-        {!installStatus.isInstalled && (
-          <div className="mt-4 bg-red-500/20 border border-red-300 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold">📥 Install AI Models</p>
-                <p className="text-sm opacity-90">
-                  Download {installStatus.missingModels.length} essential models
-                  (~10 MB)
-                </p>
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeClasses}`}>
+              {statusText}
+            </span>
+          </div>
+
+          {state === "downloading" && (
+            <div className="space-y-1">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+                <div
+                  className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-300"
+                  style={{ width: `${downloadPercent}%` }}
+                />
               </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {downloadPercent}%
+              </p>
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300">
+              <div>{errorMessage}</div>
               <button
-                onClick={handleInstallModels}
-                className="bg-white text-red-600 px-4 py-2 rounded font-semibold hover:bg-red-50 transition">
-                Install Now
+                onClick={handleRetryLoad}
+                className="mt-2 rounded border border-red-400 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/40">
+                মডেল আবার লোড করুন
+              </button>
+              <button
+                onClick={() => void handleHardReset()}
+                className="ml-2 mt-2 rounded border border-red-400 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/40">
+                ক্যাশ মুছে রিলোড
               </button>
             </div>
-            <div className="mt-2 bg-red-900/20 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-yellow-400 to-red-500 h-full transition-all duration-300"
-                style={{ width: `${installStatus.progressPercent}%` }}
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center text-gray-500 dark:text-gray-400">
-              <div className="text-6xl mb-4">💬</div>
-              <p>No messages yet. Start asking questions!</p>
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden px-4 pb-4 pt-3">
+        <div className="flex-1 space-y-3 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          {messages.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-center text-sm text-slate-500 dark:text-slate-400">
+              মডেল ডাউনলোড শেষ হলে আপনার প্রথম প্রশ্ন করুন।
             </div>
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+          ) : (
+            messages.map((message) => (
               <div
-                className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 rounded-lg ${
-                  message.role === "user"
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none"
-                }`}>
-                <p className="text-sm whitespace-pre-wrap break-words">
-                  {message.content}
-                </p>
-                <span className="text-xs opacity-70 mt-1 block">
-                  {message.timestamp.toLocaleTimeString()}
-                </span>
+                key={message.id}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[90%] rounded-xl px-4 py-3 text-sm shadow-sm md:max-w-[80%] ${
+                    message.role === "user"
+                      ? "bg-blue-600 text-white"
+                      : "border border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  }`}>
+                  <p className="whitespace-pre-wrap break-words">
+                    {message.content}
+                  </p>
+                  <p className="mt-2 text-[10px] opacity-70">
+                    {message.timestamp.toLocaleTimeString()}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Area */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder="Ask a question (offline)..."
-            disabled={loading || !initialized}
-            className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={loading || !initialized || !input.trim()}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition font-semibold">
-            {loading ? "⏳" : "📤"}
-          </button>
-          <button
-            onClick={handleClearChat}
-            className="bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
-            title="Clear chat">
-            🗑️
-          </button>
+            ))
+          )}
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* Info Footer */}
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <div className="flex items-center space-x-4">
-            <span>
-              💾 Knowledge Base: {stats.totalKnowledgeEntries} entries
-            </span>
-            <span>💬 Chats: {stats.totalConversations}</span>
+        <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAsk();
+                }
+              }}
+              placeholder="প্রশ্ন লিখুন..."
+              disabled={busy || !canAsk}
+              className="h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            />
+            <button
+              onClick={handleAsk}
+              disabled={busy || !canAsk || !input.trim()}
+              className="h-11 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400">
+              {state === "processing"
+                ? "প্রসেস হচ্ছে..."
+                : "AI-কে জিজ্ঞাসা করুন"}
+            </button>
           </div>
-          <button
-            onClick={() => setShowInstallGuide(!showInstallGuide)}
-            className="text-blue-500 hover:text-blue-600 font-semibold">
-            {showInstallGuide ? "▼ Hide" : "▶ Show"} Help
-          </button>
         </div>
-
-        {/* Help Section */}
-        {showInstallGuide && (
-          <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 text-xs">
-            <p className="font-semibold mb-2">📖 How to Use Offline AI:</p>
-            <ul className="space-y-1 list-disc list-inside">
-              <li>Ask questions about any topic in my knowledge base</li>
-              <li>I'll search for the best matching answer</li>
-              <li>All conversations are stored locally in your device</li>
-              <li>Works completely offline - no internet needed!</li>
-              <li>Install models for better experience and faster responses</li>
-            </ul>
-            <p className="mt-2 text-blue-600 dark:text-blue-300">
-              💡 Tip: For complex questions, use online AI when connected to
-              internet.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

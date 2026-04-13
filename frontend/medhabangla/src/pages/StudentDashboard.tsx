@@ -292,7 +292,9 @@ const StudentDashboard: React.FC = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, progress }) => `${name}: ${progress}%`}
+                      label={({ name, value }) =>
+                        `${name}: ${typeof value === "number" ? value : Number(value || 0)}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="progress">

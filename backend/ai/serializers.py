@@ -15,7 +15,16 @@ class AIProviderSettingsSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'provider',
+            'voice_ai_provider',
+            'study_plan_provider',
+            'quiz_flashcard_provider',
+            'doc_vision_provider',
+            'general_chat_provider',
             'provider_display',
+            'gemini_api_key',
+            'groq_api_key',
+            'alibaba_api_key',
+            'elevenlabs_api_key',
             'ollama_base_url',
             'ollama_username',
             'ollama_password',
@@ -26,7 +35,11 @@ class AIProviderSettingsSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ('id', 'updated_at', 'updated_by', 'provider_display', 'updated_by_username')
         extra_kwargs = {
-            'ollama_password': {'write_only': True}  # Don't expose password in GET requests
+            'ollama_password': {'write_only': True},  # Don't expose password in GET requests
+            'gemini_api_key': {'write_only': True},
+            'groq_api_key': {'write_only': True},
+            'alibaba_api_key': {'write_only': True},
+            'elevenlabs_api_key': {'write_only': True},
         }
 
 

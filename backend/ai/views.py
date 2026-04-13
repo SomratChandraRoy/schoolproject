@@ -1,5 +1,7 @@
 import uuid
 import warnings
+import json
+import re
 
 # Suppress the deprecation warning before importing
 warnings.filterwarnings('ignore', category=FutureWarning)
@@ -14,6 +16,7 @@ from .ai_helper import ai_helper
 from accounts.models import User, StudySession
 from quizzes.models import Quiz, Analytics, QuizAttempt
 from quizzes.serializers import QuizSerializer
+from quizzes.evaluation import evaluate_quiz_answer, format_answer_for_display, normalize_options
 
 
 class StartAIChatSessionView(APIView):
@@ -535,6 +538,141 @@ class ImprovedRemedialLearningView(APIView):
 class AnalyzeQuizResultsView(APIView):
     """Comprehensive AI analysis of quiz results"""
     permission_classes = [permissions.IsAuthenticated]
+
+    @staticmethod
+    def _extract_json_object(raw_text):
+        text = str(raw_text or '').strip()
+        if not text:
+            return None
+
+        if text.startswith('```'):
+            text = re.sub(r'^```(?:json)?\s*', '', text)
+            text = re.sub(r'\s*```$', '', text)
+
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+        json_match = re.search(r'\{[\s\S]*\}', text)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except json.JSONDecodeError:
+                return None
+
+        return None
+
+    def _grade_open_ended_answers_with_ai(self, ai_service, subject, class_level, open_ended_items):
+        """Grade short/long answers semantically with AI and return indexed verdicts."""
+        if not open_ended_items:
+            return {}
+
+        prompt_payload = [
+            {
+                'index': item['index'],
+                'question_type': item['question_type'],
+                'question_text': item['question_text'],
+                'student_answer': item['user_answer'],
+                'reference_answer': item['correct_answer'],
+            }
+            for item in open_ended_items
+        ]
+
+        grading_prompt = f"""You are an expert exam evaluator for Bangladesh curriculum (Class {class_level}, Subject: {subject}).
+
+Evaluate each answer semantically. Do NOT require exact wording.
+
+Rules:
+1. Mark correct if the student's meaning is scientifically/academically correct.
+2. Accept synonyms, reordered wording, and minor grammar/spelling errors.
+3. For short answers: key idea correctness is enough.
+4. For long answers: core points must be substantially covered.
+5. Return improvement points for each answer, even when correct.
+
+Input JSON:
+{json.dumps(prompt_payload, ensure_ascii=False)}
+
+Return ONLY valid JSON object in this format:
+{{
+  "results": [
+    {{
+      "index": 0,
+      "is_correct": true,
+      "semantic_score": 0.82,
+      "feedback": "short feedback",
+      "improvement_points": ["point 1", "point 2"]
+    }}
+  ]
+}}
+
+semantic_score must be between 0 and 1.
+"""
+
+        success, response_text, error, source = ai_service.generate(
+            grading_prompt,
+            timeout=90,
+            feature_type='quiz_flashcard_provider'
+        )
+
+        if not success:
+            print(f"[Quiz Analysis] AI semantic grading failed: {error}")
+            return {}
+
+        print(f"[Quiz Analysis] Semantic grading response from: {source}")
+
+        parsed = self._extract_json_object(response_text)
+        if not isinstance(parsed, dict):
+            return {}
+
+        raw_results = parsed.get('results', [])
+        if not isinstance(raw_results, list):
+            return {}
+
+        normalized = {}
+        for row in raw_results:
+            if not isinstance(row, dict):
+                continue
+
+            try:
+                index = int(row.get('index'))
+            except (TypeError, ValueError):
+                continue
+
+            semantic_score = row.get('semantic_score', 0)
+            try:
+                semantic_score = max(0.0, min(1.0, float(semantic_score)))
+            except (TypeError, ValueError):
+                semantic_score = 0.0
+
+            feedback = str(row.get('feedback', '') or '').strip()
+            improvement_points = row.get('improvement_points', [])
+
+            if isinstance(improvement_points, str):
+                improvement_points = [improvement_points]
+            elif not isinstance(improvement_points, list):
+                improvement_points = []
+
+            improvement_points = [
+                str(point).strip()
+                for point in improvement_points
+                if str(point or '').strip()
+            ][:5]
+
+            is_correct_raw = row.get('is_correct')
+            if isinstance(is_correct_raw, bool):
+                is_correct = is_correct_raw
+            else:
+                is_correct = semantic_score >= 0.55
+
+            normalized[index] = {
+                'is_correct': is_correct,
+                'semantic_score': semantic_score,
+                'feedback': feedback,
+                'improvement_points': improvement_points,
+            }
+
+        return normalized
     
     def post(self, request):
         user = request.user
@@ -545,52 +683,138 @@ class AnalyzeQuizResultsView(APIView):
             return Response({'error': 'Quiz data and answers are required'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Calculate results
             questions = quiz_data.get('questions', [])
             total_questions = len(questions)
-            correct_count = 0
-            wrong_count = 0
-            unanswered_count = 0
-            
-            detailed_results = []
-            wrong_answers = []
-            
+
+            # Use Hybrid AI Service for semantic grading + report generation.
+            from .ai_service import get_ai_service
+            ai_service = get_ai_service()
+
+            subject = quiz_data.get('subject', 'General')
+            class_level = quiz_data.get('classLevel', user.class_level or 9)
+
+            provisional_results = []
+            open_ended_items = []
+
             for idx, question in enumerate(questions):
                 user_answer = answers.get(str(idx), '')
                 correct_answer = question.get('correctAnswer', '')
-                
-                if not user_answer:
-                    unanswered_count += 1
-                    status_text = 'unanswered'
-                elif user_answer == correct_answer:
-                    correct_count += 1
-                    status_text = 'correct'
-                else:
-                    wrong_count += 1
-                    status_text = 'wrong'
-                    wrong_answers.append({
-                        'question': question.get('text', ''),
-                        'userAnswer': user_answer,
-                        'correctAnswer': correct_answer,
-                        'options': question.get('options', [])
-                    })
-                
-                detailed_results.append({
+                question_type = str(question.get('type', 'mcq') or 'mcq').lower()
+                question_options = question.get('options', {})
+
+                rule_based_correct = evaluate_quiz_answer(
+                    question_type=question_type,
+                    selected_answer=user_answer,
+                    correct_answer=correct_answer,
+                    raw_options=question_options,
+                )
+
+                user_answer_display = format_answer_for_display(
+                    question_type=question_type,
+                    answer=user_answer,
+                    raw_options=question_options,
+                )
+                correct_answer_display = format_answer_for_display(
+                    question_type=question_type,
+                    answer=correct_answer,
+                    raw_options=question_options,
+                )
+
+                has_answer = bool(str(user_answer or '').strip())
+
+                provisional_results.append({
+                    'index': idx,
                     'question_id': question.get('id'),
                     'question_text': question.get('text', ''),
+                    'question_type': question_type,
+                    'has_answer': has_answer,
+                    'rule_based_correct': rule_based_correct,
                     'user_answer': user_answer,
+                    'user_answer_display': user_answer_display,
                     'correct_answer': correct_answer,
-                    'status': status_text
+                    'correct_answer_display': correct_answer_display,
+                    'options': question_options,
+                    'semantic_score': None,
+                    'semantic_feedback': '',
+                    'improvement_points': []
+                })
+
+                if has_answer and question_type in ('short', 'long'):
+                    open_ended_items.append({
+                        'index': idx,
+                        'question_type': question_type,
+                        'question_text': question.get('text', ''),
+                        'user_answer': str(user_answer or ''),
+                        'correct_answer': str(correct_answer or ''),
+                    })
+
+            semantic_results = self._grade_open_ended_answers_with_ai(
+                ai_service=ai_service,
+                subject=subject,
+                class_level=class_level,
+                open_ended_items=open_ended_items,
+            )
+
+            correct_count = 0
+            wrong_count = 0
+            unanswered_count = 0
+            detailed_results = []
+            wrong_answers = []
+
+            for item in provisional_results:
+                semantic_result = semantic_results.get(item['index'])
+                if semantic_result:
+                    evaluated_correct = semantic_result['is_correct']
+                    grading_source = 'ai_semantic'
+                    semantic_score = semantic_result['semantic_score']
+                    semantic_feedback = semantic_result['feedback']
+                    improvement_points = semantic_result['improvement_points']
+                else:
+                    evaluated_correct = item['rule_based_correct']
+                    grading_source = 'rule_based'
+                    semantic_score = None
+                    semantic_feedback = ''
+                    improvement_points = []
+
+                if not item['has_answer']:
+                    status_text = 'unanswered'
+                    unanswered_count += 1
+                    grading_source = 'unanswered'
+                elif evaluated_correct:
+                    status_text = 'correct'
+                    correct_count += 1
+                else:
+                    status_text = 'wrong'
+                    wrong_count += 1
+
+                    option_map = normalize_options(item['options'])
+                    option_list = [f"{key}) {value}" for key, value in option_map.items()]
+                    wrong_answers.append({
+                        'question': item['question_text'],
+                        'userAnswer': item['user_answer_display'],
+                        'correctAnswer': item['correct_answer_display'],
+                        'options': option_list,
+                        'ai_feedback': semantic_feedback,
+                        'improvement_points': improvement_points,
+                    })
+
+                detailed_results.append({
+                    'question_id': item['question_id'],
+                    'question_text': item['question_text'],
+                    'question_type': item['question_type'],
+                    'user_answer': item['user_answer'],
+                    'user_answer_display': item['user_answer_display'],
+                    'correct_answer': item['correct_answer'],
+                    'correct_answer_display': item['correct_answer_display'],
+                    'status': status_text,
+                    'is_correct': bool(evaluated_correct) if item['has_answer'] else False,
+                    'grading_source': grading_source,
+                    'semantic_score': semantic_score,
+                    'semantic_feedback': semantic_feedback,
+                    'improvement_points': improvement_points,
                 })
             
             score_percentage = round((correct_count / total_questions) * 100) if total_questions > 0 else 0
-            
-            # Generate AI analysis using Hybrid AI Service
-            from .ai_service import get_ai_service
-            ai_service = get_ai_service()
-            
-            subject = quiz_data.get('subject', 'General')
-            class_level = quiz_data.get('classLevel', user.class_level or 9)
             
             # Create comprehensive analysis prompt
             analysis_prompt = f"""আপনি একজন বিশেষজ্ঞ শিক্ষা বিশ্লেষক। একজন Class {class_level} এর শিক্ষার্থী {subject} বিষয়ে একটি কুইজ দিয়েছে।
@@ -643,7 +867,8 @@ class AnalyzeQuizResultsView(APIView):
                     'correct': correct_count,
                     'wrong': wrong_count,
                     'unanswered': unanswered_count,
-                    'score_percentage': score_percentage
+                    'score_percentage': score_percentage,
+                    'ai_graded_count': len(semantic_results),
                 },
                 'detailed_results': detailed_results,
                 'ai_analysis': ai_analysis,
@@ -676,13 +901,26 @@ class GeneratePersonalizedLearningView(APIView):
             ai_service = get_ai_service()
             
             # Create detailed learning prompt
-            mistakes_text = "\n\n".join([
-                f"**প্রশ্ন {i+1}:** {w['question']}\n"
-                f"**শিক্ষার্থীর উত্তর:** {w['userAnswer']}\n"
-                f"**সঠিক উত্তর:** {w['correctAnswer']}\n"
-                f"**অপশনগুলো:** {', '.join(w.get('options', []))}"
-                for i, w in enumerate(wrong_answers)
-            ])
+            mistake_blocks = []
+            for i, wrong in enumerate(wrong_answers):
+                options_value = wrong.get('options', [])
+                if isinstance(options_value, dict):
+                    options_list = [f"{key}) {value}" for key, value in options_value.items()]
+                elif isinstance(options_value, list):
+                    options_list = [str(item) for item in options_value]
+                elif options_value:
+                    options_list = [str(options_value)]
+                else:
+                    options_list = []
+
+                mistake_blocks.append(
+                    f"**প্রশ্ন {i+1}:** {wrong['question']}\n"
+                    f"**শিক্ষার্থীর উত্তর:** {wrong['userAnswer']}\n"
+                    f"**সঠিক উত্তর:** {wrong['correctAnswer']}\n"
+                    f"**অপশনগুলো:** {', '.join(options_list)}"
+                )
+
+            mistakes_text = "\n\n".join(mistake_blocks)
             
             learning_prompt = f"""আপনি একজন অভিজ্ঞ শিক্ষক যিনি Class {class_level} এর শিক্ষার্থীদের {subject} বিষয়ে পড়ান।
 

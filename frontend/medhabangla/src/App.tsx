@@ -19,6 +19,7 @@ import GamesHub from "./pages/games/GamesHub";
 import MemoryPattern from "./pages/games/MemoryPattern";
 import ShipFind from "./pages/games/ShipFind";
 import NumberHunt from "./pages/games/NumberHunt";
+import ImageDragger from "./pages/games/ImageDragger";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import NotesFileSystem from "./pages/NotesFileSystem"; // File system notes with local storage
@@ -62,6 +63,7 @@ import {
   registerServiceWorker,
   requestPersistentStorage,
 } from "./utils/registerSW";
+import { autoInstallForInstalledPWA } from "./services/modelPrefetcher";
 
 function App() {
   const userStr = localStorage.getItem("user");
@@ -97,6 +99,35 @@ function App() {
   React.useEffect(() => {
     console.log("[App] Initializing PWA features...");
 
+    // In development, stale service workers can serve old cached assets
+    // and cause a blank page. Clean them up and skip registration.
+    if (import.meta.env.DEV) {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => {
+            registration.unregister().catch(() => undefined);
+          });
+        });
+      }
+
+      if ("caches" in window) {
+        caches.keys().then((cacheNames) => {
+          cacheNames
+            .filter(
+              (name) =>
+                name.includes("workbox") ||
+                name.includes("sopan") ||
+                name.includes("app-shell-cache"),
+            )
+            .forEach((name) => {
+              caches.delete(name).catch(() => undefined);
+            });
+        });
+      }
+
+      return;
+    }
+
     // Register service worker
     registerServiceWorker();
 
@@ -104,6 +135,9 @@ function App() {
     requestPersistentStorage().then((granted) => {
       console.log("[App] Persistent storage:", granted ? "granted" : "denied");
     });
+
+    // If app is already installed, prefetch offline mini model packs.
+    void autoInstallForInstalledPWA();
 
     // Log PWA installation status
     const isInstalled = window.matchMedia("(display-mode: standalone)").matches;
@@ -164,6 +198,7 @@ function App() {
                 />
                 <Route path="/games/ship_find" element={<ShipFind />} />
                 <Route path="/games/number_hunt" element={<NumberHunt />} />
+                <Route path="/games/image_dragger" element={<ImageDragger />} />
                 {/* Legacy placeholder routes */}
                 <Route
                   path="/games/memory_matrix"

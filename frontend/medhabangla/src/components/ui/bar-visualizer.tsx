@@ -30,7 +30,7 @@ export const BarVisualizer = React.forwardRef<
     ref,
   ) => {
     const [bars, setBars] = useState<number[]>(Array(barCount).fill(0.3));
-    const animationRef = useRef<number>();
+    const animationRef = useRef<number | null>(null);
 
     useEffect(() => {
       if (!animating || !isActive) return;

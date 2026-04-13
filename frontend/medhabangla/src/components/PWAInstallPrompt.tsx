@@ -1,4 +1,5 @@
 import * as React from "react";
+import { autoInstallForInstalledPWA } from "../services/modelPrefetcher";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -42,6 +43,8 @@ const PWAInstallPrompt: React.FC = () => {
       setIsInstalled(true);
       setShowInstallPrompt(false);
       setDeferredPrompt(null);
+      // Start offline model pack installation in background.
+      void autoInstallForInstalledPWA(true);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);

@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-interface Feature {
+interface FeatureItem {
   id: string;
   icon: string;
   title: string;
@@ -10,627 +10,487 @@ interface Feature {
   action: string;
 }
 
+const FEATURES: FeatureItem[] = [
+  {
+    id: "books",
+    icon: "📚",
+    title: "Digital Library",
+    description:
+      "Access syllabus books, reference material, and curated reading lists.",
+    link: "/books",
+    action: "Open Library",
+  },
+  {
+    id: "quiz",
+    icon: "🧠",
+    title: "Smart Quiz Arena",
+    description:
+      "Adaptive quiz paths that respond to your pace and mastery level.",
+    link: "/quiz",
+    action: "Start Quiz",
+  },
+  {
+    id: "notes",
+    icon: "✍️",
+    title: "Notes Studio",
+    description:
+      "Capture class notes with structure, revision cues, and quick lookup.",
+    link: "/notes",
+    action: "Write Notes",
+  },
+  {
+    id: "games",
+    icon: "🎮",
+    title: "Mind Games",
+    description:
+      "Boost memory and concentration through skill-based learning games.",
+    link: "/games",
+    action: "Play Now",
+  },
+  {
+    id: "voice",
+    icon: "🎤",
+    title: "Voice Tutor",
+    description:
+      "Practice speaking and get AI-guided explanations in a natural flow.",
+    link: "/voice-tutor",
+    action: "Talk to AI",
+  },
+];
+
 const HeroPage: React.FC = () => {
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [bgColor, setBgColor] = useState("#f9f9f7");
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const [activeMaskUps, setActiveMaskUps] = useState<Set<string>>(new Set());
-  const heroRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const scrollIndicatorRef = useRef<HTMLDivElement>(null);
+  const [scrollY, setScrollY] = useState(0);
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Scroll tracking for parallax and color transitions
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollPosition(window.scrollY);
+    let ticking = false;
 
-      // Section color transitions based on scroll position
-      const featuresSection = document.getElementById("features");
-      const philosophySection = document.getElementById("philosophy");
+    const onScroll = () => {
+      if (ticking) return;
 
-      if (featuresSection && philosophySection) {
-        const featuresRect = featuresSection.getBoundingClientRect();
-        const philosophyRect = philosophySection.getBoundingClientRect();
-
-        if (philosophyRect.top < window.innerHeight / 2) {
-          setBgColor("#002a18");
-        } else if (featuresRect.top < window.innerHeight / 2) {
-          setBgColor("#eeeeec");
-        } else {
-          setBgColor("#f9f9f7");
-        }
-      }
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        setScrollY(window.scrollY);
+        ticking = false;
+      });
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Scroll indicator animation
   useEffect(() => {
-    const bar = scrollIndicatorRef.current;
-    if (!bar) return;
-
-    let position = 0;
-    let direction = 1;
-    const animate = () => {
-      position += direction * 2;
-      if (position >= 100 || position <= 0) direction *= -1;
-      bar.style.transform = `translateY(${position}%)`;
-      requestAnimationFrame(animate);
-    };
-
-    const id = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  // Initialize Intersection Observer for mask-up animations
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const id = entry.target.getAttribute("data-mask-id");
-            if (id) {
-              setActiveMaskUps((prev) => new Set(prev).add(id));
-              entry.target.classList.add("active");
-            }
-          }
+          if (!entry.isIntersecting) return;
+
+          const id = entry.target.getAttribute("data-reveal-id");
+          if (!id) return;
+
+          setRevealed((prev) => {
+            const next = new Set(prev);
+            next.add(id);
+            return next;
+          });
         });
       },
-      { threshold: 0.1 },
+      {
+        threshold: 0.2,
+        rootMargin: "0px 0px -10% 0px",
+      },
     );
 
-    document.querySelectorAll("[data-mask-id]").forEach((el) => {
-      observerRef.current?.observe(el);
-    });
+    const nodes = document.querySelectorAll<HTMLElement>("[data-reveal-id]");
+    nodes.forEach((node) => observer.observe(node));
 
-    return () => {
-      observerRef.current?.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
 
-  const features: Feature[] = [
-    {
-      id: "read-books",
-      icon: "auto_stories",
-      title: "Read Books",
-      description:
-        "Access our pristine digital library of classic and contemporary texts.",
-      link: "/books",
-      action: "Explore Library",
-    },
-    {
-      id: "take-notes",
-      icon: "edit_note",
-      title: "Take Notes",
-      description:
-        "An elegant markdown editor for your observations and research papers.",
-      link: "/notes",
-      action: "Open Notebook",
-    },
-    {
-      id: "quizzes",
-      icon: "quiz",
-      title: "Quizzes",
-      description:
-        "Rigorous assessments designed to challenge and solidify knowledge.",
-      link: "/quiz",
-      action: "Start Challenge",
-    },
-    {
-      id: "video-calls",
-      icon: "video_call",
-      title: "Video Calls",
-      description:
-        "Secure, high-definition rooms for scholarly seminars and tutoring.",
-      link: "/video-call",
-      action: "Join Room",
-    },
-    {
-      id: "games",
-      icon: "extension",
-      title: "Games",
-      description:
-        "Cognitive simulations that transform complex concepts into play.",
-      link: "/games",
-      action: "Enter Arena",
-    },
-  ];
+  const heroImageTranslate = Math.min(scrollY * 0.22, 100);
+  const heroGlowShift = Math.min(scrollY * 0.15, 80);
+
+  const revealClass = (id: string, baseClass: string = "reveal-block") =>
+    `${baseClass} ${revealed.has(id) ? "reveal-active" : ""}`;
 
   return (
-    <div
-      className="min-h-screen bg-white overflow-x-hidden scroll-smooth grain-bg"
-      style={{
-        backgroundColor: bgColor,
-        transition: "background-color 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
-      }}
-      ref={heroRef}>
-      {/* Custom Styles */}
+    <div className="hero-premium-shell bg-[#f5f6f8] text-[#11231c] min-h-screen overflow-x-hidden">
       <style>{`
-        :root {
-          --expo-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-          --bg-transition: background-color 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Manrope:wght@400;500;600;700&display=swap");
+
+        .hero-premium-shell {
+          --ease-premium: cubic-bezier(0.2, 0.8, 0.2, 1);
+          --line-soft: rgba(17, 35, 28, 0.16);
+          --ink-soft: rgba(17, 35, 28, 0.75);
+          font-family: "Manrope", "Segoe UI", sans-serif;
+          background-image:
+            radial-gradient(circle at 15% 20%, rgba(30, 102, 78, 0.18), transparent 42%),
+            radial-gradient(circle at 84% 30%, rgba(189, 133, 44, 0.2), transparent 45%),
+            linear-gradient(180deg, #f5f6f8 0%, #eef1f4 58%, #e8ecef 100%);
         }
 
-        .material-symbols-outlined {
-          font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
-          display: inline-block;
-        }
-
-        .editorial-shadow {
-          box-shadow: 0 40px 100px rgba(11, 66, 42, 0.12);
-        }
-
-        .grain-bg::before {
+        .hero-premium-shell::before {
           content: "";
           position: fixed;
-          top: -150%;
-          left: -150%;
-          width: 300%;
-          height: 300%;
-          background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuACvKQ5wF2ELbI6F4HDPS7T9XFlRzD8Sv6ZxokRcFPYdQ9WH8BsTnKNa_vMTU3pxdqsCSZPqf2UPTBduhZtN1njxLIp3vTiiFzS_kEqVLH7VjHOrpzUwFrJQhlLETrfn_ngGxlHqOqvepuiRafWuNK-8f6NwSKiMl9YJm2mEe3EIV15ScJ-7VbI9FIrK8TMcRd_iK3tRjHLU-qHijlrFhjsYkFWdo1FseTxh2vzpEF2bW5Ch-33_XHEtm9HrvTdy3XOltkwNaHyhRA);
-          opacity: 0.05;
+          inset: -100% -100%;
+          background-image: radial-gradient(rgba(17, 35, 28, 0.14) 0.35px, transparent 0.35px);
+          background-size: 3px 3px;
+          opacity: 0.06;
           pointer-events: none;
-          z-index: 9999;
-          animation: grain 8s steps(10) infinite;
+          z-index: 0;
         }
 
-        @keyframes grain {
-          0%, 100% { transform: translate(0, 0); }
-          10% { transform: translate(-5%, -10%); }
-          20% { transform: translate(-15%, 5%); }
-          30% { transform: translate(7%, -25%); }
-          40% { transform: translate(-5%, 25%); }
-          50% { transform: translate(-15%, 10%); }
-          60% { transform: translate(15%, 0%); }
-          70% { transform: translate(0%, 15%); }
-          80% { transform: translate(3%, 35%); }
-          90% { transform: translate(-10%, 10%); }
+        .headline-font {
+          font-family: "Fraunces", Georgia, serif;
+          letter-spacing: -0.03em;
         }
 
-        .reveal-mask {
-          clip-path: inset(0 0 100% 0);
-        }
-
-        .mask-up {
-          overflow: hidden;
-          display: block;
-        }
-
-        .mask-up-inner {
-          display: block;
-          transform: translateY(110%);
-          transition: transform 1.8s var(--expo-ease);
-        }
-
-        .mask-up.active .mask-up-inner {
-          transform: translateY(0);
-        }
-
-        .reveal-el {
+        .reveal-block {
           opacity: 0;
-          transform: translateY(1rem);
-          animation: revealIn 1.5s var(--expo-ease) forwards;
+          transform: translateY(34px) scale(0.985);
+          filter: blur(8px);
+          transition:
+            opacity 0.95s var(--ease-premium),
+            transform 0.95s var(--ease-premium),
+            filter 0.95s var(--ease-premium);
         }
 
-        @keyframes revealIn {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        .reveal-active {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
         }
 
-        .premium-divider {
-          height: 1px;
-          width: 100%;
-          background: linear-gradient(90deg, transparent, #775a19 50%, transparent);
-          opacity: 0.2;
+        .reveal-left {
+          transform: translateX(-28px) scale(0.985);
         }
 
-        .premium-hover {
-          transition: all 0.6s var(--expo-ease);
+        .reveal-right {
+          transform: translateX(28px) scale(0.985);
         }
 
-        .premium-hover:hover {
-          transform: translateY(-8px) scale(1.02);
-          box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
+        .reveal-left.reveal-active,
+        .reveal-right.reveal-active {
+          transform: translateX(0) scale(1);
         }
 
-        .depth-glow {
+        .hero-card-glow {
           position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 140%;
-          height: 140%;
-          background: radial-gradient(circle, rgba(119, 90, 25, 0.15) 0%, transparent 70%);
-          transform: translate(-50%, -50%);
+          inset: -16% -10%;
+          border-radius: 30px;
+          background: radial-gradient(circle, rgba(40, 127, 97, 0.28), rgba(189, 133, 44, 0.08) 42%, transparent 68%);
+          filter: blur(28px);
           pointer-events: none;
           z-index: -1;
-          mix-blend-mode: soft-light;
+          animation: pulse-glow 4.2s ease-in-out infinite;
         }
 
-        .magnetic-wrap {
-          display: inline-flex;
-          transition: transform 0.3s var(--expo-ease);
+        @keyframes pulse-glow {
+          0%,
+          100% { opacity: 0.42; transform: scale(1); }
+          50% { opacity: 0.75; transform: scale(1.05); }
         }
 
-        .magnetic-btn {
-          will-change: transform;
+        .emotion-float {
+          animation: float-y 5.2s ease-in-out infinite;
         }
 
-        .staircase-progress {
-          display: flex;
-          gap: 4px;
+        .emotion-float-delayed {
+          animation: float-y 6.1s ease-in-out infinite 0.9s;
         }
 
-        .staircase-step {
-          width: 12px;
-          height: 12px;
-          background-color: #775a19;
-          clip-path: polygon(0% 100%, 100% 100%, 100% 0%);
+        @keyframes float-y {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
 
-        #hero-premium-image {
-          will-change: transform, filter, opacity;
-          filter: blur(20px);
-          opacity: 0;
-          transform: scale(0.95);
-          animation: heroImageLoad 2.5s var(--expo-ease) forwards 0.3s;
+        .premium-feature {
+          border: 1px solid rgba(17, 35, 28, 0.1);
+          background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 251, 0.88));
+          box-shadow: 0 20px 45px rgba(13, 35, 27, 0.07);
+          transition: transform 0.45s var(--ease-premium), box-shadow 0.45s var(--ease-premium), border-color 0.45s var(--ease-premium);
         }
 
-        @keyframes heroImageLoad {
-          to {
-            filter: blur(0px);
-            opacity: 1;
-            transform: scale(1);
-          }
+        .premium-feature:hover {
+          transform: translateY(-8px);
+          border-color: rgba(189, 133, 44, 0.42);
+          box-shadow: 0 28px 50px rgba(13, 35, 27, 0.14);
         }
 
-        .scroll-indicator-bar {
-          will-change: transform;
+        .scroll-cue-dot {
+          animation: cue-drop 1.9s ease-in-out infinite;
         }
 
-        .philosophy-img {
-          will-change: transform;
-        }
-
-        .feature-card {
-          animation: featureCardReveal 1.8s var(--expo-ease) both;
-        }
-
-        .feature-card:nth-child(1) { animation-delay: 0s; }
-        .feature-card:nth-child(2) { animation-delay: 0.1s; }
-        .feature-card:nth-child(3) { animation-delay: 0.2s; }
-        .feature-card:nth-child(4) { animation-delay: 0.3s; }
-        .feature-card:nth-child(5) { animation-delay: 0.4s; }
-
-        @keyframes featureCardReveal {
-          from {
-            clip-path: inset(0 0 100% 0);
-            transform: translateY(50px);
-            opacity: 0;
-          }
-          to {
-            clip-path: inset(0 0 0% 0);
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-
-        .quote-box {
-          animation: quoteBoxSlide 1s var(--expo-ease) forwards;
-        }
-
-        @keyframes quoteBoxSlide {
-          from {
-            transform: translateX(50px) translateY(50px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0) translateY(0);
-            opacity: 1;
-          }
+        @keyframes cue-drop {
+          0% { transform: translateY(0); opacity: 0.2; }
+          50% { transform: translateY(9px); opacity: 1; }
+          100% { transform: translateY(0); opacity: 0.2; }
         }
       `}</style>
-      {/* Logo Navigation */}
-      <nav className="fixed top-8 left-8 z-[100] mix-blend-difference">
+
+      <nav className="fixed top-6 left-6 z-40">
         <Link
           to="/"
-          className="group flex items-center gap-3 pointer-events-auto cursor-pointer">
-          <div className="transition-transform duration-1000 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:scale-110">
-            <img
-              alt="SOPAN Logo"
-              className="h-12 w-auto object-contain"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq5niX8vWEVfbZMFErHO2h_tUY35HT1_k-gCeg1_UTTRaGTvA3c0V0vzvuArA4934lKziGeBnJK2dYg80Gqnf_N1m_yoK96SAXIztaSZVLPr2vyMiTV9mqcSeCU10sE3gvd15QpK0PPAgN-7eMCU2FuLMi97lK2c8dz2lQZTDHhihTSbvGvSe4DshYpXeu4MQOeDIDpJOn1TEaGLE3TmDELi6WhkB0CVIdLzwld0HaYP6tin79s40IPeAAlvtpM7Rk9mhaBkOmAho"
-            />
-          </div>
-          <div className="h-[1px] w-0 group-hover:w-8 bg-white transition-all duration-1000 ease-[cubic-bezier(0.2,0.8,0.2,1)] origin-left"></div>
+          className="group inline-flex items-center gap-3 rounded-full border border-white/40 bg-white/75 px-4 py-2 backdrop-blur-md shadow-lg transition-all duration-500 hover:shadow-xl hover:-translate-y-0.5">
+          <img src="/logo.png" alt="SOPAN Logo" className="h-10 w-auto" />
+          <span className="text-xs font-semibold tracking-[0.24em] text-[#234536] uppercase group-hover:text-[#1a3328]">
+            SOPAN
+          </span>
         </Link>
       </nav>
 
-      {/* Hero Section */}
-      <header
-        className="relative min-h-[1024px] flex flex-col items-center justify-center overflow-hidden pt-20"
-        id="hero">
-        <div className="max-w-7xl mx-auto px-8 flex flex-col items-center text-center relative z-10">
-          {/* Badge */}
-          <div className="mask-up mb-8" data-mask-id="badge">
-            <div className="reveal-el inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#ffdea3] text-[#261900] text-[10px] font-bold tracking-[0.2em] uppercase">
-              <span className="material-symbols-outlined text-sm">school</span>
-              <span>The Modern Scholar</span>
+      <header className="relative z-10 min-h-screen px-6 pt-28 pb-20 md:px-10 lg:px-16">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <div
+              data-reveal-id="badge"
+              className={revealClass(
+                "badge",
+                "inline-flex items-center gap-2 rounded-full border border-[#234536]/20 bg-white/75 px-4 py-2 text-[11px] font-semibold tracking-[0.14em] uppercase text-[#234536]",
+              )}>
+              <span>Premium Learning Atmosphere</span>
+            </div>
+
+            <h1
+              data-reveal-id="title"
+              className={revealClass(
+                "title",
+                "headline-font mt-7 text-5xl leading-[0.95] text-[#102820] sm:text-6xl lg:text-7xl",
+              )}>
+              Build Focus.
+              <br />
+              Feel Momentum.
+              <br />
+              Learn Like A Pro.
+            </h1>
+
+            <p
+              data-reveal-id="subtitle"
+              className={revealClass(
+                "subtitle",
+                "mt-7 max-w-xl text-base leading-7 text-[color:var(--ink-soft)] md:text-lg",
+              )}>
+              A modern Bangladeshi academic platform crafted for deep practice,
+              emotional motivation, and measurable progress from day one.
+            </p>
+
+            <div
+              data-reveal-id="cta"
+              className={revealClass(
+                "cta",
+                "mt-9 flex flex-wrap items-center gap-4",
+              )}>
+              <Link
+                to="/register"
+                className="rounded-xl bg-[#173d2f] px-6 py-3 text-sm font-semibold tracking-wide text-white shadow-lg transition-all duration-300 hover:bg-[#0f2f23] hover:-translate-y-0.5">
+                Start Your Journey
+              </Link>
+              <Link
+                to="/quiz"
+                className="rounded-xl border border-[#173d2f]/20 bg-white/80 px-6 py-3 text-sm font-semibold tracking-wide text-[#173d2f] transition-all duration-300 hover:border-[#bd852c] hover:text-[#8f5f17] hover:-translate-y-0.5">
+                Explore Smart Quiz
+              </Link>
+            </div>
+
+            <div className="mt-10 flex flex-wrap gap-3" aria-hidden>
+              <span className="emotion-float rounded-full border border-[#173d2f]/15 bg-white/70 px-4 py-2 text-xs text-[#173d2f] shadow-sm">
+                Calm Focus
+              </span>
+              <span className="emotion-float-delayed rounded-full border border-[#bd852c]/20 bg-[#fff8ec] px-4 py-2 text-xs text-[#8f5f17] shadow-sm">
+                Confident Energy
+              </span>
+              <span className="emotion-float rounded-full border border-[#173d2f]/15 bg-white/70 px-4 py-2 text-xs text-[#173d2f] shadow-sm">
+                Daily Growth
+              </span>
             </div>
           </div>
 
-          {/* Main Heading */}
-          <h1
-            className="font-headline text-6xl md:text-[9rem] font-bold text-[#002a18] mb-12 leading-[0.9] tracking-tighter max-w-6xl"
-            id="hero-title">
-            <span className="mask-up block" data-mask-id="title-1">
-              <span className="mask-up-inner">Elevate Your</span>
-            </span>
-            <span className="mask-up block" data-mask-id="title-2">
-              <span className="mask-up-inner text-[#775a19]">Learning</span>
-            </span>
-            <span className="mask-up block" data-mask-id="title-3">
-              <span className="mask-up-inner">Journey</span>
-            </span>
-          </h1>
-
-          {/* Subtitle */}
-          <div className="mask-up max-w-2xl mb-24" data-mask-id="subtitle">
-            <p className="reveal-el font-body text-lg text-[#414943] leading-relaxed">
-              Bangladesh's Premier Academic Ecosystem for Students. Crafting a
-              digital institution rooted in excellence and modern scholarship.
-            </p>
-          </div>
-
-          {/* Premium Hero Image */}
           <div
-            className="relative w-full max-w-6xl mt-12 mb-24 perspective-1000"
-            id="hero-visual-wrapper">
-            <div className="depth-glow" id="hero-glow"></div>
+            data-reveal-id="hero-media"
+            className={revealClass("hero-media", "relative")}
+            style={{ transform: `translateY(${heroImageTranslate}px)` }}>
             <div
-              className="relative w-full overflow-hidden rounded-2xl editorial-shadow"
-              id="hero-image-container"
-              style={{
-                transform: `translateY(${scrollPosition * 0.3}px) scale(${1 + scrollPosition * 0.0001})`,
-              }}>
+              className="hero-card-glow"
+              style={{ transform: `translateY(${heroGlowShift}px)` }}
+            />
+
+            {!imageLoaded && (
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[#d6dee1] via-[#edf2f4] to-[#dce4e8] animate-pulse" />
+            )}
+
+            <div className="relative overflow-hidden rounded-3xl border border-white/45 bg-white/70 p-3 shadow-[0_28px_70px_rgba(17,35,28,0.18)] backdrop-blur-sm">
               <img
-                alt="SOPAN Academic Excellence"
-                className="w-full h-full object-cover"
-                id="hero-premium-image"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPoFTOqLW7UPpA8SiyRHP3oXar6kOVQYAAnH66eIUDMOnDtGn450bLDyxgf6HZDbILbJ0fraoa2SDWyAAgoFNXgR5Ms4WuRUeQG90PzXFvxUvwpUsT97mSMkOKrSY80DucHqWYlPx8l1xSU7zv_mttTMDG_HgXQErv0NdNAFCC6HGhpQLW63HZC2YIOMhbmQXVY72wdeyo5-Snqss6Jq5P2WY7mOc-bSsEwYFKmPGuk8kWxowB7pMm6IWIf_9SmDrxjB17iobsYLw"
-                onLoad={() => setIsImageLoaded(true)}
+                src="/hero.png"
+                alt="SOPAN learning hero"
+                className="h-[480px] w-full rounded-2xl object-cover object-center md:h-[560px]"
+                onLoad={() => setImageLoaded(true)}
               />
+              <div className="pointer-events-none absolute inset-3 rounded-2xl bg-gradient-to-t from-[#0f241c]/40 via-transparent to-[#0f241c]/10" />
             </div>
           </div>
         </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 scroll-indicator">
-          <span className="text-[10px] uppercase tracking-[0.5em] text-[#775a19] font-bold">
-            Scroll
-          </span>
-          <div className="relative w-[1px] h-16 bg-[#c0c9c1]/30 overflow-hidden">
-            <div
-              className="absolute top-0 left-0 w-full h-1/2 bg-[#775a19] scroll-indicator-bar"
-              ref={scrollIndicatorRef}></div>
+        <div className="mt-16 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2 text-[#173d2f]/70">
+            <span className="text-[10px] font-semibold tracking-[0.28em] uppercase">
+              Scroll
+            </span>
+            <div className="h-12 w-6 rounded-full border border-[#173d2f]/25 p-1">
+              <div className="scroll-cue-dot h-2 w-2 rounded-full bg-[#173d2f]/75" />
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="premium-divider"></div>
-
-      {/* Features Section */}
       <section
-        className="py-48 bg-[#eeeeec] transition-colors duration-1000 relative section-connector"
-        id="features">
-        <div className="max-w-7xl mx-auto px-8">
+        data-reveal-id="stats"
+        className={revealClass(
+          "stats",
+          "relative z-10 mx-auto mt-4 mb-20 grid max-w-6xl gap-4 px-6 sm:grid-cols-3 md:px-10 lg:px-16",
+        )}>
+        {[
+          { label: "Active Learners", value: "50K+" },
+          { label: "Quiz Topics", value: "1000+" },
+          { label: "Daily Practice", value: "24/7" },
+        ].map((stat) => (
           <div
-            className="flex flex-col md:flex-row justify-between items-end mb-24 gap-6 section-header reveal-mask"
-            style={{ animation: "featureCardReveal 1.8s var(--expo-ease)" }}>
-            <div className="max-w-xl">
-              <h2
-                className="font-headline text-5xl md:text-7xl font-bold text-[#002a18] mb-8 tracking-tighter mask-up active"
-                data-mask-id="features-title">
-                <span className="mask-up-inner">
-                  Curated Tools for Distinction
-                </span>
-              </h2>
-              <p className="text-[#414943] font-body text-lg leading-relaxed opacity-70">
-                We reject cluttered interfaces. Each feature is an intentional
-                instrument designed for the serious academic pursuer.
-              </p>
+            key={stat.label}
+            className="rounded-2xl border border-[#173d2f]/12 bg-white/70 px-5 py-6 text-center shadow-[0_12px_28px_rgba(17,35,28,0.08)] backdrop-blur-sm">
+            <div className="headline-font text-3xl text-[#173d2f]">
+              {stat.value}
             </div>
-            <div className="magnetic-wrap">
-              <div
-                className="flex items-center gap-2 text-[#775a19] font-semibold uppercase tracking-widest text-[10px] mb-4 cursor-pointer hover:gap-4 transition-all group magnetic-btn"
-                id="methodology-link">
-                View Methodology
-                <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
-                  arrow_forward
-                </span>
-              </div>
+            <div className="mt-1 text-xs font-semibold tracking-[0.12em] uppercase text-[#173d2f]/65">
+              {stat.label}
             </div>
           </div>
+        ))}
+      </section>
 
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {features.map((feature, idx) => (
+      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-24 md:px-10 lg:px-16">
+        <div
+          data-reveal-id="feature-header"
+          className={revealClass("feature-header", "mb-10 max-w-3xl")}>
+          <h2 className="headline-font text-4xl text-[#102820] sm:text-5xl">
+            Premium Tools That Trigger Progress
+          </h2>
+          <p className="mt-4 text-base leading-7 text-[color:var(--ink-soft)]">
+            Every block is designed to keep motivation high while reducing
+            friction in your day-to-day study routine.
+          </p>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map((feature, index) => {
+            const revealId = `feature-${feature.id}`;
+            const revealDirection =
+              index % 2 === 0 ? "reveal-left" : "reveal-right";
+
+            return (
               <Link
                 key={feature.id}
                 to={feature.link}
-                className="feature-card reveal-mask premium-hover group bg-[#ffffff] p-10 rounded-lg border border-transparent hover:border-[#775a19] flex flex-col h-full min-h-[360px] cursor-pointer"
-                style={{ animationDelay: `${idx * 0.1}s` }}>
-                <div className="w-12 h-12 bg-[#f4f4f2] rounded-lg flex items-center justify-center text-[#002a18] mb-8 group-hover:bg-[#ffdea3] transition-colors">
-                  <span className="material-symbols-outlined">
-                    {feature.icon}
-                  </span>
-                </div>
-                <h3 className="font-headline text-2xl font-bold text-[#002a18] mb-4">
+                data-reveal-id={revealId}
+                className={`${revealClass(revealId, `premium-feature reveal-block ${revealDirection}`)} rounded-2xl p-6`}>
+                <div className="text-3xl">{feature.icon}</div>
+                <h3 className="mt-4 headline-font text-2xl text-[#102820]">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-[#414943] leading-relaxed opacity-80">
+                <p className="mt-3 text-sm leading-6 text-[#204236]/78">
                   {feature.description}
                 </p>
-                <div className="mt-auto pt-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-[10px] font-bold text-[#775a19] tracking-[0.3em] uppercase">
-                    {feature.action}
-                  </span>
+                <div className="mt-6 text-xs font-bold tracking-[0.16em] uppercase text-[#8f5f17]">
+                  {feature.action} →
                 </div>
               </Link>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </section>
 
-      <div className="premium-divider"></div>
-
-      {/* Philosophy Section */}
       <section
-        className="py-48 bg-[#002a18] transition-colors duration-1000 overflow-hidden relative section-connector"
-        id="philosophy">
-        <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-12 gap-24 items-center">
-          {/* Image Column */}
-          <div
-            className="md:col-span-7 relative philosophy-image-wrap reveal-mask"
-            style={{
-              transform: `translateY(${scrollPosition * -0.15}px)`,
-              transition: "transform 0.3s ease-out",
-            }}>
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#e9c176]/10 rounded-full blur-[120px]"></div>
-            <div className="relative bg-[#ffffff] p-4 rounded-xl border border-[#c0c9c1]/20 editorial-shadow overflow-hidden group">
-              <img
-                alt="Deep Learning"
-                className="philosophy-img rounded-lg w-full h-[650px] object-cover scale-110"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWIK_aw70Qv7x8nRXnW_8uWfUOVlSPPo0KmhEjc0vnIrYERerZ5ncGOMDl-2b5DK-W0vDY-miixJ2n86mDqkfU1F2PnH-wDovvtpEa3wzLOWQoEXj1qLJkfypoJTvBQROX9CAj72CrMh2zleZayntzIid6ELbdVi5E0w-6jWObyO7-zgjoSp0s6K5-pfnj-SO9XCNElkuJgpMf_i-T88PWA0ngWs5Lf61xI9X0MLiOlYK-cEovVFGGYzNhzaAQkzaziM9FnBPus00"
-                style={{
-                  transform: `scale(${1.1 + scrollPosition * 0.0005})`,
-                  transition: "transform 0.3s ease-out",
-                }}
-              />
-              <div className="absolute inset-0 bg-[#002a18]/20 mix-blend-multiply transition-opacity duration-1000 group-hover:opacity-0"></div>
-              <div className="quote-box absolute -bottom-8 -right-8 bg-[#002a18] p-12 rounded-lg shadow-2xl max-w-xs">
-                <p className="font-headline italic text-[#f9f9f7] text-xl mb-6">
-                  "The foundation of every state is the education of its youth."
-                </p>
-                <p className="text-[#f9f9f7]/60 text-[10px] uppercase tracking-[0.4em]">
-                  Diogenes of Sinope
-                </p>
-              </div>
-            </div>
+        data-reveal-id="philosophy"
+        className={revealClass(
+          "philosophy",
+          "relative z-10 border-y border-[color:var(--line-soft)] bg-[#132a22] px-6 py-20 text-[#edf4f1] md:px-10 lg:px-16",
+        )}>
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-3 shadow-[0_25px_65px_rgba(0,0,0,0.28)]">
+            <img
+              src="/hero.png"
+              alt="Focused learning"
+              className="h-[360px] w-full rounded-2xl object-cover object-center md:h-[430px]"
+              style={{
+                transform: `translateY(${Math.min(scrollY * -0.09, 50)}px)`,
+              }}
+            />
           </div>
 
-          {/* Content Column */}
-          <div className="md:col-span-5 philosophy-content">
-            <div className="staircase-progress mb-12">
-              <div className="staircase-step w-4 h-4"></div>
-              <div className="staircase-step w-4 h-4"></div>
-              <div className="staircase-step w-4 h-4"></div>
-              <div className="staircase-step w-4 h-4"></div>
-            </div>
-
-            <h2
-              className="font-headline text-5xl md:text-6xl font-bold text-[#f9f9f7] mb-10 tracking-tighter leading-tight mask-up active"
-              data-mask-id="philosophy-title">
-              <span className="mask-up-inner">
-                Built on the SOPAN Philosophy
-              </span>
-            </h2>
-
-            <div className="space-y-12">
+          <div>
+            <h3 className="headline-font text-4xl sm:text-5xl">
+              SOPAN Learning Philosophy
+            </h3>
+            <div className="mt-8 space-y-6">
               {[
-                {
-                  num: "01",
-                  title: "Structural Integrity",
-                  desc: "Every learning path is meticulously architected to ensure cumulative mastery.",
-                },
-                {
-                  num: "02",
-                  title: "Peer Accountability",
-                  desc: "Learn alongside high-achievers in a private, curated ecosystem of merit.",
-                },
-                {
-                  num: "03",
-                  title: "Global Standard",
-                  desc: "Bringing Ivy-League pedagogical frameworks to the digital landscape of Bangladesh.",
-                },
-              ].map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex gap-6 reveal-phil-step opacity-0"
-                  style={{
-                    animation: `revealIn 1.5s var(--expo-ease) forwards ${idx * 0.2 + 0.3}s`,
-                  }}>
-                  <span className="text-[#775a19] font-headline text-3xl">
-                    {item.num}
-                  </span>
-                  <div>
-                    <h4 className="font-bold text-xl text-[#f9f9f7] mb-2">
-                      {item.title}
-                    </h4>
-                    <p className="text-[#f1f1ef] text-base leading-relaxed opacity-70">
-                      {item.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                "Structure first: clear progression from basics to mastery.",
+                "Emotion-driven momentum: visual cues keep students engaged.",
+                "Feedback loops: quick quizzes, notes, and tutoring in one ecosystem.",
+              ].map((line, index) => {
+                const revealId = `pillar-${index}`;
 
-            <div className="magnetic-wrap mt-16">
-              <Link
-                to="/register"
-                className="magnetic-btn px-10 py-4 bg-[#002a18] text-[#f9f9f7] rounded-lg font-semibold flex items-center gap-4 group transition-all duration-1000 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:bg-[#0b422a] hover:px-12 border border-[#775a19]">
-                <span className="text-sm">Join the Institution</span>
-                <span className="material-symbols-outlined text-sm group-hover:translate-x-2 transition-transform">
-                  arrow_right_alt
-                </span>
-              </Link>
+                return (
+                  <p
+                    key={line}
+                    data-reveal-id={revealId}
+                    className={revealClass(
+                      revealId,
+                      "reveal-block text-sm leading-7 text-[#d9e8e2] md:text-base",
+                    )}>
+                    {line}
+                  </p>
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="w-full border-t border-[#c0c9c1]/20 bg-[#eeeeec] relative z-10">
-        <div className="w-full py-24 px-8 flex flex-col items-center text-center max-w-7xl mx-auto">
-          <div className="mb-12">
-            <span className="text-4xl font-headline font-bold text-[#002a18] mb-4 block tracking-tighter">
-              SOPAN
-            </span>
-            <p className="text-[10px] uppercase tracking-[0.5em] text-[#414943]/60">
-              Excellence in Modern Scholarship
-            </p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-12 mb-16">
-            <Link
-              to="#"
-              className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#414943] hover:text-[#775a19] transition-colors">
-              Academic Integrity
-            </Link>
-            <Link
-              to="#"
-              className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#414943] hover:text-[#775a19] transition-colors">
-              Privacy Policy
-            </Link>
-            <Link
-              to="#"
-              className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#414943] hover:text-[#775a19] transition-colors">
-              Institutional Access
-            </Link>
-            <Link
-              to="#"
-              className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#414943] hover:text-[#775a19] transition-colors">
-              Support
-            </Link>
-          </div>
-
-          <div className="text-[10px] text-[#414943]/40">
-            © 2024 SOPAN Digital Institution. All rights reserved.
-          </div>
+      <section
+        data-reveal-id="final-cta"
+        className={revealClass(
+          "final-cta",
+          "relative z-10 mx-auto max-w-7xl px-6 py-20 text-center md:px-10 lg:px-16",
+        )}>
+        <h3 className="headline-font text-4xl text-[#102820] sm:text-5xl">
+          Ready To Feel The Difference?
+        </h3>
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[color:var(--ink-soft)]">
+          Enter a focused environment where design, motivation, and performance
+          move together.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <Link
+            to="/register"
+            className="rounded-xl bg-[#173d2f] px-7 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[#0f2f23] hover:-translate-y-0.5">
+            Create Account
+          </Link>
+          <Link
+            to="/login"
+            className="rounded-xl border border-[#173d2f]/20 bg-white/85 px-7 py-3 text-sm font-semibold text-[#173d2f] transition-all duration-300 hover:border-[#bd852c] hover:text-[#8f5f17] hover:-translate-y-0.5">
+            Sign In
+          </Link>
         </div>
+      </section>
+
+      <footer className="relative z-10 border-t border-[color:var(--line-soft)] bg-white/65 px-6 py-10 text-center backdrop-blur-sm md:px-10 lg:px-16">
+        <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#173d2f]/70">
+          SOPAN Digital Learning Ecosystem
+        </p>
+        <p className="mt-2 text-xs text-[#173d2f]/55">
+          © {new Date().getFullYear()} SOPAN. Crafted for focused learners.
+        </p>
       </footer>
     </div>
   );

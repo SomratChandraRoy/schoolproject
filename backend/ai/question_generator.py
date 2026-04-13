@@ -17,6 +17,10 @@ class QuestionGenerator:
     def __init__(self):
         from .ai_service import get_ai_service
         self.ai_service = get_ai_service()
+
+    @staticmethod
+    def _normalize_question_text(text: str) -> str:
+        return re.sub(r'\s+', ' ', str(text or '').strip().lower())
     
     def generate_batch_questions(
         self,
@@ -82,7 +86,37 @@ class QuestionGenerator:
         
         # Create AIGeneratedQuestion objects
         generated_questions = []
+        existing_texts = set(
+            self._normalize_question_text(text)
+            for text in Quiz.objects.filter(
+                subject=subject,
+                class_target=class_level,
+                question_type=question_type
+            ).values_list('question_text', flat=True)
+            if text
+        )
+        existing_texts.update(
+            self._normalize_question_text(text)
+            for text in AIGeneratedQuestion.objects.filter(
+                user=user,
+                subject=subject,
+                class_level=class_level,
+                question_type=question_type
+            ).values_list('question_text', flat=True)
+            if text
+        )
+
         for q_data in questions_data:
+            question_text = str(q_data.get('question_text', '')).strip()
+            normalized_text = self._normalize_question_text(question_text)
+
+            if not question_text:
+                continue
+
+            if normalized_text in existing_texts:
+                print(f"[QuestionGenerator] Skipping duplicate question text")
+                continue
+
             # Get options, ensure it's a dict
             options = q_data.get('options', {})
             if not isinstance(options, dict):
@@ -98,7 +132,7 @@ class QuestionGenerator:
                 subject=subject,
                 class_level=class_level,
                 difficulty=difficulty,
-                question_text=q_data['question_text'],
+                question_text=question_text,
                 question_type=question_type,
                 options=options,
                 correct_answer=q_data['correct_answer'],
@@ -106,6 +140,7 @@ class QuestionGenerator:
                 generation_batch=batch_number
             )
             generated_questions.append(question)
+            existing_texts.add(normalized_text)
         
         print(f"[QuestionGenerator] Successfully generated {len(generated_questions)} questions (Batch #{batch_number})")
         return True, generated_questions, ""

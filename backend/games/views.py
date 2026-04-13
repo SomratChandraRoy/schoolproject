@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Sum, Max, Count
+from django.utils import timezone
 from .models import (
     Game, PlayerProfile, GameSession, GameScore,
     Leaderboard, Achievement, PlayerAchievement, GameLeaderboard
@@ -16,17 +17,59 @@ from .serializers import (
 import uuid
 
 
+DEFAULT_GAME_CONFIGS = {
+    'memory_pattern': {
+        'name': 'Memory Pattern',
+        'description': 'Watch and repeat the color pattern. Test your memory skills!',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 100,
+        'is_active': True,
+    },
+    'ship_find': {
+        'name': 'Ship Find',
+        'description': 'Find all hidden ships on the grid. A memory-based battleship game!',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 150,
+        'is_active': True,
+    },
+    'number_hunt': {
+        'name': 'Number Hunt',
+        'description': 'Click numbers in sequential order. Test your memory and speed!',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 120,
+        'is_active': True,
+    },
+    'image_dragger': {
+        'name': 'Image Dragger',
+        'description': 'Drag puzzle pieces into the correct place before time runs out.',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 180,
+        'is_active': True,
+    },
+}
+
+
 class GameViewSet(viewsets.ModelViewSet):
     """Game management"""
-    queryset = Game.objects.filter(is_active=True)
     serializer_class = GameSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Ensure core games exist so the frontend hub can list them reliably.
+        for game_type, defaults in DEFAULT_GAME_CONFIGS.items():
+            Game.objects.get_or_create(game_type=game_type, defaults=defaults)
+
+        return Game.objects.filter(is_active=True)
     
     @action(detail=False, methods=['get'])
     def by_grade(self, request):
         """Get games suitable for a grade"""
         grade = request.query_params.get('grade', 6)
-        games = self.queryset.filter(
+        games = self.get_queryset().filter(
             min_grade__lte=grade,
             max_grade__gte=grade
         )
@@ -95,12 +138,124 @@ class GameSessionViewSet(viewsets.ModelViewSet):
     queryset = GameSession.objects.all()
     serializer_class = GameSessionSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def _get_or_create_game(self, game_type):
+        """Resolve game by type and auto-create known game configs when missing."""
+        defaults = DEFAULT_GAME_CONFIGS.get(game_type)
+
+        if defaults:
+            game, _ = Game.objects.get_or_create(game_type=game_type, defaults=defaults)
+            return game
+
+        return get_object_or_404(Game, game_type=game_type)
+
+    def _get_image_difficulty(self, iq_level, level):
+        """Create a difficulty profile from IQ and current level."""
+        safe_iq = max(70, min(int(iq_level or 100), 160))
+        safe_level = max(1, int(level or 1))
+
+        base_grid = 3 + min((safe_level - 1) // 3, 2)
+        iq_modifier = 0
+        if safe_iq >= 130:
+            iq_modifier = 2
+        elif safe_iq >= 115:
+            iq_modifier = 1
+        elif safe_iq <= 85:
+            iq_modifier = -1
+
+        grid_size = max(3, min(base_grid + iq_modifier, 6))
+
+        base_time_limit = {
+            3: 190,
+            4: 215,
+            5: 245,
+            6: 280,
+        }.get(grid_size, 190)
+        iq_time_penalty = max(0, int((safe_iq - 100) * 1.4))
+        time_limit = max(60, base_time_limit - iq_time_penalty)
+
+        return {
+            'iq_level': safe_iq,
+            'grid_size': grid_size,
+            'time_limit_seconds': time_limit,
+        }
+
+    def _update_image_dragger_preferences(self, player, game_score):
+        """Persist rolling IQ and performance history for image dragger rounds."""
+        preferences = player.preferences or {}
+        image_state = preferences.get('image_dragger', {})
+        metadata = game_score.metadata or {}
+
+        grid_size = max(3, int(metadata.get('grid_size', 3) or 3))
+        move_count = max(1, int(metadata.get('move_count', metadata.get('moves', 1)) or 1))
+        time_limit = max(60.0, float(metadata.get('time_limit', grid_size * grid_size * 12) or 60.0))
+
+        previous_iq = max(70, min(int(image_state.get('iq_level', 100) or 100), 160))
+        ideal_moves = max(10.0, float((grid_size * grid_size) + (grid_size * 2)))
+        move_efficiency = max(0.2, min(1.6, ideal_moves / float(move_count)))
+        time_efficiency = max(0.2, min(1.6, time_limit / max(game_score.time_taken, 1.0)))
+        accuracy_efficiency = max(0.2, min(1.2, game_score.accuracy / 100.0))
+        completion_efficiency = 1.0 if game_score.success else 0.35
+        level_efficiency = min(1.3, 1.0 + ((game_score.level - 1) * 0.03))
+
+        target_iq = int(round(
+            75
+            + (completion_efficiency * 32)
+            + (move_efficiency * 18)
+            + (time_efficiency * 16)
+            + (accuracy_efficiency * 12)
+            + (level_efficiency * 10)
+        ))
+        target_iq = max(70, min(target_iq, 160))
+        new_iq = int(round((previous_iq * 0.72) + (target_iq * 0.28)))
+
+        games_played = int(image_state.get('games_played', 0) or 0) + 1
+        games_won = int(image_state.get('games_won', 0) or 0) + (1 if game_score.success else 0)
+        total_time = float(image_state.get('total_time', 0.0) or 0.0) + float(game_score.time_taken)
+        best_time = image_state.get('best_time')
+        if game_score.success:
+            best_time = float(game_score.time_taken) if best_time is None else min(float(best_time), float(game_score.time_taken))
+
+        history = image_state.get('iq_history', [])
+        history.append({
+            'played_at': timezone.now().isoformat(),
+            'iq_level': new_iq,
+            'level': int(game_score.level),
+            'grid_size': grid_size,
+            'time_taken': float(game_score.time_taken),
+            'success': bool(game_score.success),
+        })
+
+        image_state.update({
+            'iq_level': new_iq,
+            'games_played': games_played,
+            'games_won': games_won,
+            'win_rate': round((games_won / games_played) * 100, 2),
+            'best_time': best_time,
+            'avg_time': round(total_time / games_played, 2),
+            'total_time': round(total_time, 2),
+            'highest_level': max(int(image_state.get('highest_level', 1) or 1), int(game_score.level)),
+            'last_grid_size': grid_size,
+            'last_move_count': move_count,
+            'last_time_limit': int(time_limit),
+            'iq_history': history[-40:],
+            'updated_at': timezone.now().isoformat(),
+        })
+
+        preferences['image_dragger'] = image_state
+        player.preferences = preferences
     
     @action(detail=False, methods=['post'])
     def start_session(self, request):
         """Start or resume a game session"""
         user = request.user
-        game_type = request.data.get('game_type')
+        game_type = str(request.data.get('game_type', '')).strip().lower()
+
+        if not game_type:
+            return Response(
+                {'error': 'game_type is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Get or create player profile
         player, _ = PlayerProfile.objects.get_or_create(
@@ -111,7 +266,13 @@ class GameSessionViewSet(viewsets.ModelViewSet):
             }
         )
         
-        game = get_object_or_404(Game, game_type=game_type)
+        game = self._get_or_create_game(game_type)
+
+        if not game.is_active:
+            return Response(
+                {'error': 'This game is currently disabled'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         # Get or create session
         session, created = GameSession.objects.get_or_create(
@@ -133,19 +294,52 @@ class GameSessionViewSet(viewsets.ModelViewSet):
     def submit_score(self, request):
         """Submit game score"""
         session_uuid = request.data.get('session_uuid')
-        level = request.data.get('level')
-        score = request.data.get('score')
-        time_taken = request.data.get('time_taken')
-        success = request.data.get('success', False)
-        accuracy = request.data.get('accuracy', 100.0)
+
+        try:
+            level = int(request.data.get('level', 1) or 1)
+            score = int(request.data.get('score', 0) or 0)
+            time_taken = float(request.data.get('time_taken', 0) or 0)
+            accuracy = float(request.data.get('accuracy', 100.0) or 100.0)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'Invalid numeric fields in score payload'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        success_value = request.data.get('success', False)
+        if isinstance(success_value, str):
+            success = success_value.strip().lower() in ['1', 'true', 'yes', 'on']
+        else:
+            success = bool(success_value)
+
+        level = max(level, 1)
+        score = max(score, 0)
+        time_taken = max(time_taken, 0.0)
+        accuracy = max(0.0, min(accuracy, 100.0))
+
         metadata = request.data.get('metadata', {})
+
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        if not session_uuid:
+            return Response(
+                {'error': 'session_uuid is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         session = get_object_or_404(GameSession, session_uuid=session_uuid)
+
+        if session.player.user_id != request.user.id:
+            return Response(
+                {'error': 'Session does not belong to the authenticated user'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         # Calculate bonus points
         bonus_points = 0
         if success:
-            if time_taken < 10:
+            if time_taken > 0 and time_taken < 10:
                 bonus_points += 50
             if accuracy == 100:
                 bonus_points += 100
@@ -187,6 +381,10 @@ class GameSessionViewSet(viewsets.ModelViewSet):
         player = session.player
         player.total_score += total_score
         player.total_games_played += 1
+
+        if session.game.game_type == 'image_dragger':
+            self._update_image_dragger_preferences(player, game_score)
+
         player.save()
         
         # Update leaderboard
@@ -198,6 +396,45 @@ class GameSessionViewSet(viewsets.ModelViewSet):
         return Response({
             'session': GameSessionSerializer(session).data,
             'score': GameScoreSerializer(game_score).data
+        })
+
+    @action(detail=False, methods=['get'])
+    def image_dragger_profile(self, request):
+        """Return adaptive IQ settings and play statistics for image dragger."""
+        user = request.user
+
+        player, _ = PlayerProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                'player_name': user.username,
+                'grade': getattr(user, 'class_level', 6)
+            }
+        )
+
+        image_state = (player.preferences or {}).get('image_dragger', {})
+        iq_level = int(image_state.get('iq_level', 100) or 100)
+
+        current_level = 1
+        image_session = GameSession.objects.filter(
+            player=player,
+            game__game_type='image_dragger'
+        ).first()
+        if image_session:
+            current_level = image_session.current_level
+
+        difficulty = self._get_image_difficulty(iq_level, current_level)
+
+        return Response({
+            'iq_level': difficulty['iq_level'],
+            'recommended_grid_size': difficulty['grid_size'],
+            'recommended_time_limit': difficulty['time_limit_seconds'],
+            'current_level': current_level,
+            'games_played': int(image_state.get('games_played', 0) or 0),
+            'games_won': int(image_state.get('games_won', 0) or 0),
+            'win_rate': float(image_state.get('win_rate', 0.0) or 0.0),
+            'best_time': image_state.get('best_time'),
+            'avg_time': image_state.get('avg_time'),
+            'last_grid_size': image_state.get('last_grid_size', 3),
         })
     
     def _update_leaderboard(self, session):
