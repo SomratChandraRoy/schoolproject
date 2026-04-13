@@ -9,12 +9,34 @@ from datetime import timedelta
 from django.conf import settings
 from workos import WorkOSClient
 from rest_framework.authtoken.models import Token
+import jwt as pyjwt
+import re
+import time
 from .models import User, StudySession, Note
 from .serializers import UserSerializer, UserProfileSerializer, StudySessionSerializer, NoteSerializer
 from .permissions import IsAdmin
 from quizzes.models import QuizAttempt
 from games.models import GameSession
 from books.models import Bookmark
+
+
+ROOM_SLUG_REGEX = re.compile(r'[^a-zA-Z0-9_-]+')
+
+
+def _normalize_room_slug(raw_room):
+    room = (raw_room or '').strip()
+
+    # Support users pasting a full room path and keep only the room slug.
+    if '/' in room:
+        room = room.split('/')[-1]
+
+    room = ROOM_SLUG_REGEX.sub('-', room)
+    room = room.strip('-_').lower()
+
+    if not room:
+        room = f'class-{int(time.time())}'
+
+    return room[:120]
 
 class UserDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -170,6 +192,88 @@ class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
+
+
+class VideoCallTokenView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        app_id = settings.JAAS_APP_ID
+        domain = settings.JAAS_DOMAIN
+
+        if not app_id:
+            return Response({
+                'error': 'Video call service is not configured on server (missing JAAS_APP_ID).'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        room_slug = _normalize_room_slug(
+            request.data.get('room_name') or request.data.get('room')
+        )
+        full_room_name = f'{app_id}/{room_slug}'
+
+        user = request.user
+        default_name = f'{user.first_name} {user.last_name}'.strip() or user.username
+        display_name = (request.data.get('display_name') or default_name).strip()
+
+        token = None
+        expires_at = None
+        key_id = settings.JAAS_KID
+        private_key = settings.JAAS_PRIVATE_KEY
+
+        if key_id and private_key:
+            issued_at = int(time.time())
+            expires_at = issued_at + max(300, settings.JAAS_JWT_TTL_SECONDS)
+
+            payload = {
+                'aud': 'jitsi',
+                'iss': 'chat',
+                'sub': app_id,
+                'room': room_slug,
+                'iat': issued_at,
+                'nbf': issued_at - 5,
+                'exp': expires_at,
+                'context': {
+                    'user': {
+                        'name': display_name,
+                        'email': user.email or '',
+                        'moderator': True,
+                    }
+                }
+            }
+
+            headers = {
+                'kid': f'{app_id}/{key_id}',
+                'typ': 'JWT',
+                'alg': 'RS256',
+            }
+
+            try:
+                token = pyjwt.encode(
+                    payload,
+                    private_key,
+                    algorithm='RS256',
+                    headers=headers,
+                )
+            except Exception as token_error:
+                return Response({
+                    'error': f'Failed to generate video token: {str(token_error)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        elif settings.JAAS_REQUIRE_AUTH_TOKEN:
+            return Response({
+                'error': 'JaaS JWT is required but JAAS_KID/JAAS_PRIVATE_KEY are missing.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            'domain': domain,
+            'app_id': app_id,
+            'room_slug': room_slug,
+            'room_name': full_room_name,
+            'display_name': display_name,
+            'script_url': f'https://{domain}/{app_id}/external_api.js',
+            'jwt': token,
+            'expires_at': expires_at,
+            'requires_jwt': settings.JAAS_REQUIRE_AUTH_TOKEN,
+        })
 
 
 class WorkOSAuthURLView(APIView):
@@ -417,9 +521,10 @@ class AdminPanelView(APIView):
 class NoteListCreateView(generics.ListCreateAPIView):
     serializer_class = NoteSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
-        return Note.objects.filter(user=self.request.user)
+        return Note.objects.filter(user=self.request.user).order_by('-updated_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -439,23 +544,29 @@ class NoteSyncView(APIView):
         synced_notes = []
 
         for note_data in notes_data:
+            note_payload = {
+                'title': note_data.get('title', 'Untitled'),
+                'content': note_data.get('content', ''),
+            }
+
             # If backend ID exists, update
             if note_data.get('id'):
                 try:
-                    note = Note.objects.get(id=note_data['id'], user=request.user)
-                    serializer = NoteSerializer(note, data=note_data, partial=True)
+                    note_id = int(note_data['id'])
+                    note = Note.objects.get(id=note_id, user=request.user)
+                    serializer = NoteSerializer(note, data=note_payload, partial=True)
                     if serializer.is_valid():
                         serializer.save()
                         synced_notes.append(serializer.data)
-                except Note.DoesNotExist:
+                except (Note.DoesNotExist, TypeError, ValueError):
                     # Treat as new if ID not found (unlikely but safe)
-                    serializer = NoteSerializer(data=note_data)
+                    serializer = NoteSerializer(data=note_payload)
                     if serializer.is_valid():
                         serializer.save(user=request.user)
                         synced_notes.append(serializer.data)
             else:
                 # Create new
-                serializer = NoteSerializer(data=note_data)
+                serializer = NoteSerializer(data=note_payload)
                 if serializer.is_valid():
                     serializer.save(user=request.user)
                     synced_notes.append(serializer.data)

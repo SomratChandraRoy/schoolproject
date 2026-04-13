@@ -196,6 +196,14 @@ else:
     # Fallback to single key if multiple keys not provided
     GEMINI_API_KEYS = [GEMINI_API_KEY] if GEMINI_API_KEY else []
 
+# 8x8 JaaS (Video Call) settings
+JAAS_DOMAIN = os.getenv('JAAS_DOMAIN', '8x8.vc').strip() or '8x8.vc'
+JAAS_APP_ID = os.getenv('JAAS_APP_ID', '').strip()
+JAAS_KID = os.getenv('JAAS_KID', '').strip()
+JAAS_PRIVATE_KEY = os.getenv('JAAS_PRIVATE_KEY', '').replace('\\n', '\n').strip()
+JAAS_JWT_TTL_SECONDS = int(os.getenv('JAAS_JWT_TTL_SECONDS', '3600'))
+JAAS_REQUIRE_AUTH_TOKEN = os.getenv('JAAS_REQUIRE_AUTH_TOKEN', 'False') == 'True'
+
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 

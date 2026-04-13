@@ -206,11 +206,11 @@ const Dashboard: React.FC = () => {
   const activityMixLineConfig = {
     desktop: {
       label: "Points",
-      color: "hsl(var(--chart-1))",
+      color: "var(--chart-4)",
     },
     mobile: {
       label: "Hours",
-      color: "hsl(var(--chart-2))",
+      color: "var(--chart-2)",
     },
   } satisfies ChartConfig;
 
@@ -463,16 +463,16 @@ const Dashboard: React.FC = () => {
                         />
                         <Line
                           dataKey="desktop"
-                          dot={false}
+                          dot={{ r: 2, fill: "var(--color-desktop)" }}
                           stroke="var(--color-desktop)"
-                          strokeWidth={2}
+                          strokeWidth={2.5}
                           type="monotone"
                         />
                         <Line
                           dataKey="mobile"
-                          dot={false}
+                          dot={{ r: 2, fill: "var(--color-mobile)" }}
                           stroke="var(--color-mobile)"
-                          strokeWidth={2}
+                          strokeWidth={2.5}
                           type="monotone"
                         />
                       </LineChart>

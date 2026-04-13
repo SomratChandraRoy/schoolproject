@@ -45,6 +45,8 @@ import HeroPage from "./pages/HeroPage";
 
 //import pdfd for cheking pdf viewer !
 import Pdfd from "./pages/Pdfd";
+import NotFound from "./pages/NotFound";
+
 // Import components
 import AIChat from "./components/AIChat";
 import EnhancedAIChat from "./components/EnhancedAIChat";
@@ -264,6 +266,9 @@ function App() {
                 }>
                 <Route path="/quiz/manage" element={<QuizManagement />} />
               </Route>
+
+              {/* 404 Catch-all Route - Must be last */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
 
