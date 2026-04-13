@@ -11,35 +11,8 @@ django.setup()
 
 from games.models import Game
 
-# Define the three games from the specifications
+# Define active games for the Games Hub
 games_data = [
-    {
-        'game_type': 'memory_pattern',
-        'name': 'Memory Pattern',
-        'description': 'Watch and repeat the color pattern. Test your memory skills!',
-        'min_grade': 6,
-        'max_grade': 12,
-        'base_points': 100,
-        'is_active': True
-    },
-    {
-        'game_type': 'ship_find',
-        'name': 'Ship Find',
-        'description': 'Find all hidden ships on the grid. A memory-based battleship game!',
-        'min_grade': 6,
-        'max_grade': 12,
-        'base_points': 150,
-        'is_active': True
-    },
-    {
-        'game_type': 'number_hunt',
-        'name': 'Number Hunt',
-        'description': 'Click numbers in sequential order. Test your memory and speed!',
-        'min_grade': 6,
-        'max_grade': 12,
-        'base_points': 120,
-        'is_active': True
-    },
     {
         'game_type': 'image_dragger',
         'name': 'Image Dragger',
@@ -49,21 +22,45 @@ games_data = [
         'base_points': 180,
         'is_active': True
     },
+    {
+        'game_type': 'math_quiz',
+        'name': 'MathRush',
+        'description': 'Solve endless math challenges as fast as you can in a polished game UI.',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 150,
+        'is_active': True
+    },
+    {
+        'game_type': 'molecular_memory_mechanics',
+        'name': 'Molecular Memory & Mechanics',
+        'description': 'Play the live molecular memory and mechanics challenge hosted on a dedicated subdomain.',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 170,
+        'is_active': True
+    },
 ]
+
+removed_games = ['memory_pattern', 'ship_find', 'number_hunt']
 
 print("🎮 Initializing games in database...")
 print("=" * 50)
 
 for game_data in games_data:
-    game, created = Game.objects.get_or_create(
+    game, created = Game.objects.update_or_create(
         game_type=game_data['game_type'],
         defaults=game_data
     )
-    
+
     if created:
         print(f"✅ Created: {game.name} ({game.game_type})")
     else:
-        print(f"ℹ️  Already exists: {game.name} ({game.game_type})")
+        print(f"♻️ Updated: {game.name} ({game.game_type})")
+
+deactivated = Game.objects.filter(game_type__in=removed_games, is_active=True).update(is_active=False)
+if deactivated:
+    print(f"🚫 Deactivated removed games: {deactivated}")
 
 print("=" * 50)
 print(f"✅ Total games in database: {Game.objects.count()}")

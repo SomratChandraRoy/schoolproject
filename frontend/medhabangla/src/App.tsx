@@ -17,9 +17,8 @@ import VideoCall from "./pages/VideoCall";
 import Games from "./pages/Games";
 import GamesHub from "./pages/games/GamesHub";
 import MemoryPattern from "./pages/games/MemoryPattern";
-import ShipFind from "./pages/games/ShipFind";
-import NumberHunt from "./pages/games/NumberHunt";
 import ImageDragger from "./pages/games/ImageDragger";
+import MathRush from "./pages/games/MathRush/App";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import NotesFileSystem from "./pages/NotesFileSystem"; // File system notes with local storage
@@ -57,6 +56,7 @@ import BanCheck from "./components/BanCheck";
 import MacDockNav from "./components/MacDock";
 import { DarkModeProvider } from "./contexts/DarkModeContext";
 import Footer from "./components/Footer";
+import { BlinkUIProvider } from "@blinkdotnew/ui";
 
 // Import PWA utilities
 import {
@@ -192,19 +192,20 @@ function App() {
                 <Route path="/games-old" element={<Games />} />
                 {/* New games routes */}
                 <Route path="/games" element={<GamesHub />} />
-                <Route
-                  path="/games/memory_pattern"
-                  element={<MemoryPattern />}
-                />
-                <Route path="/games/ship_find" element={<ShipFind />} />
-                <Route path="/games/number_hunt" element={<NumberHunt />} />
                 <Route path="/games/image_dragger" element={<ImageDragger />} />
                 {/* Legacy placeholder routes */}
                 <Route
                   path="/games/memory_matrix"
                   element={<MemoryPattern />}
                 />
-                <Route path="/games/math_quiz" element={<MemoryPattern />} />
+                <Route
+                  path="/games/math_quiz"
+                  element={
+                    <BlinkUIProvider theme="linear" darkMode="light">
+                      <MathRush />
+                    </BlinkUIProvider>
+                  }
+                />
                 <Route
                   path="/games/equation_storm"
                   element={<MemoryPattern />}

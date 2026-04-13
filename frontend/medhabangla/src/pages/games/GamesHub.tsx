@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { AlertTriangle, Gamepad2, RotateCcw, Target } from "lucide-react";
 import GameCard from "../../components/games/GameCard";
 import Leaderboard from "../../components/games/Leaderboard";
 import gameService, {
@@ -100,7 +101,9 @@ const GamesHub: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-8 text-center">
-            <div className="text-6xl mb-4">⚠️</div>
+            <div className="flex justify-center mb-4">
+              <AlertTriangle className="h-12 w-12 text-red-500" />
+            </div>
             <h2 className="text-2xl font-bold text-red-800 dark:text-red-200 mb-2">
               Failed to Load Games
             </h2>
@@ -111,7 +114,8 @@ const GamesHub: React.FC = () => {
                 setLoading(true);
                 loadGamesAndProfile();
               }}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+              className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+              <RotateCcw className="h-4 w-4" />
               Try Again
             </button>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
@@ -129,7 +133,7 @@ const GamesHub: React.FC = () => {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-5xl">🎮</span>
+            <Gamepad2 className="h-11 w-11" />
             <h1 className="text-4xl font-bold">Games Hub</h1>
           </div>
           <p className="text-xl opacity-90">
@@ -195,8 +199,9 @@ const GamesHub: React.FC = () => {
 
         {/* How to Play Section */}
         <div className="mt-12 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-4">
-            🎯 How to Play
+          <h3 className="text-lg font-medium text-blue-800 dark:text-blue-200 mb-4 flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            How to Play
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex gap-4">

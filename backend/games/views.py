@@ -18,30 +18,6 @@ import uuid
 
 
 DEFAULT_GAME_CONFIGS = {
-    'memory_pattern': {
-        'name': 'Memory Pattern',
-        'description': 'Watch and repeat the color pattern. Test your memory skills!',
-        'min_grade': 6,
-        'max_grade': 12,
-        'base_points': 100,
-        'is_active': True,
-    },
-    'ship_find': {
-        'name': 'Ship Find',
-        'description': 'Find all hidden ships on the grid. A memory-based battleship game!',
-        'min_grade': 6,
-        'max_grade': 12,
-        'base_points': 150,
-        'is_active': True,
-    },
-    'number_hunt': {
-        'name': 'Number Hunt',
-        'description': 'Click numbers in sequential order. Test your memory and speed!',
-        'min_grade': 6,
-        'max_grade': 12,
-        'base_points': 120,
-        'is_active': True,
-    },
     'image_dragger': {
         'name': 'Image Dragger',
         'description': 'Drag puzzle pieces into the correct place before time runs out.',
@@ -50,7 +26,25 @@ DEFAULT_GAME_CONFIGS = {
         'base_points': 180,
         'is_active': True,
     },
+    'math_quiz': {
+        'name': 'MathRush',
+        'description': 'Solve endless math challenges as fast as you can in a polished game UI.',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 150,
+        'is_active': True,
+    },
+    'molecular_memory_mechanics': {
+        'name': 'Molecular Memory & Mechanics',
+        'description': 'Play the live molecular memory and mechanics challenge hosted on a dedicated subdomain.',
+        'min_grade': 6,
+        'max_grade': 12,
+        'base_points': 170,
+        'is_active': True,
+    },
 }
+
+REMOVED_GAME_TYPES = {'memory_pattern', 'ship_find', 'number_hunt'}
 
 
 class GameViewSet(viewsets.ModelViewSet):
@@ -59,6 +53,9 @@ class GameViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        # Hide deprecated games from hub/API responses.
+        Game.objects.filter(game_type__in=REMOVED_GAME_TYPES, is_active=True).update(is_active=False)
+
         # Ensure core games exist so the frontend hub can list them reliably.
         for game_type, defaults in DEFAULT_GAME_CONFIGS.items():
             Game.objects.get_or_create(game_type=game_type, defaults=defaults)
