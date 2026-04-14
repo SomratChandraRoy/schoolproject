@@ -125,6 +125,7 @@ interface SmartComposerProps {
   placeholder: string;
   disabled?: boolean;
   onAttach?: (file: File) => void;
+  onAudioVisualizationClick?: () => void;
   submitLabel?: string;
 }
 
@@ -135,6 +136,7 @@ const SmartComposer: React.FC<SmartComposerProps> = ({
   placeholder,
   disabled = false,
   onAttach,
+  onAudioVisualizationClick,
   submitLabel = "Send",
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -276,6 +278,7 @@ const SmartComposer: React.FC<SmartComposerProps> = ({
               size="icon"
               className="h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
               disabled={disabled}
+              onClick={onAudioVisualizationClick}
               aria-label="Audio visualization">
               <IconWaveSine className="size-5" />
             </Button>
@@ -1256,6 +1259,47 @@ const Chat: React.FC = () => {
     setMobileMemberView("chat");
   };
 
+  const openAudioVisualizationWindow = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const popupPath = "/ai-voice-call-window";
+    const isSmallViewport = window.matchMedia("(max-width: 768px)").matches;
+
+    if (isSmallViewport) {
+      const openedTab = window.open(popupPath, "_blank");
+      if (!openedTab) {
+        navigate(popupPath);
+      }
+      return;
+    }
+
+    const popupWidth = Math.min(1200, Math.max(760, window.outerWidth - 160));
+    const popupHeight = Math.min(860, Math.max(620, window.outerHeight - 120));
+    const popupLeft = Math.max(
+      0,
+      window.screenX + (window.outerWidth - popupWidth) / 2,
+    );
+    const popupTop = Math.max(
+      0,
+      window.screenY + (window.outerHeight - popupHeight) / 2,
+    );
+
+    const popup = window.open(
+      popupPath,
+      "sopan-ai-voice-visualizer",
+      `popup=yes,width=${Math.round(popupWidth)},height=${Math.round(popupHeight)},left=${Math.round(popupLeft)},top=${Math.round(popupTop)},resizable=yes,scrollbars=yes`,
+    );
+
+    if (popup) {
+      popup.focus();
+      return;
+    }
+
+    navigate(popupPath);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
@@ -1512,6 +1556,9 @@ const Chat: React.FC = () => {
                           onChange={handleMemberInputChange}
                           onSubmit={sendMessage}
                           onAttach={(file) => void handleFileUpload(file)}
+                          onAudioVisualizationClick={
+                            openAudioVisualizationWindow
+                          }
                           disabled={uploading || sending}
                           placeholder="Type a message for your classmate..."
                           submitLabel="Send member message"
@@ -1752,6 +1799,7 @@ const Chat: React.FC = () => {
                           "File upload for AI chat will be added in the next iteration.",
                         );
                       }}
+                      onAudioVisualizationClick={openAudioVisualizationWindow}
                       disabled={aiSending}
                       placeholder="Ask AI about lessons, homework, exam prep, or notes..."
                       submitLabel="Send AI message"

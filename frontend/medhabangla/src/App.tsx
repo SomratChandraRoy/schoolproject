@@ -41,6 +41,7 @@ import Flashcards from "./pages/Flashcards";
 import StudentDashboard from "./pages/StudentDashboard";
 import OfflineAIPage from "./pages/OfflineAIPage";
 import TranslatorPage from "./pages/Translator";
+import AIVoiceCallWindow from "./pages/AIVoiceCallWindow";
 import HeroPage from "./pages/HeroPage";
 import ContactAdmin from "./pages/ContactAdmin";
 import Plans from "./pages/Plans";
@@ -253,6 +254,10 @@ function App() {
                 <Route path="/translator" element={<TranslatorPage />} />
                 <Route path="/study-plan" element={<StudyPlan />} />
                 <Route path="/voice-tutor" element={<VoiceTutor />} />
+                <Route
+                  path="/ai-voice-call-window"
+                  element={<AIVoiceCallWindow />}
+                />
                 <Route path="/document-vision" element={<DocumentAnalysis />} />
                 <Route path="/flashcards" element={<Flashcards />} />
               </Route>
@@ -289,7 +294,7 @@ function App() {
           <Footer />
 
           {/* Premium AI Chat with ElevenLabs UI Components */}
-          <PremiumAIChatWithElevenLabsUI />
+          {/* <PremiumAIChatWithElevenLabsUI /> */}
 
           {/* Enhanced AI Chat Assistant with ElevenLabs-inspired UI */}
           {/* <EnhancedAIChat /> */}
