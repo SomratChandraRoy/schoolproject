@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, ProfileView, UserListView, StudySessionView, StudyStatsView, WorkOSAuthView, WorkOSAuthURLView, AdminPanelView, UpdateUserProfileView, NoteListCreateView, NoteDetailView, NoteSyncView, UserDashboardView, GlobalLeaderboardView, VideoCallTokenView
+from .views import RegisterView, ProfileView, UserListView, StudySessionView, StudyStatsView, WorkOSAuthView, WorkOSAuthURLView, AdminPanelView, UpdateUserProfileView, NoteListCreateView, NoteDetailView, NoteSyncView, UserDashboardView, GlobalLeaderboardView, VideoCallTokenView, VideoCallConfigView
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
@@ -17,5 +17,6 @@ urlpatterns = [
     path('notes/', NoteListCreateView.as_view(), name='notes-list-create'),
     path('notes/<int:pk>/', NoteDetailView.as_view(), name='notes-detail'),
     path('notes/sync/', NoteSyncView.as_view(), name='notes-sync'),
+    path('video-call/config/', VideoCallConfigView.as_view(), name='video-call-config'),
     path('video-call/token/', VideoCallTokenView.as_view(), name='video-call-token'),
 ]

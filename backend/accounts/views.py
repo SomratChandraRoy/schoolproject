@@ -21,10 +21,11 @@ from books.models import Bookmark
 
 
 ROOM_SLUG_REGEX = re.compile(r'[^a-zA-Z0-9_-]+')
+APP_ID_REGEX = re.compile(r'^[a-zA-Z0-9-]{10,200}$')
 
 
 def _normalize_room_slug(raw_room):
-    room = (raw_room or '').strip()
+    room = str(raw_room).strip() if raw_room is not None else ''
 
     # Support users pasting a full room path and keep only the room slug.
     if '/' in room:
@@ -37,6 +38,63 @@ def _normalize_room_slug(raw_room):
         room = f'class-{int(time.time())}'
 
     return room[:120]
+
+
+def _extract_app_id_from_room(raw_room):
+    room = str(raw_room).strip() if raw_room is not None else ''
+
+    if '/' not in room:
+        return ''
+
+    return room.split('/')[0].strip()
+
+
+def _resolve_app_id(raw_app_id, raw_room):
+    configured_app_id = settings.JAAS_APP_ID
+    if configured_app_id:
+        return configured_app_id
+
+    fallback_app_id = str(raw_app_id).strip() if raw_app_id is not None else ''
+    if fallback_app_id:
+        return fallback_app_id
+
+    return _extract_app_id_from_room(raw_room)
+
+
+def _video_call_config_status(payload=None):
+    payload = payload or {}
+    room_value = payload.get('room_name') or payload.get('room')
+    app_id = _resolve_app_id(payload.get('app_id'), room_value)
+    domain = settings.JAAS_DOMAIN
+    key_id = settings.JAAS_KID
+    private_key = settings.JAAS_PRIVATE_KEY
+    require_jwt = settings.JAAS_REQUIRE_AUTH_TOKEN
+    has_jwt_signing = bool(key_id and private_key)
+
+    missing_fields = []
+
+    if not app_id:
+        missing_fields.append('JAAS_APP_ID')
+
+    if require_jwt and not key_id:
+        missing_fields.append('JAAS_KID')
+
+    if require_jwt and not private_key:
+        missing_fields.append('JAAS_PRIVATE_KEY')
+
+    app_id_valid = bool(app_id and APP_ID_REGEX.match(app_id))
+    if app_id and not app_id_valid:
+        missing_fields.append('JAAS_APP_ID_FORMAT')
+
+    return {
+        'domain': domain,
+        'app_id': app_id,
+        'requires_jwt': require_jwt,
+        'has_jwt_signing': has_jwt_signing,
+        'configured': bool(app_id_valid),
+        'token_endpoint_ready': bool(app_id_valid and (has_jwt_signing or not require_jwt)),
+        'missing_fields': missing_fields,
+    }
 
 class UserDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -194,17 +252,57 @@ class UserListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
 
 
+class VideoCallConfigView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        status_data = _video_call_config_status(
+            {
+                'app_id': request.query_params.get('app_id'),
+            }
+        )
+
+        response = {
+            'domain': status_data['domain'],
+            'app_id': status_data['app_id'] or None,
+            'configured': status_data['configured'],
+            'requires_jwt': status_data['requires_jwt'],
+            'has_jwt_signing': status_data['has_jwt_signing'],
+            'token_endpoint_ready': status_data['token_endpoint_ready'],
+            'missing_fields': status_data['missing_fields'],
+        }
+
+        if not status_data['token_endpoint_ready']:
+            response['error'] = 'Video call backend is not fully configured.'
+            response['hint'] = (
+                'Set JAAS_APP_ID and, if JAAS_REQUIRE_AUTH_TOKEN=True, also set JAAS_KID and JAAS_PRIVATE_KEY.'
+            )
+
+        return Response(response)
+
+
 class VideoCallTokenView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        app_id = settings.JAAS_APP_ID
-        domain = settings.JAAS_DOMAIN
+        status_data = _video_call_config_status(request.data)
+        app_id = status_data['app_id']
+        domain = status_data['domain']
 
         if not app_id:
             return Response({
-                'error': 'Video call service is not configured on server (missing JAAS_APP_ID).'
+                'error': 'Video call service is not configured on server (missing JAAS_APP_ID).',
+                'code': 'missing_app_id',
+                'missing_fields': status_data['missing_fields'],
+                'hint': 'Set JAAS_APP_ID in backend environment, or send app_id in request for fallback configuration.',
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        if not APP_ID_REGEX.match(app_id):
+            return Response({
+                'error': 'Invalid JaaS app id format.',
+                'code': 'invalid_app_id_format',
+                'missing_fields': status_data['missing_fields'],
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         room_slug = _normalize_room_slug(
             request.data.get('room_name') or request.data.get('room')
@@ -213,7 +311,12 @@ class VideoCallTokenView(APIView):
 
         user = request.user
         default_name = f'{user.first_name} {user.last_name}'.strip() or user.username
-        display_name = (request.data.get('display_name') or default_name).strip()
+        display_name_raw = request.data.get('display_name')
+        display_name = (
+            str(display_name_raw).strip() if display_name_raw is not None else default_name
+        )
+        display_name = display_name[:80] if display_name else default_name
+        is_moderator = bool(user.is_teacher or user.is_admin)
 
         token = None
         expires_at = None
@@ -234,9 +337,10 @@ class VideoCallTokenView(APIView):
                 'exp': expires_at,
                 'context': {
                     'user': {
+                        'id': str(user.id),
                         'name': display_name,
                         'email': user.email or '',
-                        'moderator': True,
+                        'moderator': is_moderator,
                     }
                 }
             }
@@ -260,7 +364,9 @@ class VideoCallTokenView(APIView):
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         elif settings.JAAS_REQUIRE_AUTH_TOKEN:
             return Response({
-                'error': 'JaaS JWT is required but JAAS_KID/JAAS_PRIVATE_KEY are missing.'
+                'error': 'JaaS JWT is required but JAAS_KID/JAAS_PRIVATE_KEY are missing.',
+                'code': 'missing_jwt_signing_config',
+                'missing_fields': status_data['missing_fields'],
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
@@ -273,6 +379,7 @@ class VideoCallTokenView(APIView):
             'jwt': token,
             'expires_at': expires_at,
             'requires_jwt': settings.JAAS_REQUIRE_AUTH_TOKEN,
+            'moderator': is_moderator,
         })
 
 

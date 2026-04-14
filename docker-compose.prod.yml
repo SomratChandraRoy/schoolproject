@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -12,7 +12,7 @@ services:
     restart: unless-stopped
 
   backend:
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile.prod
     command: gunicorn medhabangla.wsgi:application --bind 0.0.0.0:8000
@@ -24,6 +24,12 @@ services:
     environment:
       - DEBUG=0
       - DATABASE_URL=postgresql://medhabangla_user:medhabangla_password@db:5432/medhabangla_db
+      - JAAS_DOMAIN=${JAAS_DOMAIN:-8x8.vc}
+      - JAAS_APP_ID=${JAAS_APP_ID:-}
+      - JAAS_KID=${JAAS_KID:-}
+      - JAAS_PRIVATE_KEY=${JAAS_PRIVATE_KEY:-}
+      - JAAS_JWT_TTL_SECONDS=${JAAS_JWT_TTL_SECONDS:-3600}
+      - JAAS_REQUIRE_AUTH_TOKEN=${JAAS_REQUIRE_AUTH_TOKEN:-False}
     depends_on:
       - db
     restart: unless-stopped
@@ -32,6 +38,8 @@ services:
     build:
       context: ./frontend/medhabangla
       dockerfile: Dockerfile.prod
+      args:
+        - VITE_API_URL=${VITE_API_URL:-}
     volumes:
       - frontend_build:/usr/share/nginx/html
     expose:
@@ -39,7 +47,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.nginx
     ports:
@@ -50,7 +58,7 @@ services:
       - media_volume:/app/media
       - frontend_build:/usr/share/nginx/html
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl  # Uncomment for SSL certificates
+      - ./ssl:/etc/nginx/ssl # Uncomment for SSL certificates
     depends_on:
       - backend
       - frontend

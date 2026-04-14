@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -22,6 +22,12 @@ services:
     environment:
       - DEBUG=1
       - DATABASE_URL=postgresql://medhabangla_user:medhabangla_password@db:5432/medhabangla_db
+      - JAAS_DOMAIN=${JAAS_DOMAIN:-8x8.vc}
+      - JAAS_APP_ID=${JAAS_APP_ID:-}
+      - JAAS_KID=${JAAS_KID:-}
+      - JAAS_PRIVATE_KEY=${JAAS_PRIVATE_KEY:-}
+      - JAAS_JWT_TTL_SECONDS=${JAAS_JWT_TTL_SECONDS:-3600}
+      - JAAS_REQUIRE_AUTH_TOKEN=${JAAS_REQUIRE_AUTH_TOKEN:-False}
     depends_on:
       - db
 

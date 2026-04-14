@@ -8,8 +8,11 @@ import React, {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Video, VideoOff } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const RAW_API_BASE_URL = (import.meta.env.VITE_API_URL || "").trim();
+const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
+const FRONTEND_JAAS_APP_ID = (import.meta.env.VITE_JAAS_APP_ID || "").trim();
 const DEFAULT_ROOM = "sopan-classroom";
+let jaasScriptLoadPromise: Promise<void> | null = null;
 
 type MeetingBootstrapResponse = {
   domain: string;
@@ -21,6 +24,25 @@ type MeetingBootstrapResponse = {
   jwt: string | null;
   expires_at: number | null;
   requires_jwt: boolean;
+};
+
+type VideoCallApiError = {
+  error?: string;
+  code?: string;
+  hint?: string;
+  missing_fields?: string[];
+};
+
+type VideoCallConfigResponse = {
+  domain: string;
+  app_id: string | null;
+  configured: boolean;
+  requires_jwt: boolean;
+  has_jwt_signing: boolean;
+  token_endpoint_ready: boolean;
+  missing_fields: string[];
+  error?: string;
+  hint?: string;
 };
 
 type JitsiApi = {
@@ -41,11 +63,24 @@ declare global {
 }
 
 const ensureExternalApiScript = (scriptUrl: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    if (window.JitsiMeetExternalAPI) {
-      resolve();
-      return;
-    }
+  if (window.JitsiMeetExternalAPI) {
+    return Promise.resolve();
+  }
+
+  if (jaasScriptLoadPromise) {
+    return jaasScriptLoadPromise;
+  }
+
+  jaasScriptLoadPromise = new Promise((resolve, reject) => {
+    const finalizeLoaded = () => {
+      if (window.JitsiMeetExternalAPI) {
+        resolve();
+        return;
+      }
+
+      jaasScriptLoadPromise = null;
+      reject(new Error("8x8 API script loaded but SDK is unavailable."));
+    };
 
     const selector = `script[data-jaas-script=\"true\"][src=\"${scriptUrl}\"]`;
     const existing = document.querySelector(
@@ -53,13 +88,20 @@ const ensureExternalApiScript = (scriptUrl: string): Promise<void> => {
     ) as HTMLScriptElement | null;
 
     if (existing) {
+      if (existing.dataset.loaded === "true") {
+        finalizeLoaded();
+        return;
+      }
+
       const onLoad = () => {
         cleanup();
-        resolve();
+        existing.dataset.loaded = "true";
+        finalizeLoaded();
       };
 
       const onError = () => {
         cleanup();
+        jaasScriptLoadPromise = null;
         reject(new Error("Failed to load 8x8 script"));
       };
 
@@ -78,11 +120,20 @@ const ensureExternalApiScript = (scriptUrl: string): Promise<void> => {
     script.async = true;
     script.dataset.jaasScript = "true";
 
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load 8x8 script"));
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      finalizeLoaded();
+    };
+
+    script.onerror = () => {
+      jaasScriptLoadPromise = null;
+      reject(new Error("Failed to load 8x8 script"));
+    };
 
     document.head.appendChild(script);
   });
+
+  return jaasScriptLoadPromise;
 };
 
 const VideoCall: React.FC = () => {
@@ -116,6 +167,9 @@ const VideoCall: React.FC = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [configStatus, setConfigStatus] =
+    useState<VideoCallConfigResponse | null>(null);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
 
   const disposeConference = useCallback(() => {
     if (!apiRef.current) {
@@ -170,6 +224,16 @@ const VideoCall: React.FC = () => {
     try {
       handleLeave();
 
+      const fallbackAppId = FRONTEND_JAAS_APP_ID || configStatus?.app_id || "";
+      const payload: Record<string, string> = {
+        room_name: roomInput,
+        display_name: displayName,
+      };
+
+      if (fallbackAppId) {
+        payload.app_id = fallbackAppId;
+      }
+
       const response = await fetch(
         `${API_BASE_URL}/api/accounts/video-call/token/`,
         {
@@ -178,34 +242,47 @@ const VideoCall: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Token ${token}`,
           },
-          body: JSON.stringify({
-            room_name: roomInput,
-            display_name: displayName,
-          }),
+          body: JSON.stringify(payload),
         },
       );
 
-      const data = (await response.json()) as MeetingBootstrapResponse & {
-        error?: string;
-      };
+      const data = (await response.json()) as
+        | MeetingBootstrapResponse
+        | VideoCallApiError;
 
       if (!response.ok) {
-        throw new Error(data?.error || "Failed to create video call session.");
+        const errorData = data as VideoCallApiError;
+        const missingFieldsText =
+          errorData.missing_fields && errorData.missing_fields.length
+            ? ` Missing: ${errorData.missing_fields.join(", ")}.`
+            : "";
+        const hintText = errorData.hint ? ` ${errorData.hint}` : "";
+        throw new Error(
+          `${errorData.error || "Failed to create video call session."}${missingFieldsText}${hintText}`,
+        );
       }
 
-      await ensureExternalApiScript(data.script_url);
+      const bootstrap = data as MeetingBootstrapResponse;
+
+      if (bootstrap.requires_jwt && !bootstrap.jwt) {
+        throw new Error(
+          "Server requires a signed video token, but no token was returned.",
+        );
+      }
+
+      await ensureExternalApiScript(bootstrap.script_url);
 
       if (!window.JitsiMeetExternalAPI) {
         throw new Error("8x8 external API failed to initialize.");
       }
 
       const options: Record<string, unknown> = {
-        roomName: data.room_name,
+        roomName: bootstrap.room_name,
         parentNode: containerRef.current,
         width: "100%",
         height: "100%",
         userInfo: {
-          displayName: data.display_name,
+          displayName: bootstrap.display_name,
         },
         configOverwrite: {
           prejoinPageEnabled: true,
@@ -220,13 +297,13 @@ const VideoCall: React.FC = () => {
         },
       };
 
-      if (data.jwt) {
-        options.jwt = data.jwt;
+      if (bootstrap.jwt) {
+        options.jwt = bootstrap.jwt;
       }
 
-      const api = new window.JitsiMeetExternalAPI(data.domain, options);
+      const api = new window.JitsiMeetExternalAPI(bootstrap.domain, options);
       apiRef.current = api;
-      setActiveRoomName(data.room_name);
+      setActiveRoomName(bootstrap.room_name);
 
       api.addListener("videoConferenceJoined", () => {
         setIsConnected(true);
@@ -261,7 +338,72 @@ const VideoCall: React.FC = () => {
           : "Failed to connect to video call.",
       );
     }
-  }, [API_BASE_URL, displayName, disposeConference, handleLeave, roomInput]);
+  }, [
+    API_BASE_URL,
+    configStatus?.app_id,
+    displayName,
+    disposeConference,
+    handleLeave,
+    roomInput,
+  ]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsConfigLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const query = FRONTEND_JAAS_APP_ID
+      ? `?app_id=${encodeURIComponent(FRONTEND_JAAS_APP_ID)}`
+      : "";
+
+    const loadConfigStatus = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/accounts/video-call/config/${query}`,
+          {
+            headers: {
+              Authorization: `Token ${token}`,
+            },
+          },
+        );
+
+        const data = (await response.json()) as VideoCallConfigResponse;
+        if (cancelled) {
+          return;
+        }
+
+        setConfigStatus(data);
+
+        if (!data.token_endpoint_ready) {
+          const missingText = data.missing_fields?.length
+            ? ` Missing: ${data.missing_fields.join(", ")}.`
+            : "";
+          setError(
+            `${data.error || "Video call backend is not ready."}${missingText} ${data.hint || "Configure backend env and restart server."}`,
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setError(
+            "Failed to verify video call configuration. Please check backend connectivity.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsConfigLoading(false);
+        }
+      }
+    };
+
+    loadConfigStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [API_BASE_URL]);
 
   useEffect(() => {
     const roomFromUrl = searchParams.get("room");
@@ -326,6 +468,23 @@ const VideoCall: React.FC = () => {
                 backend for production safety.
               </p>
 
+              {isConfigLoading && (
+                <div className="mt-4 rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-xs text-slate-300">
+                  Checking video service configuration...
+                </div>
+              )}
+
+              {!isConfigLoading &&
+                configStatus &&
+                !configStatus.token_endpoint_ready && (
+                  <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                    Backend video setup is incomplete.
+                    {configStatus.missing_fields?.length > 0
+                      ? ` Missing: ${configStatus.missing_fields.join(", ")}.`
+                      : ""}
+                  </div>
+                )}
+
               <div className="mt-5 space-y-4">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-300">
@@ -359,7 +518,11 @@ const VideoCall: React.FC = () => {
 
                 <button
                   onClick={joinConference}
-                  disabled={isJoining || !roomInput.trim()}
+                  disabled={
+                    isJoining ||
+                    !roomInput.trim() ||
+                    (configStatus ? !configStatus.token_endpoint_ready : false)
+                  }
                   className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                   {isJoining ? (
                     <>
