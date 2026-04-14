@@ -1,5 +1,6 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { getBanReason, isUserBanned } from "../utils/roleUtils";
 
 interface ProtectedRouteProps {
   isAllowed?: boolean;
@@ -9,11 +10,11 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   isAllowed = true,
-  redirectPath = '/login',
+  redirectPath = "/login",
   children,
 }) => {
-  const token = localStorage.getItem('token');
-  const userStr = localStorage.getItem('user');
+  const token = localStorage.getItem("token");
+  const userStr = localStorage.getItem("user");
 
   if (!token) {
     return <Navigate to="/login?unauthorized=true" replace />;
@@ -23,18 +24,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (userStr) {
     try {
       const user = JSON.parse(userStr);
-      if (user.is_banned) {
-        // Clear storage and redirect to login with ban message
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('profilePicture');
-        localStorage.removeItem('userClass');
-
-        const banReason = encodeURIComponent(user.ban_reason || 'No reason provided');
-        return <Navigate to={`/login?error=banned&ban_reason=${banReason}`} replace />;
+      if (isUserBanned(user)) {
+        const banReason = encodeURIComponent(getBanReason(user));
+        return <Navigate to={`/contact-admin?reason=${banReason}`} replace />;
       }
     } catch (error) {
-      console.error('Error parsing user data:', error);
+      console.error("Error parsing user data:", error);
     }
   }
 

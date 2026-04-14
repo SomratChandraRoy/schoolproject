@@ -7,6 +7,7 @@ import os
 import warnings
 import requests
 import base64
+import re
 from django.conf import settings
 
 # Suppress Gemini deprecation warning
@@ -37,9 +38,14 @@ class AIService:
                 'quiz_flashcard_provider': settings_obj.quiz_flashcard_provider,
                 'doc_vision_provider': settings_obj.doc_vision_provider,
                 'general_chat_provider': settings_obj.general_chat_provider,
+                'chat_page_provider': settings_obj.chat_page_provider,
                 'gemini_api_key': settings_obj.gemini_api_key,
                 'groq_api_key': settings_obj.groq_api_key,
                 'alibaba_api_key': settings_obj.alibaba_api_key,
+                'elevenlabs_api_key': settings_obj.elevenlabs_api_key,
+                'flashcard_gemini_extra_keys': settings_obj.flashcard_gemini_extra_keys,
+                'flashcard_groq_extra_keys': settings_obj.flashcard_groq_extra_keys,
+                'flashcard_alibaba_extra_keys': settings_obj.flashcard_alibaba_extra_keys,
                 'ollama_base_url': settings_obj.ollama_base_url,
                 'ollama_username': settings_obj.ollama_username,
                 'ollama_password': settings_obj.ollama_password,
@@ -49,12 +55,29 @@ class AIService:
             print(f"[AI Service] Could not load settings: {e}, using defaults")
             return {
                 'provider': 'auto',
+                'chat_page_provider': 'auto',
                 'groq_model': getattr(settings, 'GROQ_MODEL', 'llama-3.3-70b-versatile'),
+                'flashcard_gemini_extra_keys': '',
+                'flashcard_groq_extra_keys': '',
+                'flashcard_alibaba_extra_keys': '',
+                'elevenlabs_api_key': getattr(settings, 'ELEVENLABS_API_KEY', None),
                 'ollama_base_url': os.getenv('OLLAMA_BASE_URL', 'http://51.21.208.44'),
                 'ollama_username': os.getenv('OLLAMA_USERNAME', 'bipul'),
                 'ollama_password': os.getenv('OLLAMA_PASSWORD', 'Bipul$'),
                 'ollama_model': os.getenv('OLLAMA_MODEL', 'llama3'),
             }
+
+    def _parse_key_list(self, value):
+        if not value:
+            return []
+
+        parts = re.split(r'[\n,]+', str(value))
+        keys = []
+        for raw in parts:
+            key = raw.strip()
+            if key and key not in keys:
+                keys.append(key)
+        return keys
 
     def generate_with_groq(self, prompt, timeout=120, model_name=None, api_key_override=None):
         api_key = api_key_override or getattr(settings, 'GROQ_API_KEY', None)
@@ -99,6 +122,52 @@ class AIService:
             if not content: content = data.get('output', {}).get('text')
             return True, content, None
         except Exception as e: return False, '', f'Alibaba error: {str(e)}'
+
+    def generate_with_elevenlabs(self, prompt, timeout=120, model_name='eleven_multilingual_v2', api_key_override=None):
+        """Attempt ElevenLabs text generation and gracefully fallback if unavailable."""
+        api_key = api_key_override or getattr(settings, 'ELEVENLABS_API_KEY', None)
+        if not api_key:
+            return False, '', 'ElevenLabs API key not configured'
+
+        headers = {
+            'xi-api-key': api_key,
+            'Content-Type': 'application/json',
+        }
+
+        payload = {
+            'text': prompt,
+            'model_id': model_name,
+        }
+
+        candidate_urls = [
+            'https://api.elevenlabs.io/v1/text-generation',
+            f'https://api.elevenlabs.io/v1/text-generation/{model_name}',
+        ]
+
+        last_error = 'ElevenLabs text endpoint is unavailable'
+        for url in candidate_urls:
+            try:
+                response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+                if response.status_code != 200:
+                    last_error = f'ElevenLabs error: {response.status_code} - {response.text[:200]}'
+                    continue
+
+                data = response.json()
+                content = (
+                    data.get('generated_text')
+                    or data.get('text')
+                    or data.get('output_text')
+                    or data.get('output', {}).get('text')
+                    or data.get('response')
+                )
+                if content:
+                    return True, content, None
+
+                last_error = 'ElevenLabs returned empty text output'
+            except Exception as exc:
+                last_error = f'ElevenLabs error: {str(exc)}'
+
+        return False, '', last_error
 
     def generate_with_ollama(self, prompt, timeout=120):
         try:
@@ -146,21 +215,52 @@ class AIService:
 
         print(f"[AI Service] Targeting Provider: {target_provider} for feature: {feature_type or 'General'}")
 
-        api_keys = {'gemini': config.get('gemini_api_key'), 'groq': config.get('groq_api_key'), 'alibaba': config.get('alibaba_api_key')}
+        api_keys = {
+            'gemini': config.get('gemini_api_key'),
+            'groq': config.get('groq_api_key'),
+            'alibaba': config.get('alibaba_api_key'),
+            'elevenlabs': config.get('elevenlabs_api_key'),
+        }
         print(f"[AI Service] Keys overrides found: {[(k, bool(v)) for k, v in api_keys.items()]}")
 
-        def _try_provider(provider_name):
+        provider_key_pool = {}
+        for provider_name in ('gemini', 'groq', 'alibaba', 'elevenlabs'):
+            key_candidates = []
+            primary_key = api_keys.get(provider_name)
+            if primary_key:
+                key_candidates.append(primary_key)
+
+            if feature_type == 'quiz_flashcard_provider':
+                extra_key_field = f'flashcard_{provider_name}_extra_keys'
+                for extra_key in self._parse_key_list(config.get(extra_key_field)):
+                    if extra_key not in key_candidates:
+                        key_candidates.append(extra_key)
+
+            if not key_candidates:
+                key_candidates = [None]
+
+            provider_key_pool[provider_name] = key_candidates
+
+        if feature_type == 'quiz_flashcard_provider':
+            print(
+                "[AI Service] Flashcard key pool sizes: "
+                f"{[(name, len(keys)) for name, keys in provider_key_pool.items()]}"
+            )
+
+        def _try_provider(provider_name, api_key_override=None):
             if provider_name == 'groq':
-                return self.generate_with_groq(prompt, timeout, api_key_override=api_keys['groq'])
+                return self.generate_with_groq(prompt, timeout, api_key_override=api_key_override)
             if provider_name == 'gemini':
-                return self.generate_with_gemini(prompt, model_name, api_key_override=api_keys['gemini'])
+                return self.generate_with_gemini(prompt, model_name, api_key_override=api_key_override)
             if provider_name == 'alibaba':
-                return self.generate_with_alibaba(prompt, timeout, api_key_override=api_keys['alibaba'])
+                return self.generate_with_alibaba(prompt, timeout, api_key_override=api_key_override)
+            if provider_name == 'elevenlabs':
+                return self.generate_with_elevenlabs(prompt, timeout, api_key_override=api_key_override)
             if provider_name == 'ollama':
                 return self.generate_with_ollama(prompt, timeout)
             return False, '', f'Unknown provider: {provider_name}'
 
-        provider_order = ['groq', 'gemini', 'alibaba', 'ollama']
+        provider_order = ['groq', 'gemini', 'alibaba', 'elevenlabs', 'ollama']
         if target_provider == 'auto':
             ordered_providers = provider_order
         else:
@@ -168,6 +268,17 @@ class AIService:
 
         errors = {}
         for provider_name in ordered_providers:
+            if provider_name in provider_key_pool:
+                attempt_errors = []
+                for key_candidate in provider_key_pool[provider_name]:
+                    success, response, error = _try_provider(provider_name, key_candidate)
+                    if success:
+                        return True, response, None, provider_name
+                    attempt_errors.append(error)
+
+                errors[provider_name] = ' | '.join(str(err) for err in attempt_errors if err)
+                continue
+
             success, response, error = _try_provider(provider_name)
             if success:
                 return True, response, None, provider_name

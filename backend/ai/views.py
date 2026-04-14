@@ -2,6 +2,7 @@ import uuid
 import warnings
 import json
 import re
+from django.db.models import Count
 
 # Suppress the deprecation warning before importing
 warnings.filterwarnings('ignore', category=FutureWarning)
@@ -35,6 +36,69 @@ class StartAIChatSessionView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+class ListAIChatSessionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        sessions = (
+            AIChatSession.objects.filter(user=request.user)
+            .annotate(message_count=Count('messages'))
+            .order_by('-updated_at')
+        )
+
+        payload = []
+        for session in sessions:
+            first_user_message = (
+                AIChatMessage.objects.filter(session=session, is_user_message=True)
+                .order_by('timestamp')
+                .first()
+            )
+            last_message = (
+                AIChatMessage.objects.filter(session=session)
+                .order_by('-timestamp')
+                .first()
+            )
+
+            title_source = ''
+            if first_user_message and first_user_message.message:
+                title_source = first_user_message.message
+            elif last_message and last_message.message:
+                title_source = last_message.message
+
+            title = (title_source or 'New chat').strip()
+            if len(title) > 70:
+                title = f"{title[:67].rstrip()}..."
+
+            payload.append(
+                {
+                    'session_id': session.session_id,
+                    'title': title,
+                    'message_count': session.message_count,
+                    'created_at': session.created_at,
+                    'updated_at': session.updated_at,
+                    'last_message_preview': (
+                        (last_message.message[:120] + '...')
+                        if last_message and last_message.message and len(last_message.message) > 120
+                        else (last_message.message if last_message else '')
+                    ),
+                }
+            )
+
+        return Response(payload)
+
+
+class DeleteAIChatSessionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, session_id):
+        try:
+            session = AIChatSession.objects.get(session_id=session_id, user=request.user)
+            session.delete()
+            return Response({'status': 'deleted'}, status=status.HTTP_204_NO_CONTENT)
+        except AIChatSession.DoesNotExist:
+            return Response({'error': 'Chat session not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class AIChatMessageView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
@@ -43,6 +107,12 @@ class AIChatMessageView(APIView):
         session_id = request.data.get('session_id')
         message = request.data.get('message')
         message_type = request.data.get('message_type', 'general')
+
+        if not session_id:
+            return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not str(message or '').strip():
+            return Response({'error': 'message is required'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             session = AIChatSession.objects.get(session_id=session_id, user=user)
@@ -123,7 +193,11 @@ Content: {message}"""
 AI:"""
             
             # Generate AI response using Hybrid AI Service
-            success, ai_response, error, source = ai_service.generate(prompt, timeout=60)
+            success, ai_response, error, source = ai_service.generate(
+                prompt,
+                timeout=60,
+                feature_type='chat_page_provider',
+            )
             
             if not success:
                 # Fallback to error message
@@ -132,16 +206,21 @@ AI:"""
                 print(f"[AIChat] Response from: {source}")
             
             # Save AI message
-            ai_message = AIChatMessage.objects.create(
+            ai_message_obj = AIChatMessage.objects.create(
                 session=session,
                 message=ai_response,
                 is_user_message=False,
-                message_type=message_type
+                message_type=message_type,
+                provider_used=source if success else 'none',
             )
+
+            session.save(update_fields=['updated_at'])
             
             return Response({
                 'user_message': AIChatMessageSerializer(user_message).data,
-                'ai_message': ai_response
+                'ai_message': ai_response,
+                'ai_message_obj': AIChatMessageSerializer(ai_message_obj).data,
+                'provider_used': source if success else 'none',
             })
             
         except AIChatSession.DoesNotExist:

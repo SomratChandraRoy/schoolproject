@@ -5,13 +5,13 @@ from .models import User
 
 class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
     model = User
-    list_display = ('username', 'email', 'class_level', 'is_teacher', 'is_admin', 'total_points')
-    list_filter = ('class_level', 'is_teacher', 'is_admin')
+    list_display = ('username', 'email', 'role', 'is_banned', 'class_level', 'is_teacher', 'is_admin', 'total_points')
+    list_filter = ('role', 'is_banned', 'class_level', 'is_teacher', 'is_admin')
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('Additional Info', {'fields': ('class_level', 'fav_subjects', 'disliked_subjects', 'total_points', 'is_teacher', 'is_admin')}),
+        ('Additional Info', {'fields': ('role', 'is_banned', 'ban_reason', 'class_level', 'fav_subjects', 'disliked_subjects', 'total_points', 'is_teacher', 'is_admin')}),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('Additional Info', {'fields': ('class_level', 'fav_subjects', 'disliked_subjects', 'total_points', 'is_teacher', 'is_admin')}),
+        ('Additional Info', {'fields': ('role', 'is_banned', 'ban_reason', 'class_level', 'fav_subjects', 'disliked_subjects', 'total_points', 'is_teacher', 'is_admin')}),
     )
 
 admin.site.register(User, CustomUserAdmin)

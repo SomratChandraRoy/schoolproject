@@ -22,6 +22,7 @@ from books.models import Bookmark
 
 ROOM_SLUG_REGEX = re.compile(r'[^a-zA-Z0-9_-]+')
 APP_ID_REGEX = re.compile(r'^[a-zA-Z0-9-]{10,200}$')
+DEFAULT_BAN_REASON = 'Your account is pending admin approval.'
 
 
 def _normalize_room_slug(raw_room):
@@ -146,8 +147,11 @@ class RegisterView(APIView):
                 serializer.validated_data['password'] = make_password(password)
             
             user = serializer.save()
-            # Set default roles
-            user.is_student = True
+            # All new users start with ban role until admin approval.
+            user.role = User.ROLE_BAN
+            user.is_banned = True
+            user.ban_reason = DEFAULT_BAN_REASON
+            user.is_student = False
             user.save()
             
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -242,7 +246,7 @@ class GlobalLeaderboardView(APIView):
 
     def get(self, request):
         # Top 20 students by total points
-        top_students = User.objects.filter(is_student=True).order_by('-total_points')[:20]
+        top_students = User.objects.filter(is_student=True).exclude(role=User.ROLE_BAN).order_by('-total_points')[:20]
         serializer = UserProfileSerializer(top_students, many=True)
         return Response(serializer.data)
 
@@ -519,7 +523,10 @@ class WorkOSAuthView(APIView):
                         class_level=9,  # Default to class 9
                         google_id=google_id,
                         profile_picture=profile_picture,
-                        is_student=True,  # Default role
+                        role=User.ROLE_BAN,
+                        is_banned=True,
+                        ban_reason=DEFAULT_BAN_REASON,
+                        is_student=False,
                     )
                     created = True
                     logger.info(f"Created new user: {user.email}")
@@ -542,13 +549,13 @@ class WorkOSAuthView(APIView):
             
             logger.info(f"User {'created' if created else 'found'}: {user.email}")
             
-            # Check if user is banned
-            if user.is_banned:
+            # Check if user is banned by explicit status or ban role.
+            if user.is_effectively_banned():
                 logger.warning(f"Banned user attempted login: {user.email}")
                 return Response({
                     'error': 'banned',
                     'message': 'You are banned. Contact our team.',
-                    'ban_reason': user.ban_reason or 'No reason provided'
+                    'ban_reason': user.ban_reason or DEFAULT_BAN_REASON
                 }, status=status.HTTP_403_FORBIDDEN)
             
             # Update user fields with latest data from WorkOS
@@ -588,6 +595,11 @@ class AdminPanelView(APIView):
         total_users = User.objects.count()
         total_teachers = User.objects.filter(is_teacher=True).count()
         total_admins = User.objects.filter(is_admin=True).count()
+
+        role_counts = {
+            role: User.objects.filter(role=role).count()
+            for role, _ in User.ROLE_CHOICES
+        }
         
         # Get recent users
         recent_users = User.objects.order_by('-date_joined')[:10]
@@ -596,7 +608,8 @@ class AdminPanelView(APIView):
             'statistics': {
                 'total_users': total_users,
                 'total_teachers': total_teachers,
-                'total_admins': total_admins
+                'total_admins': total_admins,
+                'role_counts': role_counts,
             },
             'recent_users': UserProfileSerializer(recent_users, many=True).data
         })
@@ -605,6 +618,8 @@ class AdminPanelView(APIView):
         """Update user role (promote/demote)"""
         try:
             user = User.objects.get(id=user_id)
+
+            valid_roles = {value for value, _ in User.ROLE_CHOICES}
             
             # Update user roles based on request data
             if 'is_teacher' in request.data:
@@ -612,6 +627,26 @@ class AdminPanelView(APIView):
             
             if 'is_admin' in request.data:
                 user.is_admin = request.data['is_admin']
+
+            if 'role' in request.data:
+                requested_role = request.data.get('role')
+                if requested_role not in valid_roles:
+                    return Response({
+                        'error': 'Invalid role value'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                user.role = requested_role
+
+                if requested_role == User.ROLE_BAN:
+                    user.is_banned = True
+                    user.ban_reason = request.data.get('ban_reason') or user.ban_reason or DEFAULT_BAN_REASON
+                    if not user.is_teacher and not user.is_admin:
+                        user.is_student = False
+                else:
+                    user.is_banned = False
+                    user.ban_reason = None
+                    if not user.is_teacher and not user.is_admin:
+                        user.is_student = True
             
             user.save()
             

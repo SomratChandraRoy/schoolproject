@@ -13,6 +13,7 @@ class AIProviderSettings(models.Model):
         ('gemini', 'Google Gemini API'),
         ('groq', 'Groq API'),
         ('alibaba', 'Alibaba Cloud (Qwen)'),
+        ('elevenlabs', 'ElevenLabs (voice-first; text with fallback)'),
         ('ollama', 'Ollama (AWS)'),
         ('auto', 'Auto (Groq → Gemini fallback)'),
     ]
@@ -46,6 +47,12 @@ class AIProviderSettings(models.Model):
         max_length=20, choices=PROVIDER_CHOICES, default='auto',
         help_text='AI Model Provider for General Text Chat and Note taking.'
     )
+    chat_page_provider = models.CharField(
+        max_length=20,
+        choices=PROVIDER_CHOICES,
+        default='auto',
+        help_text='AI Model Provider for the /chat page AI assistant with provider fallback.',
+    )
 
     # API Keys Configuration
     gemini_api_key = models.CharField(
@@ -62,6 +69,21 @@ class AIProviderSettings(models.Model):
         max_length=255, 
         blank=True, null=True,
         help_text='Alibaba Cloud DashScope API Key'
+    )
+    flashcard_gemini_extra_keys = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Optional extra Gemini API keys for quiz/flashcard generation. Use comma or newline to separate multiple keys.',
+    )
+    flashcard_groq_extra_keys = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Optional extra Groq API keys for quiz/flashcard generation. Use comma or newline to separate multiple keys.',
+    )
+    flashcard_alibaba_extra_keys = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Optional extra Alibaba API keys for quiz/flashcard generation. Use comma or newline to separate multiple keys.',
     )
     # Ollama configuration
     ollama_base_url = models.CharField(
@@ -139,6 +161,7 @@ class AIChatMessage(models.Model):
     message = models.TextField()
     is_user_message = models.BooleanField(default=True)  # True if from user, False if from AI
     message_type = models.CharField(max_length=20, choices=SESSION_TYPE_CHOICES, default='general')
+    provider_used = models.CharField(max_length=32, blank=True, default='')
     timestamp = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

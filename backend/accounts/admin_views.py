@@ -15,12 +15,13 @@ class IsAdminUser(permissions.BasePermission):
 class AdminUserSerializer(serializers.ModelSerializer):
     """Serializer for admin user management with all fields"""
     password = serializers.CharField(write_only=True, required=False)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
     
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name', 
                  'class_level', 'fav_subjects', 'disliked_subjects', 'interests', 
-                 'total_points', 'is_student', 'is_teacher', 'is_admin', 'is_member', 'is_staff',
+                 'total_points', 'role', 'role_display', 'is_student', 'is_teacher', 'is_admin', 'is_member', 'is_staff',
                  'is_superuser', 'is_banned', 'ban_reason', 'google_id', 'profile_picture', 
                  'total_study_time', 'current_streak', 'longest_streak', 'date_joined', 'last_login')
         read_only_fields = ('id', 'date_joined', 'last_login')
@@ -53,12 +54,18 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         
         # Filter by role
         role = self.request.query_params.get('role', None)
-        if role == 'student':
+        valid_roles = {value for value, _ in User.ROLE_CHOICES}
+
+        if role in valid_roles:
+            queryset = queryset.filter(role=role)
+        elif role == 'student':
             queryset = queryset.filter(is_student=True)
         elif role == 'teacher':
             queryset = queryset.filter(is_teacher=True)
         elif role == 'admin':
             queryset = queryset.filter(is_admin=True)
+        elif role == 'banned':
+            queryset = queryset.filter(models.Q(role=User.ROLE_BAN) | models.Q(is_banned=True))
         
         # Search by email or username
         search = self.request.query_params.get('search', None)
@@ -73,6 +80,18 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
+
+        requested_role = data.get('role')
+        if requested_role:
+            if requested_role == User.ROLE_BAN:
+                data['is_banned'] = True
+                data['is_student'] = False
+                data['ban_reason'] = data.get('ban_reason') or 'No reason provided'
+            else:
+                data['is_banned'] = False
+                data['ban_reason'] = None
+                if not data.get('is_teacher') and not data.get('is_admin'):
+                    data['is_student'] = True
         
         # Hash password if provided
         if 'password' in data:
@@ -88,6 +107,21 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         data = request.data.copy()
+
+        requested_role = data.get('role')
+        if requested_role:
+            if requested_role == User.ROLE_BAN:
+                data['is_banned'] = True
+                data['is_student'] = False
+                data['ban_reason'] = data.get('ban_reason') or instance.ban_reason or 'No reason provided'
+            else:
+                data['is_banned'] = False
+                data['ban_reason'] = None
+
+                is_teacher = data.get('is_teacher', instance.is_teacher)
+                is_admin = data.get('is_admin', instance.is_admin)
+                if not is_teacher and not is_admin:
+                    data['is_student'] = True
         
         # Hash password if provided
         if 'password' in data and data['password']:
@@ -109,14 +143,20 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         students = User.objects.filter(is_student=True).count()
         teachers = User.objects.filter(is_teacher=True).count()
         admins = User.objects.filter(is_admin=True).count()
-        banned_users = User.objects.filter(is_banned=True).count()
+        banned_users = User.objects.filter(models.Q(role=User.ROLE_BAN) | models.Q(is_banned=True)).count()
+
+        role_counts = {
+            role: User.objects.filter(role=role).count()
+            for role, _ in User.ROLE_CHOICES
+        }
         
         return Response({
             'total_users': total_users,
             'students': students,
             'teachers': teachers,
             'admins': admins,
-            'banned_users': banned_users
+            'banned_users': banned_users,
+            'role_counts': role_counts,
         })
     
     @action(detail=True, methods=['post'])
@@ -144,8 +184,11 @@ class AdminUserViewSet(viewsets.ModelViewSet):
                     'error': 'Teachers cannot ban other teachers or admins'
                 }, status=status.HTTP_403_FORBIDDEN)
         
+        user.role = User.ROLE_BAN
         user.is_banned = True
         user.ban_reason = ban_reason
+        if not user.is_teacher and not user.is_admin:
+            user.is_student = False
         user.save()
         
         return Response({
@@ -165,8 +208,13 @@ class AdminUserViewSet(viewsets.ModelViewSet):
                     'error': 'Teachers cannot unban teachers or admins'
                 }, status=status.HTTP_403_FORBIDDEN)
         
+        if user.role == User.ROLE_BAN:
+            user.role = User.ROLE_USER
+
         user.is_banned = False
         user.ban_reason = None
+        if not user.is_teacher and not user.is_admin:
+            user.is_student = True
         user.save()
         
         return Response({
@@ -178,6 +226,8 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     def change_role(self, request, pk=None):
         """Change user role (promote/demote)"""
         user = self.get_object()
+
+        valid_roles = {value for value, _ in User.ROLE_CHOICES}
         
         # Teachers cannot change admin roles
         if request.user.is_teacher and not request.user.is_admin:
@@ -193,6 +243,27 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Update roles
+        if 'role' in request.data:
+            requested_role = request.data.get('role')
+
+            if requested_role not in valid_roles:
+                return Response({
+                    'error': 'Invalid role value'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            user.role = requested_role
+
+            if requested_role == User.ROLE_BAN:
+                user.is_banned = True
+                user.ban_reason = request.data.get('ban_reason') or user.ban_reason or 'No reason provided'
+                if not user.is_teacher and not user.is_admin:
+                    user.is_student = False
+            else:
+                user.is_banned = False
+                user.ban_reason = None
+                if not user.is_teacher and not user.is_admin:
+                    user.is_student = True
+
         if 'is_student' in request.data:
             user.is_student = request.data['is_student']
         if 'is_teacher' in request.data:

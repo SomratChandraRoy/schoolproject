@@ -3,7 +3,13 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
 
-type Provider = "gemini" | "groq" | "alibaba" | "ollama" | "auto";
+type Provider =
+  | "gemini"
+  | "groq"
+  | "alibaba"
+  | "elevenlabs"
+  | "ollama"
+  | "auto";
 
 interface AIProviderSettings {
   id: number;
@@ -14,6 +20,7 @@ interface AIProviderSettings {
   quiz_flashcard_provider: Provider;
   doc_vision_provider: Provider;
   general_chat_provider: Provider;
+  chat_page_provider: Provider;
   ollama_base_url: string;
   ollama_username: string;
   ollama_model: string;
@@ -26,6 +33,7 @@ const providerOptions: Array<{ value: Provider; label: string }> = [
   { value: "groq", label: "Groq" },
   { value: "gemini", label: "Gemini" },
   { value: "alibaba", label: "Alibaba (Qwen)" },
+  { value: "elevenlabs", label: "ElevenLabs" },
   { value: "ollama", label: "Ollama" },
 ];
 
@@ -70,6 +78,7 @@ function AdminSettings() {
   const [quizProvider, setQuizProvider] = useState<Provider>("auto");
   const [visionProvider, setVisionProvider] = useState<Provider>("gemini");
   const [chatProvider, setChatProvider] = useState<Provider>("auto");
+  const [chatPageProvider, setChatPageProvider] = useState<Provider>("auto");
 
   const [geminiApiKey, setGeminiApiKey] = useState("");
   const [groqApiKey, setGroqApiKey] = useState("");
@@ -108,6 +117,9 @@ function AdminSettings() {
       setQuizProvider(data.quiz_flashcard_provider);
       setVisionProvider(data.doc_vision_provider);
       setChatProvider(data.general_chat_provider);
+      setChatPageProvider(
+        data.chat_page_provider || data.general_chat_provider,
+      );
       setOllamaUrl(data.ollama_base_url);
       setOllamaUsername(data.ollama_username);
       setOllamaModel(data.ollama_model);
@@ -140,6 +152,7 @@ function AdminSettings() {
           quiz_flashcard_provider: quizProvider,
           doc_vision_provider: visionProvider,
           general_chat_provider: chatProvider,
+          chat_page_provider: chatPageProvider,
           gemini_api_key: geminiApiKey || undefined,
           groq_api_key: groqApiKey || undefined,
           alibaba_api_key: alibabaApiKey || undefined,
@@ -235,6 +248,13 @@ function AdminSettings() {
           <div className="space-y-2">
             <label className="text-sm font-medium">General chat provider</label>
             <ProviderSelect value={chatProvider} onChange={setChatProvider} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">/chat page provider</label>
+            <ProviderSelect
+              value={chatPageProvider}
+              onChange={setChatPageProvider}
+            />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Study plan provider</label>

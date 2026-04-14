@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
-    StartAIChatSessionView, AIChatMessageView, GetChatHistoryView, 
+    StartAIChatSessionView, AIChatMessageView, GetChatHistoryView,
+    ListAIChatSessionsView, DeleteAIChatSessionView,
     SaveOfflineNoteView, ListOfflineNotesView, RemedialLearningView, 
     GenerateQuizQuestionView, ManageClassQuestionsView,
     GenerateStudyNotesView, GenerateBookSummaryView, GenerateGameHintView,
@@ -28,6 +29,8 @@ urlpatterns = [
     
     # Chat endpoints
     path('chat/start/', StartAIChatSessionView.as_view(), name='start-chat-session'),
+    path('chat/sessions/', ListAIChatSessionsView.as_view(), name='chat-sessions'),
+    path('chat/session/<str:session_id>/', DeleteAIChatSessionView.as_view(), name='delete-chat-session'),
     path('chat/message/', AIChatMessageView.as_view(), name='ai-chat-message'),
     path('chat/history/<str:session_id>/', GetChatHistoryView.as_view(), name='chat-history'),
     

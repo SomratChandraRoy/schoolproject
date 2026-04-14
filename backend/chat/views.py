@@ -20,9 +20,9 @@ if settings.USE_GOOGLE_DRIVE:
 
 
 class IsMemberPermission(permissions.BasePermission):
-    """Only members can access chat"""
+    """Only chat-enabled roles can access chat"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.is_member
+        return request.user.is_authenticated and request.user.can_access_chat()
 
 
 class MemberListView(viewsets.ReadOnlyModelViewSet):
@@ -31,15 +31,21 @@ class MemberListView(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserBasicSerializer
     
     def get_queryset(self):
-        queryset = User.objects.filter(is_member=True).exclude(id=self.request.user.id)
+        queryset = User.objects.filter(
+            is_active=True,
+        ).exclude(
+            Q(role=User.ROLE_BAN) | Q(is_banned=True)
+        ).exclude(id=self.request.user.id)
+
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(username__icontains=search) |
                 Q(first_name__icontains=search) |
-                Q(last_name__icontains=search)
+                Q(last_name__icontains=search) |
+                Q(email__icontains=search)
             )
-        return queryset.order_by('username')
+        return queryset.order_by('first_name', 'username')[:40]
 
 
 class ChatRoomViewSet(viewsets.ModelViewSet):
@@ -66,10 +72,15 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             )
         
         try:
-            other_user = User.objects.get(id=other_user_id, is_member=True)
+            other_user = User.objects.get(
+                id=other_user_id,
+                is_active=True,
+            )
+            if other_user.is_effectively_banned():
+                raise User.DoesNotExist
         except User.DoesNotExist:
             return Response(
-                {'error': 'User not found or not a member'},
+                {'error': 'User not found or account is restricted'},
                 status=status.HTTP_404_NOT_FOUND
             )
         
@@ -251,7 +262,7 @@ def upload_file(request):
         )
     
     file = request.FILES['file']
-    chatroom_id = request.data.get('chatroom_id')
+    chatroom_id = request.data.get('chatroom_id') or request.data.get('chatroom')
     
     if not chatroom_id:
         return Response(

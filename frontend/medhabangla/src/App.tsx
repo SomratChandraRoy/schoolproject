@@ -42,7 +42,8 @@ import StudentDashboard from "./pages/StudentDashboard";
 import OfflineAIPage from "./pages/OfflineAIPage";
 import TranslatorPage from "./pages/Translator";
 import HeroPage from "./pages/HeroPage";
-
+import ContactAdmin from "./pages/ContactAdmin";
+import Plans from "./pages/Plans";
 //import pdfd for cheking pdf viewer !
 import Pdfd from "./pages/Pdfd";
 import NotFound from "./pages/NotFound";
@@ -59,6 +60,7 @@ import MacDockNav from "./components/MacDock";
 import { DarkModeProvider } from "./contexts/DarkModeContext";
 import Footer from "./components/Footer";
 import { BlinkUIProvider } from "@blinkdotnew/ui";
+import { canAccessChat } from "./utils/roleUtils";
 
 // Import PWA utilities
 import {
@@ -71,11 +73,12 @@ function App() {
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
   const token = localStorage.getItem("token");
+  const hasChatAccess = canAccessChat(user);
   const [unreadCount, setUnreadCount] = React.useState(0);
 
   // Fetch unread count for members
   React.useEffect(() => {
-    if (!user || !user.is_member || !token) return;
+    if (!user || !hasChatAccess || !token) return;
 
     const fetchUnreadCount = async () => {
       try {
@@ -95,7 +98,7 @@ function App() {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 15000);
     return () => clearInterval(interval);
-  }, [user, token]);
+  }, [user, hasChatAccess, token]);
 
   // Register service worker and request storage permission
   React.useEffect(() => {
@@ -178,6 +181,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/contact-admin" element={<ContactAdmin />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="/ollama" element={<Ollama />} />
 
@@ -228,7 +232,17 @@ function App() {
                 <Route path="/syllabus" element={<Syllabus />} />
                 <Route path="/study-timer" element={<StudyTimer />} />
                 <Route path="/study-stats" element={<StudyStats />} />
-                <Route path="/chat" element={<Chat />} />
+                <Route path="/plans" element={<Plans />} />
+                <Route
+                  path="/chat"
+                  element={
+                    <ProtectedRoute
+                      isAllowed={hasChatAccess}
+                      redirectPath="/plans">
+                      <Chat />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/drawing" element={<TldrawPage />} />
                 <Route
                   path="/academics"

@@ -62,6 +62,22 @@ import {
 import ProfileCompletionModal from "../components/ProfileCompletionModal";
 import AIVoiceConversation from "../components/AIVoiceConversation";
 
+interface SyllabusChartItem {
+  name: string;
+  progress: number;
+  color: string;
+  total: number;
+  completed: number;
+}
+
+interface SyllabusDashboardStats {
+  overall_progress: number;
+  total_subjects: number;
+  total_topics: number;
+  completed_topics: number;
+  chart_data: SyllabusChartItem[];
+}
+
 const Dashboard: React.FC = () => {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +90,8 @@ const Dashboard: React.FC = () => {
   ]);
   const [streakDays, setStreakDays] = useState(0);
   const [totalHoursLearned, setTotalHoursLearned] = useState(0);
+  const [syllabusStats, setSyllabusStats] =
+    useState<SyllabusDashboardStats | null>(null);
 
   const totalPoints = stats[0]?.value || 0;
   const quizzesTaken = stats[1]?.value || 0;
@@ -235,6 +253,23 @@ const Dashboard: React.FC = () => {
     },
   } satisfies ChartConfig;
 
+  const syllabusProgressConfig = {
+    progress: {
+      label: "Progress",
+      color: "hsl(var(--chart-1))",
+    },
+  } satisfies ChartConfig;
+
+  const syllabusProgressData = useMemo(
+    () =>
+      (syllabusStats?.chart_data || []).map((subject) => ({
+        name: subject.name,
+        progress: subject.progress,
+        color: subject.color || "hsl(var(--chart-1))",
+      })),
+    [syllabusStats],
+  );
+
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -280,10 +315,33 @@ const Dashboard: React.FC = () => {
         // Set streak and learning time
         setStreakDays(data.stats.current_streak || 0);
         setTotalHoursLearned(data.stats.total_hours_learned || 0);
+
+        try {
+          const syllabusResponse = await fetch(
+            "/api/academics/subjects/dashboard_stats/",
+            {
+              headers: {
+                Authorization: `Token ${token}`,
+              },
+            },
+          );
+
+          if (syllabusResponse.ok) {
+            const syllabusData: SyllabusDashboardStats =
+              await syllabusResponse.json();
+            setSyllabusStats(syllabusData);
+          } else {
+            setSyllabusStats(null);
+          }
+        } catch (syllabusError) {
+          console.error("Error fetching syllabus stats:", syllabusError);
+          setSyllabusStats(null);
+        }
       } else {
         // Token might be invalid, redirect to login
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        setSyllabusStats(null);
         window.location.href = "/login";
       }
     } catch (error) {
@@ -922,6 +980,124 @@ const Dashboard: React.FC = () => {
                           </Bar>
                         </BarChart>
                       </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-slate-200/80 shadow-sm dark:border-slate-700 lg:col-span-2">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">
+                        Syllabus Progress
+                      </CardTitle>
+                      <CardDescription>
+                        Track completion by subject from your personal syllabus
+                        planner
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      {syllabusStats && syllabusStats.total_subjects > 0 ? (
+                        <>
+                          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
+                            <div className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
+                              <p className="text-slate-500 dark:text-slate-400">
+                                Subjects
+                              </p>
+                              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                {syllabusStats.total_subjects}
+                              </p>
+                            </div>
+                            <div className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
+                              <p className="text-slate-500 dark:text-slate-400">
+                                Topics
+                              </p>
+                              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                {syllabusStats.total_topics}
+                              </p>
+                            </div>
+                            <div className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
+                              <p className="text-slate-500 dark:text-slate-400">
+                                Completed
+                              </p>
+                              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                {syllabusStats.completed_topics}
+                              </p>
+                            </div>
+                            <div className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
+                              <p className="text-slate-500 dark:text-slate-400">
+                                Overall
+                              </p>
+                              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                {syllabusStats.overall_progress}%
+                              </p>
+                            </div>
+                          </div>
+
+                          <ChartContainer
+                            config={syllabusProgressConfig}
+                            className="h-[250px] w-full">
+                            <BarChart
+                              data={syllabusProgressData}
+                              margin={{
+                                top: 16,
+                                left: 8,
+                                right: 8,
+                                bottom: 0,
+                              }}>
+                              <CartesianGrid vertical={false} />
+                              <XAxis
+                                dataKey="name"
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={10}
+                                tickFormatter={(value) => {
+                                  const label = String(value);
+                                  return label.length > 12
+                                    ? `${label.slice(0, 12)}...`
+                                    : label;
+                                }}
+                              />
+                              <ChartTooltip
+                                cursor={false}
+                                content={<ChartTooltipContent />}
+                              />
+                              <Bar dataKey="progress" radius={10}>
+                                {syllabusProgressData.map((entry, index) => (
+                                  <Cell
+                                    key={`syllabus-progress-${entry.name}-${index}`}
+                                    fill={entry.color}
+                                  />
+                                ))}
+                                <LabelList
+                                  dataKey="progress"
+                                  position="top"
+                                  formatter={(value: number) => `${value}%`}
+                                  className="fill-slate-700 text-xs font-medium dark:fill-slate-200"
+                                />
+                              </Bar>
+                            </BarChart>
+                          </ChartContainer>
+
+                          <div className="mt-4">
+                            <Link
+                              to="/syllabus"
+                              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                              Manage your syllabus topics
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="rounded-lg border border-dashed border-slate-300 px-4 py-6 text-center dark:border-slate-700">
+                          <p className="text-sm text-slate-600 dark:text-slate-300">
+                            You have not added syllabus subjects yet.
+                          </p>
+                          <Link
+                            to="/syllabus"
+                            className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                            Add subjects and topics
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>

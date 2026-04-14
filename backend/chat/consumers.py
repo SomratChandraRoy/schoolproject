@@ -24,7 +24,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
         # Authenticate user
         self.user = await self.get_user_from_token()
-        if not self.user or not self.user.is_member:
+        if not self.user or not self.user.can_access_chat():
             await self.close()
             return
         

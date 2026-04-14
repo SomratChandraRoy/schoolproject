@@ -15,13 +15,22 @@ class AIProviderSettingsAdmin(ModelAdmin):
                 'study_plan_provider', 
                 'quiz_flashcard_provider', 
                 'doc_vision_provider', 
-                'general_chat_provider'
+                'general_chat_provider',
+                'chat_page_provider',
             ),
             'description': 'Configure which specific AI model provider should run for which feature.'
         }),
         ('API Keys (Gemini, Groq, Alibaba, ElevenLabs)', {
             'fields': ('gemini_api_key', 'groq_api_key', 'alibaba_api_key', 'elevenlabs_api_key'),
             'description': 'Keys here will override default application keys.'
+        }),
+        ('Extra API Keys for Quiz/Flashcards', {
+            'fields': (
+                'flashcard_gemini_extra_keys',
+                'flashcard_groq_extra_keys',
+                'flashcard_alibaba_extra_keys',
+            ),
+            'description': 'Optional backup keys (comma/newline separated) used only for quiz and flashcard generation.'
         }),
         ('Ollama Configuration', {
             'fields': ('ollama_base_url', 'ollama_username', 'ollama_password', 'ollama_model')
@@ -45,8 +54,8 @@ class AIChatSessionAdmin(ModelAdmin):
 
 @admin.register(AIChatMessage)
 class AIChatMessageAdmin(ModelAdmin):
-    list_display = ('session', 'message_type', 'is_user_message', 'timestamp')
-    list_filter = ('message_type', 'is_user_message', 'timestamp')
+    list_display = ('session', 'message_type', 'is_user_message', 'provider_used', 'timestamp')
+    list_filter = ('message_type', 'is_user_message', 'provider_used', 'timestamp')
     search_fields = ('session__user__username', 'message')
 
 @admin.register(OfflineNote)

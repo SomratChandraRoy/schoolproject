@@ -84,6 +84,12 @@ class TestAIProviderView(APIView):
                 api_key_override=settings_obj.alibaba_api_key
             )
             source = 'alibaba'
+        elif provider == 'elevenlabs':
+            success, response, error = ai_service.generate_with_elevenlabs(
+                test_prompt,
+                api_key_override=settings_obj.elevenlabs_api_key
+            )
+            source = 'elevenlabs'
         elif provider == 'ollama':
             success, response, error = ai_service.generate_with_ollama(test_prompt, timeout=30)
             source = 'ollama'

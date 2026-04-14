@@ -74,10 +74,20 @@ class FlashcardDeck(models.Model):
 
 
 class Flashcard(models.Model):
+    STATUS_UNKNOWN = 'unknown'
+    STATUS_PENDING = 'pending'
+    STATUS_KNOWN = 'known'
+    REVIEW_STATUS_CHOICES = [
+        (STATUS_UNKNOWN, 'Unknown'),
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_KNOWN, 'Known'),
+    ]
+
     deck = models.ForeignKey(FlashcardDeck, on_delete=models.CASCADE, related_name='cards')
     front = models.TextField(help_text="Question or concept")
     back = models.TextField(help_text="Answer or explanation")
     is_known = models.BooleanField(default=False)
+    review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, default=STATUS_UNKNOWN)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

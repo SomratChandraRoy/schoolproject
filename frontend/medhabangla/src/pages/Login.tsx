@@ -25,9 +25,11 @@ const Login: React.FC = () => {
 
     if (errorParam) {
       if (errorParam === "banned") {
-        setError(
-          `You are banned. Contact our team.\n\nReason: ${banReason || "No reason provided"}`,
+        navigate(
+          `/contact-admin?reason=${encodeURIComponent(banReason || "No reason provided")}`,
+          { replace: true },
         );
+        return;
       } else if (errorParam === "auth_failed") {
         setError("Authentication failed. Please try again.");
       } else if (errorDescription) {
@@ -36,7 +38,7 @@ const Login: React.FC = () => {
         setError(`Authentication error: ${errorParam}`);
       }
     }
-  }, [searchParams]);
+  }, [navigate, searchParams]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -89,8 +91,14 @@ const Login: React.FC = () => {
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
+          <div
+            className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "1s" }}
+          />
+          <div
+            className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-400/20 rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "2s" }}
+          />
         </div>
 
         <div className="relative flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -138,10 +146,11 @@ const Login: React.FC = () => {
 
                   {error && (
                     <div
-                      className={`mb-6 p-4 border rounded-xl backdrop-blur-sm ${searchParams.get("error") === "banned"
+                      className={`mb-6 p-4 border rounded-xl backdrop-blur-sm ${
+                        searchParams.get("error") === "banned"
                           ? "bg-red-100/80 dark:bg-red-900/30 border-red-300 dark:border-red-700"
                           : "bg-red-50/80 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-                        }`}>
+                      }`}>
                       {searchParams.get("error") === "banned" ? (
                         <div className="text-center">
                           <div className="text-5xl mb-4">🚫</div>
@@ -156,7 +165,7 @@ const Login: React.FC = () => {
                               Need help? Contact our support team:
                             </p>
                             <a
-                              href="mailto:support@sopan.com"
+                              href="mailto:info@bipul.tech"
                               className="inline-block px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
                               📧 Contact Support
                             </a>
@@ -255,8 +264,8 @@ const Login: React.FC = () => {
 
                   <div className="mt-6 text-center">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      By signing in, you agree to our Terms of Service and Privacy
-                      Policy
+                      By signing in, you agree to our Terms of Service and
+                      Privacy Policy
                     </p>
                   </div>
 
@@ -269,10 +278,15 @@ const Login: React.FC = () => {
                       <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded">
                         <p>
                           Client ID:{" "}
-                          {import.meta.env.VITE_WORKOS_CLIENT_ID?.substring(0, 20)}...
+                          {import.meta.env.VITE_WORKOS_CLIENT_ID?.substring(
+                            0,
+                            20,
+                          )}
+                          ...
                         </p>
                         <p>
-                          Redirect URI: {import.meta.env.VITE_WORKOS_REDIRECT_URI}
+                          Redirect URI:{" "}
+                          {import.meta.env.VITE_WORKOS_REDIRECT_URI}
                         </p>
                       </div>
                     </details>

@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -19,9 +19,9 @@ const AuthCallback: React.FC = () => {
       try {
         // Get the authorization code from the URL
         const urlParams = new URLSearchParams(location.search);
-        const code = urlParams.get('code');
-        const errorParam = urlParams.get('error');
-        const errorDescription = urlParams.get('error_description');
+        const code = urlParams.get("code");
+        const errorParam = urlParams.get("error");
+        const errorDescription = urlParams.get("error_description");
 
         // Check for errors from WorkOS
         if (errorParam) {
@@ -32,68 +32,79 @@ const AuthCallback: React.FC = () => {
         }
 
         if (!code) {
-          throw new Error('No authorization code found');
+          throw new Error("No authorization code found");
         }
 
         // Mark as processing to prevent duplicate calls
         hasProcessedAuth.current = true;
 
-        console.log('Exchanging authorization code with backend...');
+        console.log("Exchanging authorization code with backend...");
 
         // Send the code to our backend to exchange for a token
-        const response = await fetch(`${API_BASE_URL}/api/accounts/workos-auth/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          `${API_BASE_URL}/api/accounts/workos-auth/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ code }),
           },
-          body: JSON.stringify({ code }),
-        });
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
 
           // Check if user is banned
-          if (errorData.error === 'banned') {
-            // Redirect to login with ban message
-            navigate(`/login?error=banned&ban_reason=${encodeURIComponent(errorData.ban_reason || 'No reason provided')}`);
+          if (errorData.error === "banned") {
+            navigate(
+              `/contact-admin?reason=${encodeURIComponent(errorData.ban_reason || "No reason provided")}`,
+            );
             return;
           }
 
-          throw new Error(errorData.error || 'Failed to authenticate with WorkOS');
+          throw new Error(
+            errorData.error || "Failed to authenticate with WorkOS",
+          );
         }
 
         const data = await response.json();
 
-        console.log('Authentication successful, storing user data...');
+        console.log("Authentication successful, storing user data...");
 
         // Store the token in localStorage
-        localStorage.setItem('token', data.token);
+        localStorage.setItem("token", data.token);
 
         // Store user data
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem("user", JSON.stringify(data.user));
 
         // Store profile picture if available
         if (data.user.profile_picture) {
-          localStorage.setItem('profilePicture', data.user.profile_picture);
+          localStorage.setItem("profilePicture", data.user.profile_picture);
         }
 
         // Set class level if available
         if (data.user.class_level) {
-          localStorage.setItem('userClass', data.user.class_level.toString());
+          localStorage.setItem("userClass", data.user.class_level.toString());
         }
 
-        console.log('Redirecting to dashboard...');
+        console.log("Redirecting to dashboard...");
 
         // Always redirect to dashboard - it will show modal if profile incomplete
-        navigate('/dashboard');
+        navigate("/dashboard");
       } catch (error) {
-        console.error('Authentication error:', error);
-        setError(error instanceof Error ? error.message : 'Authentication failed');
+        console.error("Authentication error:", error);
+        setError(
+          error instanceof Error ? error.message : "Authentication failed",
+        );
 
         // Redirect to login page with error after 3 seconds
         setTimeout(() => {
-          const errorMsg = error instanceof Error ? error.message : 'auth_failed';
-          navigate(`/login?error=auth_failed&error_description=${encodeURIComponent(errorMsg)}`);
+          const errorMsg =
+            error instanceof Error ? error.message : "auth_failed";
+          navigate(
+            `/login?error=auth_failed&error_description=${encodeURIComponent(errorMsg)}`,
+          );
         }, 3000);
       }
     };
@@ -108,13 +119,26 @@ const AuthCallback: React.FC = () => {
         {error ? (
           <div>
             <div className="mb-4">
-              <svg className="w-16 h-16 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-16 h-16 text-red-500 mx-auto"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Authentication Failed</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+              Authentication Failed
+            </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Redirecting to login page...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Redirecting to login page...
+            </p>
 
             {/* Troubleshooting tips */}
             <details className="mt-4 text-left">
@@ -122,7 +146,9 @@ const AuthCallback: React.FC = () => {
                 Troubleshooting Tips
               </summary>
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 space-y-1 bg-gray-100 dark:bg-gray-800 p-3 rounded">
-                <p>• Check if WorkOS is configured correctly in the dashboard</p>
+                <p>
+                  • Check if WorkOS is configured correctly in the dashboard
+                </p>
                 <p>• Verify Google OAuth connection is set up and enabled</p>
                 <p>• Ensure redirect URI matches in WorkOS dashboard</p>
                 <p>• Check browser console for detailed error logs</p>
@@ -133,8 +159,12 @@ const AuthCallback: React.FC = () => {
         ) : (
           <div>
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-4"></div>
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Authenticating with Google</h2>
-            <p className="text-gray-600 dark:text-gray-300">Please wait while we sign you in...</p>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+              Authenticating with Google
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300">
+              Please wait while we sign you in...
+            </p>
           </div>
         )}
       </div>

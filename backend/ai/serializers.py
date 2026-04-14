@@ -20,11 +20,15 @@ class AIProviderSettingsSerializer(serializers.ModelSerializer):
             'quiz_flashcard_provider',
             'doc_vision_provider',
             'general_chat_provider',
+            'chat_page_provider',
             'provider_display',
             'gemini_api_key',
             'groq_api_key',
             'alibaba_api_key',
             'elevenlabs_api_key',
+            'flashcard_gemini_extra_keys',
+            'flashcard_groq_extra_keys',
+            'flashcard_alibaba_extra_keys',
             'ollama_base_url',
             'ollama_username',
             'ollama_password',
@@ -40,6 +44,9 @@ class AIProviderSettingsSerializer(serializers.ModelSerializer):
             'groq_api_key': {'write_only': True},
             'alibaba_api_key': {'write_only': True},
             'elevenlabs_api_key': {'write_only': True},
+            'flashcard_gemini_extra_keys': {'write_only': True},
+            'flashcard_groq_extra_keys': {'write_only': True},
+            'flashcard_alibaba_extra_keys': {'write_only': True},
         }
 
 

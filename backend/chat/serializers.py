@@ -25,7 +25,8 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ['id', 'chatroom', 'sender', 'message_type', 'content', 'file_url', 
-                  'file_name', 'file_size', 'is_read', 'created_at', 'reactions']
+                  'file_name', 'file_size', 'is_read', 'created_at', 'reactions',
+                  'drive_file_id', 'drive_view_link', 'drive_download_link']
         read_only_fields = ['sender', 'created_at']
 
 

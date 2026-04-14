@@ -419,23 +419,29 @@ const VideoCall: React.FC = () => {
   }, [disposeConference]);
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-slate-950 text-slate-100">
-      <header className="flex h-16 items-center justify-between border-b border-slate-800 px-4 sm:px-6">
+    <div className="fixed inset-0 z-[1000] overflow-hidden bg-[#0B2F24] text-[#E8F4EF]">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_18%,rgba(19,93,65,0.52),transparent_40%),radial-gradient(circle_at_88%_12%,rgba(63,164,123,0.28),transparent_36%),linear-gradient(180deg,#081C16_0%,#0B2F24_56%,#061C15_100%)]" />
+        <div className="absolute -left-16 top-20 h-56 w-56 rounded-full bg-[#2C8B66]/20 blur-3xl" />
+        <div className="absolute -right-20 bottom-10 h-64 w-64 rounded-full bg-[#1A7A55]/22 blur-3xl" />
+      </div>
+
+      <header className="relative z-10 flex h-16 items-center justify-between border-b border-[#2A7C5D]/45 bg-[#0E352A]/85 px-4 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-800">
+            className="inline-flex items-center gap-2 rounded-lg border border-[#2B7A5A] bg-[#114837]/70 px-3 py-1.5 text-sm text-[#DDF4EA] transition-colors hover:bg-[#135D41]">
             <ArrowLeft className="h-4 w-4" />
             Back
           </button>
           <div>
-            <h1 className="text-base font-semibold sm:text-lg">
+            <h1 className="text-base font-semibold tracking-wide text-[#F1FBF7] sm:text-lg">
               8x8 Video Call
             </h1>
             {activeRoomName ? (
-              <p className="text-xs text-slate-400">Room: {activeRoomName}</p>
+              <p className="text-xs text-[#A9DCC7]">Room: {activeRoomName}</p>
             ) : (
-              <p className="text-xs text-slate-400">Ready to join</p>
+              <p className="text-xs text-[#A9DCC7]">Ready to join</p>
             )}
           </div>
         </div>
@@ -443,33 +449,37 @@ const VideoCall: React.FC = () => {
         {activeRoomName && (
           <button
             onClick={handleLeave}
-            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold hover:bg-red-700">
+            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700">
             <VideoOff className="h-4 w-4" />
             Leave
           </button>
         )}
       </header>
 
-      <div className="relative h-[calc(100%-4rem)] w-full">
+      <div className="relative z-10 h-[calc(100%-4rem)] w-full">
         <div
           ref={containerRef}
           id="jaas-container"
-          className="h-full w-full bg-black"
+          className="h-full w-full bg-black/95"
         />
 
         {!activeRoomName && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/95 p-4">
-            <div className="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
-              <h2 className="text-xl font-bold text-white">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#061C15]/80 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-2xl rounded-3xl border border-[#2B7A5A]/45 bg-[#0E352A]/88 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-7">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#2D8A66]/60 bg-[#135D41]/35 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#C9F0DF]">
+                Secure Live Session
+              </div>
+
+              <h2 className="text-xl font-bold text-[#F3FCF8] sm:text-2xl">
                 Start a live class
               </h2>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-[#B5E2CF]">
                 Your call runs on 8x8 JaaS. Room access token is generated from
                 backend for production safety.
               </p>
 
               {isConfigLoading && (
-                <div className="mt-4 rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-xs text-slate-300">
+                <div className="mt-4 rounded-xl border border-[#2A7D5D]/50 bg-[#0F3A2D]/75 px-3 py-2 text-xs text-[#CDEFE0]">
                   Checking video service configuration...
                 </div>
               )}
@@ -477,7 +487,7 @@ const VideoCall: React.FC = () => {
               {!isConfigLoading &&
                 configStatus &&
                 !configStatus.token_endpoint_ready && (
-                  <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                  <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
                     Backend video setup is incomplete.
                     {configStatus.missing_fields?.length > 0
                       ? ` Missing: ${configStatus.missing_fields.join(", ")}.`
@@ -487,31 +497,31 @@ const VideoCall: React.FC = () => {
 
               <div className="mt-5 space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-300">
+                  <label className="mb-1 block text-sm font-medium text-[#D2F2E4]">
                     Room name
                   </label>
                   <input
                     value={roomInput}
                     onChange={(event) => setRoomInput(event.target.value)}
                     placeholder="class-10-math"
-                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+                    className="w-full rounded-xl border border-[#2A7C5D] bg-[#0C2F24] px-3 py-2.5 text-sm text-white outline-none transition-colors focus:border-[#39A77A] focus:ring-2 focus:ring-[#39A77A]/35"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-300">
+                  <label className="mb-1 block text-sm font-medium text-[#D2F2E4]">
                     Display name
                   </label>
                   <input
                     value={displayName}
                     onChange={(event) => setDisplayName(event.target.value)}
                     placeholder="Teacher Name"
-                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+                    className="w-full rounded-xl border border-[#2A7C5D] bg-[#0C2F24] px-3 py-2.5 text-sm text-white outline-none transition-colors focus:border-[#39A77A] focus:ring-2 focus:ring-[#39A77A]/35"
                   />
                 </div>
 
                 {error && (
-                  <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                  <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
                     {error}
                   </div>
                 )}
@@ -523,7 +533,7 @@ const VideoCall: React.FC = () => {
                     !roomInput.trim() ||
                     (configStatus ? !configStatus.token_endpoint_ready : false)
                   }
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#135D41] to-[#1A7A55] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#0A3A28]/45 transition-all hover:from-[#0F5138] hover:to-[#166A4B] disabled:cursor-not-allowed disabled:opacity-60">
                   {isJoining ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -542,8 +552,8 @@ const VideoCall: React.FC = () => {
         )}
 
         {isJoining && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35">
-            <div className="inline-flex items-center gap-2 rounded-lg bg-slate-900/90 px-4 py-2 text-sm text-white shadow-xl">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-[#2A7C5D]/55 bg-[#0E352A]/90 px-4 py-2 text-sm text-[#E8F6EF] shadow-xl backdrop-blur-md">
               <Loader2 className="h-4 w-4 animate-spin" />
               Connecting to meeting...
             </div>
@@ -551,7 +561,7 @@ const VideoCall: React.FC = () => {
         )}
 
         {isConnected && (
-          <div className="pointer-events-none absolute bottom-4 left-4 rounded-md bg-emerald-600/90 px-3 py-1 text-xs font-semibold text-white">
+          <div className="pointer-events-none absolute bottom-4 left-4 rounded-md border border-[#1C7A56]/70 bg-[#135D41]/92 px-3 py-1 text-xs font-semibold text-[#EAF8F2] shadow-lg">
             Connected
           </div>
         )}

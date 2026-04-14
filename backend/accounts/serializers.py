@@ -3,23 +3,26 @@ from .models import User, StudySession, Note
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
     
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'class_level', 
-                 'fav_subjects', 'disliked_subjects', 'interests', 'total_points', 'is_student', 
+                 'fav_subjects', 'disliked_subjects', 'interests', 'total_points', 'role', 'role_display', 'is_student', 
                  'is_teacher', 'is_admin', 'is_member', 'is_banned', 'ban_reason', 'google_id', 'profile_picture',
                  'total_study_time', 'current_streak', 'longest_streak')
-        read_only_fields = ('id', 'is_student', 'is_teacher', 'is_admin', 'is_member', 'is_banned', 'google_id', 'profile_picture')
+        read_only_fields = ('id', 'role', 'role_display', 'is_student', 'is_teacher', 'is_admin', 'is_member', 'is_banned', 'google_id', 'profile_picture')
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'class_level', 
-                 'fav_subjects', 'disliked_subjects', 'interests', 'total_points', 'is_student', 
+                 'fav_subjects', 'disliked_subjects', 'interests', 'total_points', 'role', 'role_display', 'is_student', 
                  'is_teacher', 'is_admin', 'is_member', 'is_banned', 'ban_reason', 'google_id', 'profile_picture',
                  'total_study_time', 'current_streak', 'longest_streak')
-        read_only_fields = ('id', 'username', 'email', 'is_student', 'is_teacher', 'is_admin', 
+        read_only_fields = ('id', 'username', 'email', 'role', 'role_display', 'is_student', 'is_teacher', 'is_admin', 
                            'is_member', 'is_banned', 'google_id', 'profile_picture')
 
 class StudySessionSerializer(serializers.ModelSerializer):
