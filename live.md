@@ -196,14 +196,114 @@ docker compose -f docker-compose.prod.yml logs -f nginx
 - Forward HTTPS -> droplet HTTP 80
 - keep SECURE_SSL_REDIRECT=False unless X-Forwarded-Proto is handled exactly
 
-### Option B: TLS cert files mounted to nginx container
+### Option B: In-container Nginx HTTPS with Let's Encrypt
+
+This option runs HTTPS directly in your Docker Nginx service for bipulroy.me.
+
+#### Step 1: Install certbot on droplet
+
+```bash
+sudo apt-get update
+sudo apt-get install -y certbot
+```
+
+#### Step 2: Stop nginx temporarily (port 80 must be free)
+
+```bash
+cd ~/schoolproject
+docker compose -f docker-compose.prod.yml stop nginx
+```
+
+#### Step 3: Issue certificates for bipulroy.me and www
+
+```bash
+sudo certbot certonly --standalone \
+  -d bipulroy.me -d www.bipulroy.me \
+  --agree-tos --non-interactive \
+  -m your-email@example.com
+```
+
+#### Step 4: Copy cert files into project ssl folder
+
+```bash
+cd ~/schoolproject
+mkdir -p ssl
+sudo cp /etc/letsencrypt/live/bipulroy.me/fullchain.pem ./ssl/fullchain.pem
+sudo cp /etc/letsencrypt/live/bipulroy.me/privkey.pem ./ssl/privkey.pem
+sudo chmod 644 ./ssl/fullchain.pem
+sudo chmod 600 ./ssl/privkey.pem
+```
+
+#### Step 5: Switch to HTTPS nginx configuration
+
+```bash
+cd ~/schoolproject
+cp nginx.https.conf.example nginx.conf
+```
+
+#### Step 6: Enable secure redirect in env files
+
+In `.env` set:
+
+```env
+SECURE_SSL_REDIRECT=True
+```
+
+In `backend/.env` set:
+
+```env
+SECURE_SSL_REDIRECT=True
+```
+
+#### Step 7: Restart production services
+
+```bash
+cd ~/schoolproject
+docker compose -f docker-compose.prod.yml up -d --build nginx backend
+```
+
+#### Step 8: Validate HTTPS
+
+```bash
+curl -I https://bipulroy.me
+curl -I https://www.bipulroy.me
+```
+
+#### Step 9: Auto-renew certificates and redeploy cert files
+
+Create deploy hook:
+
+```bash
+sudo tee /etc/letsencrypt/renewal-hooks/deploy/bipulroy-me-docker.sh > /dev/null <<'EOF'
+#!/bin/sh
+set -eu
+PROJECT_DIR="/home/$SUDO_USER/schoolproject"
+cp /etc/letsencrypt/live/bipulroy.me/fullchain.pem "$PROJECT_DIR/ssl/fullchain.pem"
+cp /etc/letsencrypt/live/bipulroy.me/privkey.pem "$PROJECT_DIR/ssl/privkey.pem"
+chmod 644 "$PROJECT_DIR/ssl/fullchain.pem"
+chmod 600 "$PROJECT_DIR/ssl/privkey.pem"
+cd "$PROJECT_DIR"
+docker compose -f docker-compose.prod.yml restart nginx
+EOF
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/bipulroy-me-docker.sh
+```
+
+Test renewal process:
+
+```bash
+sudo certbot renew --dry-run
+```
 
 Place cert files into project ssl directory:
 
 - ssl/fullchain.pem
 - ssl/privkey.pem
 
-Then uncomment the HTTPS server block in nginx.conf and redeploy nginx.
+Use HTTPS template config in this project:
+
+- nginx.https.conf.example
+
+Then redeploy nginx.
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build nginx
