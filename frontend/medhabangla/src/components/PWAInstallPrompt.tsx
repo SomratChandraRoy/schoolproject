@@ -108,7 +108,7 @@ const PWAInstallPrompt: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold mb-1">Install SOPAN</h3>
+            <h3 className="text-lg font-bold mb-1">Install SOPNA</h3>
             <p className="text-sm text-white/90 mb-4">
               Install our app for offline access to notes, faster performance,
               and a better experience!

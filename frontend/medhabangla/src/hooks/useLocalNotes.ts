@@ -210,7 +210,7 @@ export const useLocalNotes = (): LocalNotes => {
   // Open IndexedDB
   const openDB = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open("SopanNotesDB", 2);
+      const request = indexedDB.open("SopnaNotesDB", 2);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);

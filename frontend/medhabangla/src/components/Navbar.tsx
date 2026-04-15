@@ -155,7 +155,7 @@ const Navbar: React.FC = () => {
               <Link
                 to="/"
                 className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                SOPAN
+                SOPNA
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

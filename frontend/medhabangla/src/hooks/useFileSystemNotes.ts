@@ -130,7 +130,7 @@ export const useFileSystemNotes = (): FileSystemNotes => {
   // Open IndexedDB for storing folder handle
   const openDB = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open("SopanFileSystem", 1);
+      const request = indexedDB.open("SopnaFileSystem", 1);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);

@@ -15,7 +15,7 @@ class NotesDatabase extends Dexie {
   notes: Dexie.Table<Note, number>;
 
   constructor() {
-    super("SopanNotes");
+    super("SopnaNotes");
     this.version(1).stores({
       notes: "++id, title, content, createdAt, updatedAt",
     });

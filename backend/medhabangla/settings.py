@@ -208,6 +208,12 @@ WORKOS_REDIRECT_URI = os.getenv(
     f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/auth/callback"
 )
 
+# Auth redirect safety: when login form omits a `next` value, avoid Django's
+# default /accounts/profile/ target (not present in this project).
+LOGIN_URL = '/admin/login/'
+LOGIN_REDIRECT_URL = '/admin/'
+LOGOUT_REDIRECT_URL = '/admin/login/'
+
 # Groq AI settings
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
@@ -303,8 +309,8 @@ from django.utils.translation import gettext_lazy as _
 
 # Unfold UI Config
 UNFOLD = {
-    'SITE_TITLE': 'MedhaBangla Admin',
-    'SITE_HEADER': 'MedhaBangla',
+    'SITE_TITLE': 'SOPNA Admin',
+    'SITE_HEADER': 'SOPNA',
     'SITE_URL': '/',
     'SITE_ICON': lambda request: 'https://cdn-icons-png.flaticon.com/512/8066/8066115.png',
     'SITE_SYMBOL': 'school',  # Material symbol

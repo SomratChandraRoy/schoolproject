@@ -137,7 +137,7 @@ const Login: React.FC = () => {
 
                   <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      Welcome to SOPAN
+                      Welcome to SOPNA
                     </h1>
                     <p className="text-gray-600 dark:text-gray-300">
                       Sign in with your Google account to continue

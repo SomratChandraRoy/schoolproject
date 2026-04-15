@@ -541,7 +541,7 @@ const UnifiedAIChat: React.FC = () => {
                 )}
               />
               <h2 className="text-lg md:text-xl font-bold">
-                SOPAN AI Assistant
+                SOPNA AI Assistant
               </h2>
             </div>
             <div className="flex gap-2">

@@ -39,7 +39,7 @@ const Register: React.FC = () => {
                 Create Account
               </h1>
               <p className="text-gray-600 dark:text-gray-300">
-                Join SOPAN to start your learning journey
+                Join SOPNA to start your learning journey
               </p>
             </div>
 
