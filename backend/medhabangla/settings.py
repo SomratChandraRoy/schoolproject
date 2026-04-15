@@ -120,8 +120,10 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# Database configuration with support for SQLite, Docker PostgreSQL, and AWS RDS PostgreSQL
-# Check if using SQLite (local development)
+# Supports:
+# - SQLite local mode (USE_SQLITE=True)
+# - Docker PostgreSQL service (DB_HOST=db)
+# - Managed PostgreSQL (for example DigitalOcean managed database)
 if env_bool('USE_SQLITE', False):
     DATABASES = {
         'default': {
@@ -129,52 +131,49 @@ if env_bool('USE_SQLITE', False):
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-# Check if using Docker environment
-elif env_bool('DOCKER_ENV', False):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'medhabangla_db'),
-            'USER': os.getenv('DB_USER', 'medhabangla_user'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', 'db'),
-            'PORT': os.getenv('DB_PORT', '5432'),
-            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '300')),
-            'CONN_HEALTH_CHECKS': True,
-        }
-    }
-# Use AWS RDS PostgreSQL (production/cloud)
-elif os.getenv('DB_HOST'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'medhabangla'),
-            'USER': os.getenv('DB_USER', 'postgres'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', ''),
-            'PORT': os.getenv('DB_PORT', '5432'),
-            'OPTIONS': {
-                'connect_timeout': 10,
-                'options': '-c statement_timeout=30000',  # 30 seconds timeout
-                'keepalives': 1,
-                'keepalives_idle': 30,
-                'keepalives_interval': 10,
-                'keepalives_count': 5,
-            },
-            # Connection pooling settings
-            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '300')),  # 5 minutes default
-            'CONN_HEALTH_CHECKS': True,  # Django 4.1+ feature to validate connections
-            'ATOMIC_REQUESTS': False,  # Set to True if you want automatic transactions
-        }
-    }
-# Default to SQLite if no configuration provided
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+    use_postgres = env_bool('DOCKER_ENV', False) or bool(os.getenv('DB_HOST'))
+
+    if use_postgres:
+        db_options = {
+            'connect_timeout': int(os.getenv('DB_CONNECT_TIMEOUT', '10')),
+            'options': os.getenv('DB_OPTIONS', '-c statement_timeout=30000'),
+            'keepalives': int(os.getenv('DB_KEEPALIVES', '1')),
+            'keepalives_idle': int(os.getenv('DB_KEEPALIVES_IDLE', '30')),
+            'keepalives_interval': int(os.getenv('DB_KEEPALIVES_INTERVAL', '10')),
+            'keepalives_count': int(os.getenv('DB_KEEPALIVES_COUNT', '5')),
         }
-    }
+
+        db_sslmode = os.getenv('DB_SSLMODE', 'prefer').strip()
+        db_sslrootcert = os.getenv('DB_SSLROOTCERT', '').strip()
+
+        if db_sslmode:
+            db_options['sslmode'] = db_sslmode
+
+        if db_sslrootcert:
+            db_options['sslrootcert'] = db_sslrootcert
+
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('DB_NAME', 'medhabangla_db'),
+                'USER': os.getenv('DB_USER', 'medhabangla_user'),
+                'PASSWORD': os.getenv('DB_PASSWORD', ''),
+                'HOST': os.getenv('DB_HOST', 'db'),
+                'PORT': os.getenv('DB_PORT', '5432'),
+                'OPTIONS': db_options,
+                'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '300')),
+                'CONN_HEALTH_CHECKS': True,
+                'ATOMIC_REQUESTS': env_bool('DB_ATOMIC_REQUESTS', False),
+            }
+        }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', DEBUG)
 if not CORS_ALLOW_ALL_ORIGINS:
@@ -207,6 +206,12 @@ WORKOS_REDIRECT_URI = os.getenv(
     'WORKOS_REDIRECT_URI',
     f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/auth/callback"
 )
+
+# Auth redirect safety: when login form omits a `next` value, avoid Django's
+# default /accounts/profile/ target (not present in this project).
+LOGIN_URL = '/admin/login/'
+LOGIN_REDIRECT_URL = '/admin/'
+LOGOUT_REDIRECT_URL = '/admin/login/'
 
 # Groq AI settings
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -303,8 +308,8 @@ from django.utils.translation import gettext_lazy as _
 
 # Unfold UI Config
 UNFOLD = {
-    'SITE_TITLE': 'MedhaBangla Admin',
-    'SITE_HEADER': 'MedhaBangla',
+    'SITE_TITLE': 'SOPNA Admin',
+    'SITE_HEADER': 'SOPNA',
     'SITE_URL': '/',
     'SITE_ICON': lambda request: 'https://cdn-icons-png.flaticon.com/512/8066/8066115.png',
     'SITE_SYMBOL': 'school',  # Material symbol

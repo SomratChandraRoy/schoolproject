@@ -894,6 +894,17 @@ semantic_score must be between 0 and 1.
                 })
             
             score_percentage = round((correct_count / total_questions) * 100) if total_questions > 0 else 0
+
+            wrong_answer_lines = []
+            for item in wrong_answers[:5]:
+                wrong_answer_lines.append(
+                    "প্রশ্ন: {}\nশিক্ষার্থীর উত্তর: {}\nসঠিক উত্তর: {}".format(
+                        item['question'],
+                        item['userAnswer'],
+                        item['correctAnswer'],
+                    )
+                )
+            wrong_answer_summary = "\n".join(wrong_answer_lines)
             
             # Create comprehensive analysis prompt
             analysis_prompt = f"""আপনি একজন বিশেষজ্ঞ শিক্ষা বিশ্লেষক। একজন Class {class_level} এর শিক্ষার্থী {subject} বিষয়ে একটি কুইজ দিয়েছে।
@@ -906,7 +917,7 @@ semantic_score must be between 0 and 1.
 - স্কোর: {score_percentage}%
 
 **ভুল উত্তরগুলো:**
-{chr(10).join([f"প্রশ্ন: {w['question']}\nশিক্ষার্থীর উত্তর: {w['userAnswer']}\nসঠিক উত্তর: {w['correctAnswer']}" for w in wrong_answers[:5]])}
+{wrong_answer_summary}
 
 অনুগ্রহ করে নিম্নলিখিত বিষয়ে একটি বিস্তারিত বিশ্লেষণ প্রদান করুন (বাংলায়):
 

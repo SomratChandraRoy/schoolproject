@@ -7,21 +7,37 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-medhabangla_db}
       POSTGRES_USER: ${POSTGRES_USER:-medhabangla_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-medhabangla_password}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-medhabangla_user} -d ${POSTGRES_DB:-medhabangla_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     ports:
       - "5432:5432"
 
   redis:
     image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     ports:
       - "6379:6379"
 
   backend:
     build: ./backend
-    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: sh /app/entrypoint.dev.sh
     volumes:
       - ./backend:/app
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - DEBUG=True
       - DOCKER_ENV=True
@@ -40,8 +56,10 @@ services:
       - JAAS_JWT_TTL_SECONDS=${JAAS_JWT_TTL_SECONDS:-3600}
       - JAAS_REQUIRE_AUTH_TOKEN=${JAAS_REQUIRE_AUTH_TOKEN:-False}
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
     build:
@@ -51,9 +69,10 @@ services:
       - ./frontend/medhabangla:/app
       - /app/node_modules
     ports:
-      - "3000:3000"
+      - "5173:5173"
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
     depends_on:
       - backend
 

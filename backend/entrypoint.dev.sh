@@ -1,13 +1,10 @@
 #!/bin/sh
 set -eu
 
-echo "[entrypoint] Running database migrations..."
+echo "[dev-entrypoint] Waiting for database and applying migrations..."
 python manage.py migrate --noinput
 
-echo "[entrypoint] Collecting static files..."
-python manage.py collectstatic --noinput
-
-echo "[entrypoint] Ensuring default superuser exists..."
+echo "[dev-entrypoint] Ensuring default superuser exists..."
 python manage.py shell <<'PY'
 from django.contrib.auth import get_user_model
 
@@ -67,5 +64,5 @@ else:
     print(f"Superuser '{username}' already exists")
 PY
 
-echo "[entrypoint] Starting application..."
-exec "$@"
+echo "[dev-entrypoint] Starting Django development server..."
+exec python manage.py runserver 0.0.0.0:8000

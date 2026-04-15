@@ -1,4 +1,4 @@
-# MedhaBangla School Project
+# SOPNA Project
 
 Full production deployment documentation is available in [live.md](live.md).
 
@@ -10,7 +10,7 @@ Full production deployment documentation is available in [live.md](live.md).
 2. Run Docker development stack:
    - `docker compose up --build`
 3. Open apps:
-   - Frontend: `http://localhost:3000`
+   - Frontend: `http://localhost:5173`
    - Backend API: `http://localhost:8000`
    - Admin: `http://localhost:8000/admin/`
 

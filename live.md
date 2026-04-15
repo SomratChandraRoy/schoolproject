@@ -1,35 +1,185 @@
-# MedhaBangla Production Deployment (DigitalOcean + Docker)
+# SOPNA Live Runbook (Development + Production)
 
-This file contains the full production deployment workflow for this project.
+All command and file snippets in this document are provided as fenced code blocks so you can use the copy button in Markdown viewers (GitHub/VS Code preview).
 
-## 1. Production Architecture
+This document is the complete runbook for local Docker development and live deployment on a DigitalOcean Ubuntu droplet for:
 
-- `db`: PostgreSQL 15 (persistent volume)
-- `redis`: Redis 7 (Channels/WebSocket backend)
-- `backend`: Django ASGI app (Daphne)
-- `nginx`: reverse proxy + frontend static app + static/media serving
-- Frontend is built inside `Dockerfile.nginx` (multi-stage build)
+- domain: bipulroy.me
+- app: MedhaBangla (Django + React + PostgreSQL + Redis + Nginx)
 
-## 2. Files Updated For Production
+## 1. Architecture Overview
 
-- `docker-compose.prod.yml`
-- `docker-compose.yml`
-- `Dockerfile.nginx`
-- `nginx.conf`
-- `backend/Dockerfile`
-- `backend/Dockerfile.prod`
-- `backend/entrypoint.prod.sh`
-- `backend/medhabangla/settings.py`
-- `backend/.env.example`
-- `backend/requirements.txt` (generated from pip freeze)
-- `.dockerignore`
-- `backend/.dockerignore`
-- `frontend/medhabangla/.dockerignore`
-- `frontend/medhabangla/nginx.conf`
+### Development stack (docker-compose.yml)
 
-## 3. DigitalOcean Server Prerequisites
+- db: PostgreSQL 15
+- redis: Redis 7
+- backend: Django development server via entrypoint.dev.sh
+- frontend: Vite dev server on port 5173
 
-Create an Ubuntu droplet and install Docker + Compose plugin.
+### Production stack (docker-compose.prod.yml)
+
+- db: PostgreSQL 15 with persistent volume
+- redis: Redis 7 with appendonly persistence
+- backend: Django ASGI app via Daphne + entrypoint.prod.sh
+- nginx: reverse proxy + static/media + frontend dist
+
+## 2. Important Startup Behavior
+
+Both dev and prod now auto-bootstrap the admin account on first start:
+
+- username: bipulroy
+- password: Bipul10000$
+
+Implemented in:
+
+- backend/entrypoint.dev.sh
+- backend/entrypoint.prod.sh
+
+Change password immediately after first login.
+
+## 3. Environment Files You Need
+
+### Root env templates
+
+- .env.dev.example
+- .env.prod.example
+
+### Backend env template
+
+- backend/.env.example
+
+### Frontend env template
+
+- frontend/medhabangla/.env.example
+
+### 3.1 Copy-ready root `.env.dev.example`
+
+```env
+# Root development Docker variables
+POSTGRES_DB=medhabangla_db
+POSTGRES_USER=medhabangla_user
+POSTGRES_PASSWORD=medhabangla_password
+
+# Backend URL used by frontend dev container
+VITE_API_URL=http://localhost:8000
+
+# Optional JaaS vars for video-call dev flow
+JAAS_DOMAIN=8x8.vc
+JAAS_APP_ID=
+JAAS_KID=
+JAAS_PRIVATE_KEY=
+JAAS_JWT_TTL_SECONDS=3600
+JAAS_REQUIRE_AUTH_TOKEN=False
+```
+
+### 3.2 Copy-ready root `.env.prod.example`
+
+```env
+# Root production Docker variables for bipulroy.me
+# Local postgres container fallback (optional)
+POSTGRES_DB=medhabangla_db
+POSTGRES_USER=medhabangla_user
+POSTGRES_PASSWORD=change_this_postgres_password
+
+# Application database connection (used by backend).
+# For DigitalOcean Managed PostgreSQL, set DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD
+# from your DO database connection details.
+DB_HOST=db
+DB_PORT=5432
+DB_NAME=medhabangla_db
+DB_USER=medhabangla_user
+DB_PASSWORD=change_this_postgres_password
+
+# SSL mode for PostgreSQL.
+# For DigitalOcean Managed PostgreSQL use: require
+DB_SSLMODE=prefer
+
+# Optional CA certificate path inside backend container (advanced).
+# Example: /app/certs/do-ca.crt
+DB_SSLROOTCERT=
+
+# Optional connection timeout (seconds)
+DB_CONNECT_TIMEOUT=10
+
+# DigitalOcean Managed DB example values:
+# DB_HOST=db-postgresql-nyc3-12345-do-user-1234567-0.l.db.ondigitalocean.com
+# DB_PORT=25060
+# DB_NAME=defaultdb
+# DB_USER=doadmin
+# DB_PASSWORD=your_digitalocean_db_password
+# DB_SSLMODE=require
+
+ALLOWED_HOSTS=bipulroy.me,www.bipulroy.me
+CORS_ALLOWED_ORIGINS=https://bipulroy.me,https://www.bipulroy.me
+CSRF_TRUSTED_ORIGINS=https://bipulroy.me,https://www.bipulroy.me
+
+# Use empty value for same-origin API calls from nginx-hosted frontend
+VITE_API_URL=
+
+# Keep False when TLS is terminated by DigitalOcean load balancer
+SECURE_SSL_REDIRECT=False
+```
+
+## 4. Local Development with Docker
+
+Run from project root.
+
+### Step 1: Prepare env files
+
+```bash
+cp .env.dev.example .env
+cp backend/.env.example backend/.env
+cp frontend/medhabangla/.env.example frontend/medhabangla/.env
+```
+
+If you already configured env files, keep your existing values.
+
+### Step 2: Build and start dev stack
+
+```bash
+docker compose down --remove-orphans
+docker compose up -d --build
+```
+
+### Step 3: Verify containers
+
+```bash
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+```
+
+### Step 4: Verify URLs
+
+- frontend: http://localhost:5173
+- backend api/admin: http://localhost:8000/admin/login/
+
+Quick command checks:
+
+```bash
+curl -I http://localhost:5173
+curl -I http://localhost:8000/admin/login/
+```
+
+### Dev helper commands
+
+```bash
+docker compose restart
+docker compose down
+docker compose down -v
+docker compose up -d --build backend
+docker compose up -d --build frontend
+```
+
+## 5. Production Deployment on DigitalOcean (bipulroy.me)
+
+## 5.1 Create droplet
+
+- Ubuntu 22.04 or 24.04 LTS
+- minimum 2 vCPU / 4 GB RAM recommended
+- attach SSH key
+
+## 5.2 Install Docker and Compose plugin
 
 ```bash
 sudo apt-get update
@@ -48,74 +198,92 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 sudo usermod -aG docker $USER
 ```
 
-Log out and log in once after adding user to the docker group.
+Logout/login once after adding docker group.
 
-## 4. DNS
+## 5.3 DNS for bipulroy.me
 
-Point your domain A record to the droplet IP.
+Set A records:
 
-Example:
+- @ -> your droplet public IP
+- www -> your droplet public IP
 
-- `@` -> `YOUR_DROPLET_IP`
-- `www` -> `YOUR_DROPLET_IP`
-
-## 5. Prepare Project On Server
+## 5.4 Clone project
 
 ```bash
 git clone <your-repo-url>
 cd schoolproject
 ```
 
-## 6. Configure Environment Variables
+## 5.5 Configure production env
 
-### 6.1 Backend env file
+### Root file
+
+```bash
+cp .env.prod.example .env
+nano .env
+```
+
+### Backend file
 
 ```bash
 cp backend/.env.example backend/.env
 nano backend/.env
 ```
 
-Set at least these values correctly:
+Set strong real values for:
 
-- `DEBUG=False`
-- `DJANGO_SECRET_KEY=<strong-random-secret>`
-- `ALLOWED_HOSTS=your-domain.com,www.your-domain.com`
-- `CORS_ALLOWED_ORIGINS=https://your-domain.com,https://www.your-domain.com`
-- `CSRF_TRUSTED_ORIGINS=https://your-domain.com,https://www.your-domain.com`
-- `DB_PASSWORD=<strong-db-password>`
-- all required API keys (`WORKOS`, `GROQ`, `GEMINI`, etc.)
+- DJANGO_SECRET_KEY
+- DB_PASSWORD
+- all API keys in backend/.env
 
-### 6.2 Root compose env file
+### 5.5.1 Use DigitalOcean Managed PostgreSQL
 
-Create a root `.env` file beside `docker-compose.prod.yml`:
+If you already have a DigitalOcean Managed PostgreSQL cluster, set these values in root `.env`:
 
-```bash
-cat > .env << 'EOF'
-POSTGRES_DB=medhabangla_db
-POSTGRES_USER=medhabangla_user
-POSTGRES_PASSWORD=change_this_postgres_password
-
-ALLOWED_HOSTS=your-domain.com,www.your-domain.com
-CORS_ALLOWED_ORIGINS=https://your-domain.com,https://www.your-domain.com
-CSRF_TRUSTED_ORIGINS=https://your-domain.com,https://www.your-domain.com
-
-# For same-domain frontend/backend requests, keep empty.
-VITE_API_URL=
-
-# Keep False if TLS is terminated by DigitalOcean Load Balancer.
-SECURE_SSL_REDIRECT=False
-EOF
+```env
+DB_HOST=db-postgresql-nyc3-12345-do-user-1234567-0.l.db.ondigitalocean.com
+DB_PORT=25060
+DB_NAME=defaultdb
+DB_USER=doadmin
+DB_PASSWORD=your_digitalocean_db_password
+DB_SSLMODE=require
+DB_SSLROOTCERT=
+DB_CONNECT_TIMEOUT=10
 ```
 
-Important: keep database values in `.env` and `backend/.env` consistent.
+Also set matching values in `backend/.env`:
 
-## 7. First Production Build + Run
+```env
+DB_HOST=db-postgresql-nyc3-12345-do-user-1234567-0.l.db.ondigitalocean.com
+DB_PORT=25060
+DB_NAME=defaultdb
+DB_USER=doadmin
+DB_PASSWORD=your_digitalocean_db_password
+DB_SSLMODE=require
+DB_SSLROOTCERT=
+DB_CONNECT_TIMEOUT=10
+```
+
+Notes:
+
+- `DB_SSLMODE=require` is recommended for DigitalOcean managed databases.
+- Keep `DOCKER_ENV=True` for container runtime behavior.
+- You can keep the local `db` service in compose; backend will connect to `DB_HOST` from env.
+
+Confirm these are correct:
+
+- ALLOWED_HOSTS=bipulroy.me,www.bipulroy.me
+- CORS_ALLOWED_ORIGINS=https://bipulroy.me,https://www.bipulroy.me
+- CSRF_TRUSTED_ORIGINS=https://bipulroy.me,https://www.bipulroy.me
+
+## 5.6 Build and start production stack
 
 ```bash
+docker compose -f docker-compose.prod.yml down --remove-orphans
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Check status:
+Verify:
 
 ```bash
 docker compose -f docker-compose.prod.yml ps
@@ -123,106 +291,206 @@ docker compose -f docker-compose.prod.yml logs -f backend
 docker compose -f docker-compose.prod.yml logs -f nginx
 ```
 
-## 8. Automatic First-Time Superuser Creation
+## 5.7 HTTPS options
 
-The backend startup logic now auto-runs in `backend/entrypoint.prod.sh`:
+### Option A (recommended): DigitalOcean Load Balancer TLS
 
-- Runs `migrate`
-- Runs `collectstatic`
-- Creates superuser if missing:
-  - username: `bipulroy`
-  - password: `Bipul10000$`
+- Create DO load balancer in front of droplet
+- Use managed certificate for bipulroy.me and www.bipulroy.me
+- Forward HTTPS -> droplet HTTP 80
+- keep SECURE_SSL_REDIRECT=False unless X-Forwarded-Proto is handled exactly
 
-After first login, change this password immediately:
+### Option B: In-container Nginx HTTPS with Let's Encrypt
+
+This option runs HTTPS directly in your Docker Nginx service for bipulroy.me.
+
+#### Step 1: Install certbot on droplet
 
 ```bash
-docker compose -f docker-compose.prod.yml exec backend python manage.py changepassword bipulroy
+sudo apt-get update
+sudo apt-get install -y certbot
 ```
 
-## 9. HTTPS Setup Options
+#### Step 2: Stop nginx temporarily (port 80 must be free)
 
-### Option A: DigitalOcean Load Balancer TLS (recommended)
+```bash
+cd ~/schoolproject
+docker compose -f docker-compose.prod.yml stop nginx
+```
 
-- Terminate SSL at DO Load Balancer.
-- Forward traffic to droplet on port 80.
-- Keep `SECURE_SSL_REDIRECT=False` unless forwarding `X-Forwarded-Proto=https` correctly.
+#### Step 3: Issue certificates for bipulroy.me and www
 
-### Option B: TLS inside Nginx container
+```bash
+sudo certbot certonly --standalone \
+  -d bipulroy.me -d www.bipulroy.me \
+  --agree-tos --non-interactive \
+  -m your-email@example.com
+```
 
-Place cert files under `./ssl`:
+#### Step 4: Copy cert files into project ssl folder
 
-- `fullchain.pem`
-- `privkey.pem`
+```bash
+cd ~/schoolproject
+mkdir -p ssl
+sudo cp /etc/letsencrypt/live/bipulroy.me/fullchain.pem ./ssl/fullchain.pem
+sudo cp /etc/letsencrypt/live/bipulroy.me/privkey.pem ./ssl/privkey.pem
+sudo chmod 644 ./ssl/fullchain.pem
+sudo chmod 600 ./ssl/privkey.pem
+```
 
-Then enable HTTPS server block in `nginx.conf` and reload:
+#### Step 5: Switch to HTTPS nginx configuration
+
+```bash
+cd ~/schoolproject
+cp nginx.https.conf.example nginx.conf
+```
+
+#### Step 6: Enable secure redirect in env files
+
+In `.env` set:
+
+```env
+SECURE_SSL_REDIRECT=True
+```
+
+In `backend/.env` set:
+
+```env
+SECURE_SSL_REDIRECT=True
+```
+
+#### Step 7: Restart production services
+
+```bash
+cd ~/schoolproject
+docker compose -f docker-compose.prod.yml up -d --build nginx backend
+```
+
+#### Step 8: Validate HTTPS
+
+```bash
+curl -I https://bipulroy.me
+curl -I https://www.bipulroy.me
+```
+
+#### Step 9: Auto-renew certificates and redeploy cert files
+
+Create deploy hook:
+
+```bash
+sudo tee /etc/letsencrypt/renewal-hooks/deploy/bipulroy-me-docker.sh > /dev/null <<'EOF'
+#!/bin/sh
+set -eu
+PROJECT_DIR="/home/$SUDO_USER/schoolproject"
+cp /etc/letsencrypt/live/bipulroy.me/fullchain.pem "$PROJECT_DIR/ssl/fullchain.pem"
+cp /etc/letsencrypt/live/bipulroy.me/privkey.pem "$PROJECT_DIR/ssl/privkey.pem"
+chmod 644 "$PROJECT_DIR/ssl/fullchain.pem"
+chmod 600 "$PROJECT_DIR/ssl/privkey.pem"
+cd "$PROJECT_DIR"
+docker compose -f docker-compose.prod.yml restart nginx
+EOF
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/bipulroy-me-docker.sh
+```
+
+Test renewal process:
+
+```bash
+sudo certbot renew --dry-run
+```
+
+Place cert files into project ssl directory:
+
+- ssl/fullchain.pem
+- ssl/privkey.pem
+
+Use HTTPS template config in this project:
+
+- nginx.https.conf.example
+
+Then redeploy nginx.
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build nginx
 ```
 
-## 10. Firewall and Ports
+## 5.8 Firewall ports
 
-Open only necessary ports on droplet firewall:
+Open only:
 
-- `22/tcp` (SSH)
-- `80/tcp` (HTTP)
-- `443/tcp` (HTTPS)
+- 22/tcp
+- 80/tcp
+- 443/tcp
 
-Do not expose PostgreSQL/Redis publicly.
+Do not expose 5432 and 6379 publicly.
 
-## 11. Operations Cheat Sheet
+## 6. Files You Edit for Live Production
 
-Rebuild after code changes:
+1. .env
+2. backend/.env
+3. nginx.conf (only if enabling in-container TLS block)
+
+Core deployment files already production-ready:
+
+- docker-compose.prod.yml
+- Dockerfile.nginx
+- backend/Dockerfile.prod
+- backend/entrypoint.prod.sh
+- backend/medhabangla/settings.py
+
+## 7. Safe Update Procedure (Production)
 
 ```bash
+git pull
 docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs --tail 200 backend
+docker compose -f docker-compose.prod.yml logs --tail 200 nginx
 ```
 
-Restart services:
+## 8. Backup and Restore
 
-```bash
-docker compose -f docker-compose.prod.yml restart
-```
-
-View logs:
-
-```bash
-docker compose -f docker-compose.prod.yml logs -f
-```
-
-Stop stack:
-
-```bash
-docker compose -f docker-compose.prod.yml down
-```
-
-Stop and remove volumes (danger: deletes DB data):
-
-```bash
-docker compose -f docker-compose.prod.yml down -v
-```
-
-## 12. Backup Recommendations
-
-PostgreSQL backup:
+### Backup PostgreSQL
 
 ```bash
 docker compose -f docker-compose.prod.yml exec -T db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup.sql
 ```
 
-Restore:
+### Restore PostgreSQL
 
 ```bash
 cat backup.sql | docker compose -f docker-compose.prod.yml exec -T db psql -U "$POSTGRES_USER" "$POSTGRES_DB"
 ```
 
-## 13. Health Checklist Before Going Live
+## 9. Go-Live Checklist
 
-- `backend/.env` has real secrets and no placeholder values.
-- Domain points to droplet.
-- `docker compose -f docker-compose.prod.yml ps` shows all services healthy.
-- `https://your-domain.com` frontend loads.
-- `https://your-domain.com/admin/` works.
-- API routes under `/api/` work through Nginx.
-- WebSockets under `/ws/` work (chat/voice features).
-- Default superuser password has been changed.
+- Domain bipulroy.me and www resolve to target endpoint
+- Production env files contain no placeholder secrets
+- docker compose prod services are healthy
+- https://bipulroy.me opens frontend
+- https://bipulroy.me/admin/ opens admin login
+- API calls under /api work through nginx
+- WebSocket routes under /ws work
+- Admin password changed after first login
+
+## 10. Troubleshooting
+
+### Check all logs
+
+```bash
+docker compose logs -f
+docker compose -f docker-compose.prod.yml logs -f
+```
+
+### Rebuild only one service
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build backend
+docker compose -f docker-compose.prod.yml up -d --build nginx
+```
+
+### Full clean restart (danger: removes volumes)
+
+```bash
+docker compose down -v
+docker compose -f docker-compose.prod.yml down -v
+```
