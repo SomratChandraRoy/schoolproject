@@ -1,4 +1,6 @@
-# MedhaBangla Live Runbook (Development + Production)
+# SOPNA Live Runbook (Development + Production)
+
+All command and file snippets in this document are provided as fenced code blocks so you can use the copy button in Markdown viewers (GitHub/VS Code preview).
 
 This document is the complete runbook for local Docker development and live deployment on a DigitalOcean Ubuntu droplet for:
 
@@ -49,6 +51,74 @@ Change password immediately after first login.
 ### Frontend env template
 
 - frontend/medhabangla/.env.example
+
+### 3.1 Copy-ready root `.env.dev.example`
+
+```env
+# Root development Docker variables
+POSTGRES_DB=medhabangla_db
+POSTGRES_USER=medhabangla_user
+POSTGRES_PASSWORD=medhabangla_password
+
+# Backend URL used by frontend dev container
+VITE_API_URL=http://localhost:8000
+
+# Optional JaaS vars for video-call dev flow
+JAAS_DOMAIN=8x8.vc
+JAAS_APP_ID=
+JAAS_KID=
+JAAS_PRIVATE_KEY=
+JAAS_JWT_TTL_SECONDS=3600
+JAAS_REQUIRE_AUTH_TOKEN=False
+```
+
+### 3.2 Copy-ready root `.env.prod.example`
+
+```env
+# Root production Docker variables for bipulroy.me
+# Local postgres container fallback (optional)
+POSTGRES_DB=medhabangla_db
+POSTGRES_USER=medhabangla_user
+POSTGRES_PASSWORD=change_this_postgres_password
+
+# Application database connection (used by backend).
+# For DigitalOcean Managed PostgreSQL, set DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD
+# from your DO database connection details.
+DB_HOST=db
+DB_PORT=5432
+DB_NAME=medhabangla_db
+DB_USER=medhabangla_user
+DB_PASSWORD=change_this_postgres_password
+
+# SSL mode for PostgreSQL.
+# For DigitalOcean Managed PostgreSQL use: require
+DB_SSLMODE=prefer
+
+# Optional CA certificate path inside backend container (advanced).
+# Example: /app/certs/do-ca.crt
+DB_SSLROOTCERT=
+
+# Optional connection timeout (seconds)
+DB_CONNECT_TIMEOUT=10
+
+# DigitalOcean Managed DB example values:
+# DB_HOST=db-postgresql-nyc3-12345-do-user-1234567-0.l.db.ondigitalocean.com
+# DB_PORT=25060
+# DB_NAME=defaultdb
+# DB_USER=doadmin
+# DB_PASSWORD=your_digitalocean_db_password
+# DB_SSLMODE=require
+
+ALLOWED_HOSTS=bipulroy.me,www.bipulroy.me
+CORS_ALLOWED_ORIGINS=https://bipulroy.me,https://www.bipulroy.me
+CSRF_TRUSTED_ORIGINS=https://bipulroy.me,https://www.bipulroy.me
+
+# Use empty value for same-origin API calls from nginx-hosted frontend
+VITE_API_URL=
+
+# Keep False when TLS is terminated by DigitalOcean load balancer
+SECURE_SSL_REDIRECT=False
+```
 
 ## 4. Local Development with Docker
 
