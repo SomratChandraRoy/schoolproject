@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { HomeScreen } from "./components/HomeScreen";
 import { GameScreen } from "./components/GameScreen";
 import { ResultsScreen } from "./components/ResultsScreen";
-import type { GameStats } from "./lib/math-engine";
+import type { GameStats } from "@/lib/math-engine";
 import "./index.css";
 
 type Screen = "home" | "game" | "results";
@@ -72,3 +72,5 @@ export default function App() {
     </div>
   );
 }
+
+
