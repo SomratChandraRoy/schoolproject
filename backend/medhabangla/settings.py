@@ -41,6 +41,12 @@ DEBUG = env_bool('DEBUG', True)
 
 ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
+# Ensure container/internal health checks do not fail on host validation
+# when production ALLOWED_HOSTS is domain-only.
+for internal_host in ('localhost', '127.0.0.1'):
+    if internal_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(internal_host)
+
 
 # Application definition
 
