@@ -12,7 +12,7 @@ This document is the complete runbook for local Docker development and live depl
 - db: PostgreSQL 15
 - redis: Redis 7
 - backend: Django development server via entrypoint.dev.sh
-- frontend: Vite dev server on port 3000
+- frontend: Vite dev server on port 5173
 
 ### Production stack (docker-compose.prod.yml)
 
@@ -81,13 +81,13 @@ docker compose logs -f frontend
 
 ### Step 4: Verify URLs
 
-- frontend: http://localhost:3000
+- frontend: http://localhost:5173
 - backend api/admin: http://localhost:8000/admin/login/
 
 Quick command checks:
 
 ```bash
-curl -I http://localhost:3000
+curl -I http://localhost:5173
 curl -I http://localhost:8000/admin/login/
 ```
 
