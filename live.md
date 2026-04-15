@@ -166,6 +166,40 @@ Set strong real values for:
 - DB_PASSWORD
 - all API keys in backend/.env
 
+### 5.5.1 Use DigitalOcean Managed PostgreSQL
+
+If you already have a DigitalOcean Managed PostgreSQL cluster, set these values in root `.env`:
+
+```env
+DB_HOST=db-postgresql-nyc3-12345-do-user-1234567-0.l.db.ondigitalocean.com
+DB_PORT=25060
+DB_NAME=defaultdb
+DB_USER=doadmin
+DB_PASSWORD=your_digitalocean_db_password
+DB_SSLMODE=require
+DB_SSLROOTCERT=
+DB_CONNECT_TIMEOUT=10
+```
+
+Also set matching values in `backend/.env`:
+
+```env
+DB_HOST=db-postgresql-nyc3-12345-do-user-1234567-0.l.db.ondigitalocean.com
+DB_PORT=25060
+DB_NAME=defaultdb
+DB_USER=doadmin
+DB_PASSWORD=your_digitalocean_db_password
+DB_SSLMODE=require
+DB_SSLROOTCERT=
+DB_CONNECT_TIMEOUT=10
+```
+
+Notes:
+
+- `DB_SSLMODE=require` is recommended for DigitalOcean managed databases.
+- Keep `DOCKER_ENV=True` for container runtime behavior.
+- You can keep the local `db` service in compose; backend will connect to `DB_HOST` from env.
+
 Confirm these are correct:
 
 - ALLOWED_HOSTS=bipulroy.me,www.bipulroy.me

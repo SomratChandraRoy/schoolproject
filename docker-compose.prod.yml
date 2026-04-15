@@ -43,11 +43,14 @@ services:
     environment:
       DEBUG: "False"
       DOCKER_ENV: "True"
-      DB_HOST: db
-      DB_PORT: "5432"
-      DB_NAME: ${POSTGRES_DB:-medhabangla_db}
-      DB_USER: ${POSTGRES_USER:-medhabangla_user}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-change_this_postgres_password}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-medhabangla_db}
+      DB_USER: ${DB_USER:-medhabangla_user}
+      DB_PASSWORD: ${DB_PASSWORD:-change_this_postgres_password}
+      DB_SSLMODE: ${DB_SSLMODE:-prefer}
+      DB_SSLROOTCERT: ${DB_SSLROOTCERT:-}
+      DB_CONNECT_TIMEOUT: ${DB_CONNECT_TIMEOUT:-10}
       REDIS_URL: redis://redis:6379/0
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-bipulroy.me,www.bipulroy.me}
       CORS_ALLOW_ALL_ORIGINS: "False"
