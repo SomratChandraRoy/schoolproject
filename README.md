@@ -1,4 +1,4 @@
-# MedhaBangla School Project
+# SOPNA Project
 
 Full production deployment documentation is available in [live.md](live.md).
 
