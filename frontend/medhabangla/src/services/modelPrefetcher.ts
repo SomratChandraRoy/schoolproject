@@ -14,9 +14,9 @@ export interface ModelPackage {
   optional: boolean;
 }
 
-const MODEL_CACHE_NAME = "sopan-ai-models-v1";
-const MODEL_METADATA_KEY = "sopan-model-metadata";
-const MODEL_AUTO_INSTALL_KEY = "sopan-models-auto-installed";
+const MODEL_CACHE_NAME = "sopna-ai-models-v1";
+const MODEL_METADATA_KEY = "sopna-model-metadata";
+const MODEL_AUTO_INSTALL_KEY = "sopna-models-auto-installed";
 
 // Available model packages
 const AVAILABLE_MODELS: ModelPackage[] = [

@@ -24,7 +24,7 @@ interface FileSystemNotes {
   generateAINotes: (topic: string) => Promise<void>;
 }
 
-const FOLDER_HANDLE_KEY = "sopan_notes_folder_handle";
+const FOLDER_HANDLE_KEY = "sopna_notes_folder_handle";
 const NOTES_INDEX_FILE = "notes_index.json";
 
 export const useFileSystemNotes = (): FileSystemNotes => {
@@ -130,7 +130,7 @@ export const useFileSystemNotes = (): FileSystemNotes => {
   // Open IndexedDB for storing folder handle
   const openDB = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open("SopanFileSystem", 1);
+      const request = indexedDB.open("SopnaFileSystem", 1);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);

@@ -7,7 +7,7 @@ const ContactAdmin: React.FC = () => {
     searchParams.get("reason") ||
     "Access is currently restricted for your account.";
 
-  const mailSubject = encodeURIComponent("Access Request for SOPAN Account");
+  const mailSubject = encodeURIComponent("Access Request for SOPNA Account");
   const mailBody = encodeURIComponent(
     `Hello Admin,%0D%0A%0D%0AMy account is currently restricted. Please review and help me regain access.%0D%0A%0D%0AReason shown:%0D%0A${reason}`,
   );
@@ -19,7 +19,7 @@ const ContactAdmin: React.FC = () => {
       <div className="relative mx-auto flex min-h-screen max-w-4xl items-center px-6 py-12">
         <div className="w-full rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-md md:p-12">
           <p className="mb-4 inline-flex items-center rounded-full border border-amber-400/40 bg-amber-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
-            SOPAN Access Control
+            SOPNA Access Control
           </p>
 
           <h1 className="text-4xl font-black leading-tight text-white md:text-5xl">

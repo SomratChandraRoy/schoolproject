@@ -11,7 +11,7 @@ import { ArrowLeft, Loader2, Video, VideoOff } from "lucide-react";
 const RAW_API_BASE_URL = (import.meta.env.VITE_API_URL || "").trim();
 const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
 const FRONTEND_JAAS_APP_ID = (import.meta.env.VITE_JAAS_APP_ID || "").trim();
-const DEFAULT_ROOM = "sopan-classroom";
+const DEFAULT_ROOM = "sopna-classroom";
 let jaasScriptLoadPromise: Promise<void> | null = null;
 
 type MeetingBootstrapResponse = {

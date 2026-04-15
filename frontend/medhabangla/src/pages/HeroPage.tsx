@@ -235,9 +235,9 @@ const HeroPage: React.FC = () => {
         <Link
           to="/"
           className="group inline-flex items-center gap-3 rounded-full border border-white/40 bg-white/75 px-4 py-2 backdrop-blur-md shadow-lg transition-all duration-500 hover:shadow-xl hover:-translate-y-0.5">
-          <img src="/logo.png" alt="SOPAN Logo" className="h-10 w-auto" />
+          <img src="/logo.png" alt="SOPNA Logo" className="h-10 w-auto" />
           <span className="text-xs font-semibold tracking-[0.24em] text-[#234536] uppercase group-hover:text-[#1a3328]">
-            SOPAN
+            SOPNA
           </span>
         </Link>
       </nav>
@@ -324,7 +324,7 @@ const HeroPage: React.FC = () => {
             <div className="relative overflow-hidden rounded-3xl border border-white/45 bg-white/70 p-3 shadow-[0_28px_70px_rgba(17,35,28,0.18)] backdrop-blur-sm">
               <img
                 src="/hero.png"
-                alt="SOPAN learning hero"
+                alt="SOPNA learning hero"
                 className="h-[480px] w-full rounded-2xl object-cover object-center md:h-[560px]"
                 onLoad={() => setImageLoaded(true)}
               />
@@ -430,7 +430,7 @@ const HeroPage: React.FC = () => {
 
           <div>
             <h3 className="headline-font text-4xl sm:text-5xl">
-              SOPAN Learning Philosophy
+              SOPNA Learning Philosophy
             </h3>
             <div className="mt-8 space-y-6">
               {[
@@ -486,10 +486,10 @@ const HeroPage: React.FC = () => {
 
       <footer className="relative z-10 border-t border-[color:var(--line-soft)] bg-white/65 px-6 py-10 text-center backdrop-blur-sm md:px-10 lg:px-16">
         <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#173d2f]/70">
-          SOPAN Digital Learning Ecosystem
+          SOPNA Digital Learning Ecosystem
         </p>
         <p className="mt-2 text-xs text-[#173d2f]/55">
-          © {new Date().getFullYear()} SOPAN. Crafted for focused learners.
+          © {new Date().getFullYear()} SOPNA. Crafted for focused learners.
         </p>
       </footer>
     </div>

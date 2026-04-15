@@ -122,7 +122,7 @@ function App() {
             .filter(
               (name) =>
                 name.includes("workbox") ||
-                name.includes("sopan") ||
+                name.includes("sopna") ||
                 name.includes("app-shell-cache"),
             )
             .forEach((name) => {

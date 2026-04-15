@@ -124,7 +124,7 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/"
                   className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  SOPAN
+                  SOPNA
                 </Link>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -148,7 +148,7 @@ const Navbar: React.FC = () => {
                 <button
                   onClick={handleInstallClick}
                   className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-md hover:shadow-lg"
-                  title="Install SOPAN as an app">
+                  title="Install SOPNA as an app">
                   <svg
                     className="w-4 h-4 mr-2"
                     fill="none"

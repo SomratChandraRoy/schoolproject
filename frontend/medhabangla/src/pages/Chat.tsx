@@ -1288,7 +1288,7 @@ const Chat: React.FC = () => {
 
     const popup = window.open(
       popupPath,
-      "sopan-ai-voice-visualizer",
+      "sopna-ai-voice-visualizer",
       `popup=yes,width=${Math.round(popupWidth)},height=${Math.round(popupHeight)},left=${Math.round(popupLeft)},top=${Math.round(popupTop)},resizable=yes,scrollbars=yes`,
     );
 
@@ -1569,7 +1569,7 @@ const Chat: React.FC = () => {
                     <ConversationEmptyState
                       className="h-full text-slate-500 dark:text-slate-400"
                       icon={<MessageSquare className="size-10" />}
-                      title="Welcome to SOPAN Chat"
+                      title="Welcome to SOPNA Chat"
                       description="Select a chat on the left to start messaging."
                     />
                   )}

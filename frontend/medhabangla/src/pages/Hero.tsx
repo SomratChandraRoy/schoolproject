@@ -87,7 +87,7 @@ const Hero: React.FC = () => {
           className="group flex items-center gap-3 pointer-events-auto cursor-pointer">
           <div className="transition-transform duration-1000 ease-out group-hover:scale-110">
             <img
-              alt="SOPAN Logo"
+              alt="SOPNA Logo"
               className="h-12 w-auto object-contain drop-shadow-lg"
               src="/logo.png"
             />
@@ -162,7 +162,7 @@ const Hero: React.FC = () => {
               )}
 
               <img
-                alt="SOPAN Academic Excellence"
+                alt="SOPNA Academic Excellence"
                 id="hero-premium-image"
                 className="w-full h-auto object-cover transition-all duration-500 filter blur-sm opacity-0"
                 src="/hero.png"
@@ -280,7 +280,7 @@ const Hero: React.FC = () => {
           </h2>
           <p className="text-lg text-blue-100 mb-8">
             Join thousands of Bangladeshi students who are already elevating
-            their academic journey with SOPAN.
+            their academic journey with SOPNA.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -301,7 +301,7 @@ const Hero: React.FC = () => {
       <footer className="bg-gray-900 dark:bg-black text-gray-300 py-12">
         <div className="max-w-7xl mx-auto px-8 text-center">
           <p className="mb-4">
-            &copy; {new Date().getFullYear()} SOPAN. Bangladesh's Premier
+            &copy; {new Date().getFullYear()} SOPNA. Bangladesh's Premier
             Academic Ecosystem.
           </p>
           <p className="text-sm text-gray-500">

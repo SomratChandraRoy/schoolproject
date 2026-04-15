@@ -53,7 +53,7 @@ const ManualInstallGuide: React.FC<ManualInstallGuideProps> = ({ onClose }) => {
           steps: [
             "Look for the install icon (⊕) in the address bar",
             "Click it to install",
-            'Or: Click the three-dot menu (⋮) → "Install SOPAN"',
+            'Or: Click the three-dot menu (⋮) → "Install SOPNA"',
             "The app will open in its own window",
           ],
           note: "You can also wait for the automatic install prompt.",
@@ -93,7 +93,7 @@ const ManualInstallGuide: React.FC<ManualInstallGuideProps> = ({ onClose }) => {
             {instructions.title}
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-sm">
-            Follow these steps to install SOPAN as an app
+            Follow these steps to install SOPNA as an app
           </p>
         </div>
 

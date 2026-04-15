@@ -75,7 +75,7 @@ export interface AppSettings {
 }
 
 // Define the database
-export class SopanDB extends Dexie {
+export class SopnaDB extends Dexie {
   notes!: Table<Note, number>;
   cachedQuizzes!: Table<CachedQuiz, number>;
   quizAttempts!: Table<QuizAttempt, number>;
@@ -85,7 +85,7 @@ export class SopanDB extends Dexie {
   settings!: Table<AppSettings, string>;
 
   constructor() {
-    super("SopanDB");
+    super("SopnaDB");
 
     this.version(1).stores({
       notes: "++id, serverId, title, createdAt, updatedAt, synced, userId",
@@ -100,7 +100,7 @@ export class SopanDB extends Dexie {
 }
 
 // Create database instance
-export const db = new SopanDB();
+export const db = new SopnaDB();
 
 // Helper functions for common operations
 

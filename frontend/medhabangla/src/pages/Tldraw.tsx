@@ -12,7 +12,7 @@ const TldrawPage: React.FC = () => {
         width: "100vw",
         height: "100vh",
       }}>
-      <Tldraw persistenceKey="sopan-tldraw-board" autoFocus />
+      <Tldraw persistenceKey="sopna-tldraw-board" autoFocus />
     </div>
   );
 };

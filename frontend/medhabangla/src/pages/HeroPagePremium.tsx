@@ -343,7 +343,7 @@ const HeroPagePremium: React.FC = () => {
           className="group flex items-center gap-3 pointer-events-auto cursor-pointer">
           <div className="transition-transform duration-1000 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:scale-110">
             <img
-              alt="SOPAN Logo"
+              alt="SOPNA Logo"
               className="h-12 w-auto object-contain"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq5niX8vWEVfbZMFErHO2h_tUY35HT1_k-gCeg1_UTTRaGTvA3c0V0vzvuArA4934lKziGeBnJK2dYg80Gqnf_N1m_yoK96SAXIztaSZVLPr2vyMiTV9mqcSeCU10sE3gvd15QpK0PPAgN-7eMCU2FuLMi97lK2c8dz2lQZTDHhihTSbvGvSe4DshYpXeu4MQOeDIDpJOn1TEaGLE3TmDELi6WhkB0CVIdLzwld0HaYP6tin79s40IPeAAlvtpM7Rk9mhaBkOmAho"
             />
@@ -400,7 +400,7 @@ const HeroPagePremium: React.FC = () => {
                 transform: `translateY(${scrollPosition * 0.3}px) scale(${1 + scrollPosition * 0.0001})`,
               }}>
               <img
-                alt="SOPAN Academic Excellence"
+                alt="SOPNA Academic Excellence"
                 className="w-full h-full object-cover"
                 id="hero-premium-image"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPoFTOqLW7UPpA8SiyRHP3oXar6kOVQYAAnH66eIUDMOnDtGn450bLDyxgf6HZDbILbJ0fraoa2SDWyAAgoFNXgR5Ms4WuRUeQG90PzXFvxUvwpUsT97mSMkOKrSY80DucHqWYlPx8l1xSU7zv_mttTMDG_HgXQErv0NdNAFCC6HGhpQLW63HZC2YIOMhbmQXVY72wdeyo5-Snqss6Jq5P2WY7mOc-bSsEwYFKmPGuk8kWxowB7pMm6IWIf_9SmDrxjB17iobsYLw"
@@ -538,7 +538,7 @@ const HeroPagePremium: React.FC = () => {
               className="font-headline text-5xl md:text-6xl font-bold text-[#f9f9f7] mb-10 tracking-tighter leading-tight mask-up active"
               data-mask-id="philosophy-title">
               <span className="mask-up-inner">
-                Built on the SOPAN Philosophy
+                Built on the SOPNA Philosophy
               </span>
             </h2>
 
@@ -600,7 +600,7 @@ const HeroPagePremium: React.FC = () => {
         <div className="w-full py-24 px-8 flex flex-col items-center text-center max-w-7xl mx-auto">
           <div className="mb-12">
             <span className="text-4xl font-headline font-bold text-[#002a18] mb-4 block tracking-tighter">
-              SOPAN
+              SOPNA
             </span>
             <p className="text-[10px] uppercase tracking-[0.5em] text-[#414943]/60">
               Excellence in Modern Scholarship
@@ -631,7 +631,7 @@ const HeroPagePremium: React.FC = () => {
           </div>
 
           <div className="text-[10px] text-[#414943]/40">
-            © 2024 SOPAN Digital Institution. All rights reserved.
+            © 2024 SOPNA Digital Institution. All rights reserved.
           </div>
         </div>
       </footer>

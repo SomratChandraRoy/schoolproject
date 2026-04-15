@@ -60,7 +60,7 @@ interface LocalNotes {
   downloadAllNotes: () => void;
 }
 
-const FOLDER_HANDLE_KEY = "sopan_notes_folder_handle";
+const FOLDER_HANDLE_KEY = "sopna_notes_folder_handle";
 const NOTES_INDEX_FILE = "notes_index.json";
 const INDEXEDDB_NOTES_STORE = "notes";
 
@@ -210,7 +210,7 @@ export const useLocalNotes = (): LocalNotes => {
   // Open IndexedDB
   const openDB = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open("SopanNotesDB", 2);
+      const request = indexedDB.open("SopnaNotesDB", 2);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
