@@ -21,16 +21,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name, str(default))
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_csv(name: str, default: str = '') -> list[str]:
+    return [item.strip() for item in os.getenv(name, default).split(',') if item.strip()]
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-REDACTED')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-local-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = env_bool('DEBUG', True)
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 
 # Application definition
@@ -112,10 +121,8 @@ CHANNEL_LAYERS = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 # Database configuration with support for SQLite, Docker PostgreSQL, and AWS RDS PostgreSQL
-import os
-
 # Check if using SQLite (local development)
-if os.getenv('USE_SQLITE', 'False') == 'True':
+if env_bool('USE_SQLITE', False):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -123,15 +130,17 @@ if os.getenv('USE_SQLITE', 'False') == 'True':
         }
     }
 # Check if using Docker environment
-elif os.getenv('DOCKER_ENV', 'False') == 'True':
+elif env_bool('DOCKER_ENV', False):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'medhabangla_db',
-            'USER': 'medhabangla_user',
-            'PASSWORD': 'medhabangla_password',
-            'HOST': 'db',
-            'PORT': '5432',
+            'NAME': os.getenv('DB_NAME', 'medhabangla_db'),
+            'USER': os.getenv('DB_USER', 'medhabangla_user'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'db'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '300')),
+            'CONN_HEALTH_CHECKS': True,
         }
     }
 # Use AWS RDS PostgreSQL (production/cloud)
@@ -167,8 +176,29 @@ else:
         }
     }
 
-# Allow all origins for development (restrict in production)
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', DEBUG)
+if not CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOWED_ORIGINS = env_csv('CORS_ALLOWED_ORIGINS', '')
+
+CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS', '')
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', False)
+
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
+
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', True)
+    SECURE_HSTS_PRELOAD = env_bool('SECURE_HSTS_PRELOAD', True)
+
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # WorkOS settings
 WORKOS_API_KEY = os.getenv('WORKOS_API_KEY')
@@ -202,7 +232,7 @@ JAAS_APP_ID = os.getenv('JAAS_APP_ID', '').strip()
 JAAS_KID = os.getenv('JAAS_KID', '').strip()
 JAAS_PRIVATE_KEY = os.getenv('JAAS_PRIVATE_KEY', '').replace('\\n', '\n').strip()
 JAAS_JWT_TTL_SECONDS = int(os.getenv('JAAS_JWT_TTL_SECONDS', '3600'))
-JAAS_REQUIRE_AUTH_TOKEN = os.getenv('JAAS_REQUIRE_AUTH_TOKEN', 'False') == 'True'
+JAAS_REQUIRE_AUTH_TOKEN = env_bool('JAAS_REQUIRE_AUTH_TOKEN', False)
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -238,7 +268,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (User uploaded files, PDFs, etc.)
@@ -246,10 +276,10 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Google Drive Configuration for Chat File Storage
-USE_GOOGLE_DRIVE = os.getenv('USE_GOOGLE_DRIVE', 'False') == 'True'
+USE_GOOGLE_DRIVE = env_bool('USE_GOOGLE_DRIVE', False)
 GOOGLE_DRIVE_CREDENTIALS_JSON = os.getenv('GOOGLE_DRIVE_CREDENTIALS_JSON', '')
 GOOGLE_DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '')
-GOOGLE_DRIVE_PUBLIC_FILES = os.getenv('GOOGLE_DRIVE_PUBLIC_FILES', 'True') == 'True'
+GOOGLE_DRIVE_PUBLIC_FILES = env_bool('GOOGLE_DRIVE_PUBLIC_FILES', True)
 
 # REST Framework settings
 REST_FRAMEWORK = {
@@ -263,6 +293,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 from django.templatetags.static import static

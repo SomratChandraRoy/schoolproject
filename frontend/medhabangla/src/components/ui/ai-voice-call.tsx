@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -27,53 +27,481 @@ import {
 import "../../styles/ai-voice-call.css";
 
 const QUICK_PROMPTS = [
-  "Help me practice spoken English for 2 minutes.",
-  "Take a viva-style quiz on Class 10 Science.",
-  "Explain algebra in simple Bengali and English.",
-  "Test my pronunciation and speaking confidence.",
-];
-
-const MOCK_ASSISTANT_REPLIES = [
-  "Great energy. Continue in short, clear sentences and slow your ending words slightly.",
-  "Nice start. I heard strong confidence. Want a 30-second follow-up speaking task?",
-  "Your pronunciation is improving. Focus on stress in key words for more natural rhythm.",
-  "Excellent. I can now switch to viva mode and ask one question at a time.",
+  "গণিতের বীজগণিত ধাপে ধাপে বুঝাও।",
+  "Class 10 Science viva style প্রশ্ন করো।",
+  "আমার ইংরেজি উচ্চারণ ঠিক করতে চাও।",
+  "Exam mode এ ১টা প্রশ্ন করো এবং feedback দাও।",
 ];
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  meta?: string;
+}
+
+type ConversationMode = "tutor" | "exam" | "quiz" | "general";
+type VoiceState = "idle" | "listening" | "thinking" | "speaking" | "disconnected";
+
+interface ProviderTrace {
+  stt?: string | null;
+  llm?: string | null;
+  tts?: string | null;
 }
 
 const AIVoiceCall: React.FC = () => {
   const navigate = useNavigate();
   const messagePanelRef = useRef<HTMLDivElement>(null);
-  const replyTimerRef = useRef<number | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const playbackChainRef = useRef<Promise<void>>(Promise.resolve());
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [composerValue, setComposerValue] = useState("");
+  const [subjectValue, setSubjectValue] = useState("General");
+  const [topicValue, setTopicValue] = useState("");
+  const [mode, setMode] = useState<ConversationMode>("tutor");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [isAssistantThinking, setIsAssistantThinking] = useState(false);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [lastProviders, setLastProviders] = useState<ProviderTrace | null>(null);
 
   const isPopupWindow = typeof window !== "undefined" && window.opener !== null;
 
+  const sessionActiveRef = useRef(isSessionActive);
+  const micMutedRef = useRef(isMicMuted);
+
+  useEffect(() => {
+    sessionActiveRef.current = isSessionActive;
+  }, [isSessionActive]);
+
+  useEffect(() => {
+    micMutedRef.current = isMicMuted;
+  }, [isMicMuted]);
+
+  const appendMessage = useCallback((message: ChatMessage) => {
+    setMessages((prev) => [...prev, message]);
+  }, []);
+
+  const getAuthToken = () => {
+    return localStorage.getItem("token") || "";
+  };
+
+  const resolveIdleState = useCallback(() => {
+    if (!sessionActiveRef.current) {
+      setVoiceState("idle");
+      return;
+    }
+
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      setVoiceState("disconnected");
+      return;
+    }
+
+    setVoiceState(micMutedRef.current ? "idle" : "listening");
+  }, []);
+
+  const closeSocket = useCallback(() => {
+    const ws = wsRef.current;
+    if (ws) {
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+      ws.close();
+      wsRef.current = null;
+    }
+    setIsSocketConnected(false);
+  }, []);
+
+  const stopMicrophone = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    mediaRecorderRef.current = null;
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+  }, []);
+
+  const base64FromBlob = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = String(reader.result || "");
+        const base64 = result.split(",")[1] || "";
+        resolve(base64);
+      };
+      reader.onerror = () => reject(new Error("Failed to read audio chunk"));
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const decodeBase64 = (value: string): ArrayBuffer => {
+    const binary = window.atob(value);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+  };
+
+  const playAudioBase64 = useCallback(
+    async (audioBase64: string, audioMimeType: string) => {
+      if (!audioBase64) {
+        return;
+      }
+
+      setVoiceState("speaking");
+
+      const playWithElement = async () => {
+        const src = `data:${audioMimeType || "audio/mpeg"};base64,${audioBase64}`;
+        const audio = new Audio(src);
+        await audio.play();
+
+        await new Promise<void>((resolve) => {
+          audio.onended = () => resolve();
+          audio.onerror = () => resolve();
+        });
+      };
+
+      try {
+        const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextCtor) {
+          await playWithElement();
+          return;
+        }
+
+        if (!audioContextRef.current) {
+          audioContextRef.current = new AudioContextCtor();
+        }
+
+        if (audioContextRef.current.state === "suspended") {
+          await audioContextRef.current.resume();
+        }
+
+        const arrayBuffer = decodeBase64(audioBase64);
+        const decodedBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer.slice(0));
+
+        await new Promise<void>((resolve) => {
+          if (!audioContextRef.current) {
+            resolve();
+            return;
+          }
+
+          const source = audioContextRef.current.createBufferSource();
+          source.buffer = decodedBuffer;
+          source.connect(audioContextRef.current.destination);
+          source.onended = () => resolve();
+          source.start(0);
+        });
+      } catch (error) {
+        console.warn("WebAudio decode failed, using HTMLAudio fallback", error);
+        await playWithElement();
+      } finally {
+        resolveIdleState();
+      }
+    },
+    [resolveIdleState],
+  );
+
+  const enqueueAudio = useCallback(
+    (audioBase64?: string | null, audioMimeType?: string | null) => {
+      if (!audioBase64) {
+        resolveIdleState();
+        return;
+      }
+
+      playbackChainRef.current = playbackChainRef.current
+        .then(() => playAudioBase64(audioBase64, audioMimeType || "audio/mpeg"))
+        .catch((error) => {
+          console.error("Audio queue playback failed", error);
+          resolveIdleState();
+        });
+    },
+    [playAudioBase64, resolveIdleState],
+  );
+
+  const sendSocketEvent = useCallback((
+    payload: Record<string, unknown>,
+    options?: { silent?: boolean },
+  ) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      if (!options?.silent) {
+        appendMessage({
+          role: "assistant",
+          content: "Realtime socket not connected. Please restart the session.",
+        });
+      }
+      setVoiceState("disconnected");
+      return false;
+    }
+
+    wsRef.current.send(JSON.stringify(payload));
+    return true;
+  }, [appendMessage]);
+
+  const connectSocket = useCallback(
+    (targetSessionId: string, token: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsUrl = `${protocol}://${window.location.host}/ws/ai/voice-tutor/${targetSessionId}/?token=${encodeURIComponent(token)}`;
+
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          setIsSocketConnected(true);
+          setVoiceState(micMutedRef.current ? "idle" : "listening");
+          resolve();
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            const eventType = data.type;
+
+            if (eventType === "state") {
+              const nextState = String(data.state || "").toLowerCase();
+              if (
+                nextState === "listening" ||
+                nextState === "thinking" ||
+                nextState === "speaking" ||
+                nextState === "idle" ||
+                nextState === "disconnected"
+              ) {
+                setVoiceState(nextState as VoiceState);
+              }
+              return;
+            }
+
+            if (eventType === "user_transcript") {
+              const transcript = String(data.text || "").trim();
+              if (transcript) {
+                appendMessage({ role: "user", content: transcript });
+              }
+              return;
+            }
+
+            if (eventType === "assistant_response") {
+              const providers = (data.providers || {}) as ProviderTrace;
+              setLastProviders(providers);
+
+              const providerMeta = [
+                providers.stt ? `STT:${providers.stt}` : "",
+                providers.llm ? `LLM:${providers.llm}` : "",
+                providers.tts ? `TTS:${providers.tts}` : "",
+              ]
+                .filter(Boolean)
+                .join(" | ");
+
+              appendMessage({
+                role: "assistant",
+                content: String(data.text || ""),
+                meta: providerMeta || undefined,
+              });
+
+              enqueueAudio(data.audio_base64, data.audio_mime_type);
+              return;
+            }
+
+            if (eventType === "error") {
+              appendMessage({
+                role: "assistant",
+                content: `Voice pipeline error: ${String(data.message || "Unknown error")}`,
+              });
+              resolveIdleState();
+              return;
+            }
+          } catch (error) {
+            console.error("Failed to parse voice websocket payload", error);
+          }
+        };
+
+        ws.onerror = () => {
+          setIsSocketConnected(false);
+          setVoiceState("disconnected");
+          reject(new Error("Realtime voice socket connection failed"));
+        };
+
+        ws.onclose = () => {
+          setIsSocketConnected(false);
+          if (sessionActiveRef.current) {
+            setVoiceState("disconnected");
+          }
+        };
+      });
+    },
+    [appendMessage, enqueueAudio, resolveIdleState],
+  );
+
+  const startMicStreaming = useCallback(async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+      },
+    });
+    mediaStreamRef.current = stream;
+
+    const mimeTypeCandidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+    ];
+
+    const supportedMimeType = mimeTypeCandidates.find((candidate) => {
+      return typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate);
+    });
+
+    const recorder = supportedMimeType
+      ? new MediaRecorder(stream, { mimeType: supportedMimeType })
+      : new MediaRecorder(stream);
+
+    mediaRecorderRef.current = recorder;
+
+    recorder.ondataavailable = async (event) => {
+      if (!sessionActiveRef.current || micMutedRef.current) {
+        return;
+      }
+
+      if (event.data.size <= 0) {
+        return;
+      }
+
+      try {
+        const chunkBase64 = await base64FromBlob(event.data);
+        sendSocketEvent(
+          {
+            type: "audio_chunk",
+            chunk_base64: chunkBase64,
+            mime_type: event.data.type || supportedMimeType || "audio/webm",
+          },
+          { silent: true },
+        );
+      } catch (error) {
+        console.error("Failed to stream audio chunk", error);
+      }
+    };
+
+    recorder.start(350);
+    stream.getAudioTracks().forEach((track) => {
+      track.enabled = !micMutedRef.current;
+    });
+  }, [sendSocketEvent]);
+
+  const startSession = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) {
+      appendMessage({
+        role: "assistant",
+        content: "Authentication token missing. Please login again.",
+      });
+      return;
+    }
+
+    try {
+      setVoiceState("thinking");
+
+      const response = await fetch("/api/ai/voice-conversation/start/", {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mode,
+          subject: subjectValue,
+          topic: topicValue,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.session_id) {
+        throw new Error(data.error || "Failed to start voice session");
+      }
+
+      setSessionId(data.session_id);
+      await connectSocket(data.session_id, token);
+      await startMicStreaming();
+
+      setIsSessionActive(true);
+      appendMessage({
+        role: "assistant",
+        content: "Voice session started. Speak naturally and press 'Process Voice' when you finish a turn.",
+      });
+      resolveIdleState();
+    } catch (error) {
+      console.error("Failed to start realtime session", error);
+      appendMessage({
+        role: "assistant",
+        content: `Could not start session: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
+      stopMicrophone();
+      closeSocket();
+      setSessionId(null);
+      setIsSessionActive(false);
+      setVoiceState("disconnected");
+    }
+  }, [
+    appendMessage,
+    closeSocket,
+    connectSocket,
+    mode,
+    resolveIdleState,
+    startMicStreaming,
+    stopMicrophone,
+    subjectValue,
+    topicValue,
+  ]);
+
+  const endSession = useCallback(async () => {
+    const token = getAuthToken();
+    const currentSessionId = sessionId;
+
+    try {
+      if (currentSessionId && token) {
+        await fetch("/api/ai/voice-conversation/end/", {
+          method: "POST",
+          headers: {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ session_id: currentSessionId }),
+        });
+      }
+
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: "end_session" }));
+      }
+    } catch (error) {
+      console.warn("Error while ending session", error);
+    } finally {
+      stopMicrophone();
+      closeSocket();
+      setIsSessionActive(false);
+      setSessionId(null);
+      setVoiceState("idle");
+      setLastProviders(null);
+    }
+  }, [closeSocket, sessionId, stopMicrophone]);
+
   const sessionLabel = useMemo(() => {
-    if (isAssistantThinking) {
-      return "Analyzing your voice context...";
-    }
-
-    if (isSessionActive && !isMicMuted) {
-      return "Voice session live";
-    }
-
-    if (isSessionActive && isMicMuted) {
-      return "Voice session muted";
-    }
-
-    return "Session not started";
-  }, [isAssistantThinking, isSessionActive, isMicMuted]);
+    if (!isSessionActive) return "Session not started";
+    if (isMicMuted) return "Mic muted";
+    if (!isSocketConnected) return "Socket disconnected";
+    if (voiceState === "thinking") return "Thinking";
+    if (voiceState === "speaking") return "Speaking";
+    if (voiceState === "disconnected") return "Connection lost";
+    return "Listening";
+  }, [isMicMuted, isSessionActive, isSocketConnected, voiceState]);
 
   useEffect(() => {
     const panel = messagePanelRef.current;
@@ -82,17 +510,24 @@ const AIVoiceCall: React.FC = () => {
     }
 
     panel.scrollTo({ top: panel.scrollHeight, behavior: "smooth" });
-  }, [messages, isAssistantThinking]);
+  }, [messages, voiceState]);
 
   useEffect(() => {
     return () => {
-      if (replyTimerRef.current !== null) {
-        window.clearTimeout(replyTimerRef.current);
+      stopMicrophone();
+      closeSocket();
+      if (audioContextRef.current) {
+        void audioContextRef.current.close();
+        audioContextRef.current = null;
       }
     };
-  }, []);
+  }, [closeSocket, stopMicrophone]);
 
   const handleClose = () => {
+    if (isSessionActive) {
+      void endSession();
+    }
+
     if (isPopupWindow) {
       window.close();
       return;
@@ -110,40 +545,66 @@ const AIVoiceCall: React.FC = () => {
     }
   };
 
-  const queueAssistantReply = () => {
-    if (replyTimerRef.current !== null) {
-      window.clearTimeout(replyTimerRef.current);
-    }
-
-    setIsAssistantThinking(true);
-    replyTimerRef.current = window.setTimeout(() => {
-      const reply =
-        MOCK_ASSISTANT_REPLIES[
-          Math.floor(Math.random() * MOCK_ASSISTANT_REPLIES.length)
-        ];
-
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
-      setIsAssistantThinking(false);
-      replyTimerRef.current = null;
-    }, 900);
-  };
-
   const submitPrompt = (rawValue: string) => {
     const value = rawValue.trim();
     if (!value) {
       return;
     }
 
-    setMessages((prev) => [...prev, { role: "user", content: value }]);
-    setComposerValue("");
-
-    if (isSessionActive) {
-      queueAssistantReply();
+    if (!isSessionActive) {
+      appendMessage({
+        role: "assistant",
+        content: "Start session first to send messages.",
+      });
+      return;
     }
+
+    const sent = sendSocketEvent({
+      type: "text_message",
+      text: value,
+    });
+    if (!sent) {
+      return;
+    }
+
+    appendMessage({ role: "user", content: value });
+    setComposerValue("");
+    setVoiceState("thinking");
   };
 
   const addQuickPrompt = (prompt: string) => {
     submitPrompt(prompt);
+  };
+
+  const processVoiceTurn = () => {
+    if (!isSessionActive) {
+      appendMessage({
+        role: "assistant",
+        content: "Start session first, then speak and process voice.",
+      });
+      return;
+    }
+
+    const sent = sendSocketEvent({ type: "audio_commit" });
+    if (sent) {
+      setVoiceState("thinking");
+    }
+  };
+
+  const toggleMic = () => {
+    setIsMicMuted((prev) => {
+      const next = !prev;
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getAudioTracks().forEach((track) => {
+          track.enabled = !next;
+        });
+      }
+
+      if (isSessionActive) {
+        setVoiceState(next ? "idle" : "listening");
+      }
+      return next;
+    });
   };
 
   return (
@@ -172,7 +633,7 @@ const AIVoiceCall: React.FC = () => {
                 AI Voice Visualization Window
               </p>
               <p className="truncate text-[11px] text-slate-500 dark:text-slate-400 sm:text-xs">
-                Emotion-triggered live conversation UI from chat composer
+                Real-time Bangla voice tutor with STT/LLM/TTS provider fallback
               </p>
             </div>
           </div>
@@ -208,11 +669,11 @@ const AIVoiceCall: React.FC = () => {
                       </div>
                       <div>
                         <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 sm:text-lg">
-                          Start your premium voice interaction
+                          Start your realtime AI Bangla voice tutor
                         </h3>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-                          Start session, speak naturally, then send a prompt to
-                          see animated response flow.
+                          Stream mic chunks continuously, then process each
+                          speaking turn for contextual tutor feedback.
                         </p>
                       </div>
                       <div className="mx-auto mt-1 flex w-full max-w-3xl flex-wrap justify-center gap-2.5">
@@ -243,6 +704,11 @@ const AIVoiceCall: React.FC = () => {
                             <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
                               {message.content}
                             </p>
+                            {message.meta && (
+                              <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                {message.meta}
+                              </p>
+                            )}
                           </MessageContent>
 
                           {message.role === "assistant" && (
@@ -291,21 +757,49 @@ const AIVoiceCall: React.FC = () => {
                     ))
                   )}
 
-                  {isAssistantThinking && (
+                  {voiceState === "thinking" && (
                     <div className="rounded-xl border border-sky-300/70 bg-sky-50/90 px-3 py-2 text-xs text-sky-900 dark:border-sky-500/40 dark:bg-sky-900/25 dark:text-sky-100 sm:text-sm">
-                      AI assistant is crafting your response based on voice
-                      flow...
+                      Tutor is reasoning on your latest voice context...
                     </div>
                   )}
                 </div>
 
                 <div className="border-t border-slate-200 bg-white/90 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/86 dark:shadow-[0_-8px_24px_rgba(0,0,0,0.2)] sm:p-4">
+                  <div className="mb-2 grid gap-2 sm:grid-cols-3">
+                    <select
+                      value={mode}
+                      onChange={(event) =>
+                        setMode(event.target.value as ConversationMode)
+                      }
+                      disabled={isSessionActive}
+                      className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-sky-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
+                      <option value="tutor">Tutor Mode</option>
+                      <option value="exam">Exam Mode</option>
+                      <option value="quiz">Quiz Mode</option>
+                      <option value="general">General Mode</option>
+                    </select>
+                    <input
+                      value={subjectValue}
+                      onChange={(event) => setSubjectValue(event.target.value)}
+                      disabled={isSessionActive}
+                      placeholder="Subject"
+                      className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-sky-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                    <input
+                      value={topicValue}
+                      onChange={(event) => setTopicValue(event.target.value)}
+                      disabled={isSessionActive}
+                      placeholder="Topic (optional)"
+                      className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-sky-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    />
+                  </div>
+
                   <div className="mb-2.5 flex items-center justify-between gap-3">
                     <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-slate-100/90 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:border-slate-600 dark:bg-slate-800/85 dark:text-slate-200 sm:text-xs">
                       <span
                         className={cn(
                           "inline-block h-2 w-2 rounded-full",
-                          isSessionActive && !isMicMuted
+                          isSessionActive && !isMicMuted && isSocketConnected
                             ? "bg-sky-500 animate-pulse"
                             : "bg-slate-300/70",
                         )}
@@ -313,12 +807,20 @@ const AIVoiceCall: React.FC = () => {
                       {sessionLabel}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setMessages([])}
-                      className="text-[11px] text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 sm:text-xs">
-                      Clear transcript
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {lastProviders && (
+                        <div className="hidden rounded-full border border-sky-300/60 bg-sky-100/70 px-2 py-1 text-[10px] font-semibold text-sky-800 dark:border-sky-500/45 dark:bg-sky-900/30 dark:text-sky-100 sm:block">
+                          {`STT:${lastProviders.stt || "-"}  LLM:${lastProviders.llm || "-"}  TTS:${lastProviders.tts || "-"}`}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setMessages([])}
+                        className="text-[11px] text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 sm:text-xs">
+                        Clear transcript
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-end gap-2.5">
@@ -351,7 +853,7 @@ const AIVoiceCall: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                      onClick={() => setIsMicMuted((prev) => !prev)}
+                      onClick={toggleMic}
                       aria-label={
                         isMicMuted ? "Unmute microphone" : "Mute microphone"
                       }>
@@ -374,8 +876,11 @@ const AIVoiceCall: React.FC = () => {
                           : "bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700",
                       )}
                       onClick={() => {
-                        setIsSessionActive((prev) => !prev);
-                        setIsAssistantThinking(false);
+                        if (isSessionActive) {
+                          void endSession();
+                        } else {
+                          void startSession();
+                        }
                       }}
                       aria-label={
                         isSessionActive
@@ -388,6 +893,18 @@ const AIVoiceCall: React.FC = () => {
                         <Phone className="mr-1.5 size-4" />
                       )}
                       {isSessionActive ? "End Session" : "Start Session"}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                      onClick={processVoiceTurn}
+                      disabled={!isSessionActive || voiceState === "thinking"}
+                      aria-label="Process buffered voice chunks">
+                      <Sparkles className="mr-1.5 size-4" />
+                      Process Voice
                     </Button>
                   </div>
                 </div>

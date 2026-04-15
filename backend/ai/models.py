@@ -18,6 +18,24 @@ class AIProviderSettings(models.Model):
         ('auto', 'Auto (Groq → Gemini fallback)'),
     ]
 
+    VOICE_STT_PROVIDER_CHOICES = [
+        ('auto', 'Auto (Deepgram -> Sarvam fallback)'),
+        ('deepgram', 'Deepgram'),
+        ('sarvam', 'Sarvam AI'),
+    ]
+
+    VOICE_LLM_PROVIDER_CHOICES = [
+        ('auto', 'Auto (Alibaba Qwen -> Groq fallback)'),
+        ('alibaba', 'Alibaba Qwen'),
+        ('groq', 'Groq'),
+    ]
+
+    VOICE_TTS_PROVIDER_CHOICES = [
+        ('auto', 'Auto (Gemini TTS -> Sarvam fallback)'),
+        ('gemini', 'Gemini TTS'),
+        ('sarvam', 'Sarvam AI TTS'),
+    ]
+
     # Global fallback provider
     provider = models.CharField(
         max_length=20,
@@ -30,6 +48,24 @@ class AIProviderSettings(models.Model):
     voice_ai_provider = models.CharField(
         max_length=20, choices=PROVIDER_CHOICES, default='auto',
         help_text='AI Model Provider for AI Voice Tutor and Conversation.'
+    )
+    voice_stt_provider = models.CharField(
+        max_length=20,
+        choices=VOICE_STT_PROVIDER_CHOICES,
+        default='auto',
+        help_text='Speech-to-text provider for real-time AI voice tutor.',
+    )
+    voice_llm_provider = models.CharField(
+        max_length=20,
+        choices=VOICE_LLM_PROVIDER_CHOICES,
+        default='auto',
+        help_text='LLM provider for real-time AI voice tutor responses.',
+    )
+    voice_tts_provider = models.CharField(
+        max_length=20,
+        choices=VOICE_TTS_PROVIDER_CHOICES,
+        default='auto',
+        help_text='Text-to-speech provider for real-time AI voice tutor.',
     )
     study_plan_provider = models.CharField(
         max_length=20, choices=PROVIDER_CHOICES, default='auto',
@@ -69,6 +105,18 @@ class AIProviderSettings(models.Model):
         max_length=255, 
         blank=True, null=True,
         help_text='Alibaba Cloud DashScope API Key'
+    )
+    deepgram_api_key = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Deepgram API key for speech-to-text.',
+    )
+    sarvam_api_key = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Sarvam AI API key for STT/TTS fallback.',
     )
     flashcard_gemini_extra_keys = models.TextField(
         blank=True,

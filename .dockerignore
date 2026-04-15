@@ -1,0 +1,16 @@
+.git
+.vscode
+A.C.Q
+md
+pdf
+py
+scripts
+txt
+backend
+frontend/medhabangla/node_modules
+frontend/medhabangla/dist
+**/__pycache__
+**/.pytest_cache
+**/.venv
+**/venv
+**/*.pyc

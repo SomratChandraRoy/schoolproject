@@ -16,7 +16,13 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'medhabangla.settings')
 django_asgi_app = get_asgi_application()
 
 # Import routing after Django is initialized
-from chat.routing import websocket_urlpatterns
+from chat.routing import websocket_urlpatterns as chat_websocket_urlpatterns
+from ai.routing import websocket_urlpatterns as ai_websocket_urlpatterns
+
+websocket_urlpatterns = [
+    *chat_websocket_urlpatterns,
+    *ai_websocket_urlpatterns,
+]
 
 application = ProtocolTypeRouter({
     # HTTP requests

@@ -12,6 +12,9 @@ class AIProviderSettingsAdmin(ModelAdmin):
         ('Feature-Specific Providers', {
             'fields': (
                 'voice_ai_provider', 
+                'voice_stt_provider',
+                'voice_llm_provider',
+                'voice_tts_provider',
                 'study_plan_provider', 
                 'quiz_flashcard_provider', 
                 'doc_vision_provider', 
@@ -20,8 +23,15 @@ class AIProviderSettingsAdmin(ModelAdmin):
             ),
             'description': 'Configure which specific AI model provider should run for which feature.'
         }),
-        ('API Keys (Gemini, Groq, Alibaba, ElevenLabs)', {
-            'fields': ('gemini_api_key', 'groq_api_key', 'alibaba_api_key', 'elevenlabs_api_key'),
+        ('API Keys (Gemini, Groq, Alibaba, Deepgram, Sarvam, ElevenLabs)', {
+            'fields': (
+                'gemini_api_key',
+                'groq_api_key',
+                'alibaba_api_key',
+                'deepgram_api_key',
+                'sarvam_api_key',
+                'elevenlabs_api_key',
+            ),
             'description': 'Keys here will override default application keys.'
         }),
         ('Extra API Keys for Quiz/Flashcards', {
