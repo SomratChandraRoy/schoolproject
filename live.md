@@ -359,6 +359,10 @@ In `backend/.env` set:
 SECURE_SSL_REDIRECT=True
 ```
 
+Note:
+
+- `docker-compose.prod.yml` backend healthcheck must send `X-Forwarded-Proto=https` to avoid false unhealthy status when `SECURE_SSL_REDIRECT=True`.
+
 #### Step 7: Restart production services
 
 ```bash
@@ -369,6 +373,8 @@ docker compose -f docker-compose.prod.yml up -d --build nginx backend
 #### Step 8: Validate HTTPS
 
 ```bash
+curl -I http://bipulroy.me
+curl -I http://www.bipulroy.me
 curl -I https://bipulroy.me
 curl -I https://www.bipulroy.me
 ```
@@ -381,7 +387,11 @@ Create deploy hook:
 sudo tee /etc/letsencrypt/renewal-hooks/deploy/bipulroy-me-docker.sh > /dev/null <<'EOF'
 #!/bin/sh
 set -eu
-PROJECT_DIR="/home/$SUDO_USER/schoolproject"
+if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+  PROJECT_DIR="/home/$SUDO_USER/schoolproject"
+else
+  PROJECT_DIR="/root/schoolproject"
+fi
 cp /etc/letsencrypt/live/bipulroy.me/fullchain.pem "$PROJECT_DIR/ssl/fullchain.pem"
 cp /etc/letsencrypt/live/bipulroy.me/privkey.pem "$PROJECT_DIR/ssl/privkey.pem"
 chmod 644 "$PROJECT_DIR/ssl/fullchain.pem"
