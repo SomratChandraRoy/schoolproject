@@ -57,9 +57,7 @@ const MacOSDock: React.FC<MacOSDockProps> = ({
       return 1;
     }
 
-    if (path.startsWith("/chat")) {
-      return 1;
-    }
+    
 
     return 0;
   }, []);
