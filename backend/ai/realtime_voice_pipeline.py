@@ -3,12 +3,15 @@ Realtime voice tutor orchestration pipeline.
 Implements stage-wise provider fallback for STT -> LLM -> TTS.
 """
 
+import asyncio
 import logging
 import os
+import threading
 from typing import Dict, List, Optional, Tuple
 
 import requests
 from django.conf import settings
+from django.db import close_old_connections
 from django.utils import timezone
 
 from .ai_service import get_ai_service
@@ -33,6 +36,8 @@ class RealtimeVoiceTutorPipeline:
     DEFAULT_STT_ORDER = ("deepgram", "sarvam")
     DEFAULT_LLM_ORDER = ("alibaba", "groq")
     DEFAULT_TTS_ORDER = ("gemini", "sarvam")
+    _summary_jobs: set[int] = set()
+    _summary_jobs_lock = threading.Lock()
 
     def __init__(self):
         self.ai_service = get_ai_service()
@@ -106,6 +111,51 @@ class RealtimeVoiceTutorPipeline:
             .first()
         )
         return summary.summary_text if summary else ""
+
+    def _merge_unique_topics(self, existing: List[str], incoming: List[str], *, limit: int = 10) -> List[str]:
+        merged: List[str] = []
+        seen = set()
+
+        for raw_item in (existing or []) + (incoming or []):
+            item = str(raw_item or "").strip()
+            if not item:
+                continue
+            lowered = item.lower()
+            if lowered in seen:
+                continue
+            seen.add(lowered)
+            merged.append(item)
+            if len(merged) >= limit:
+                break
+
+        return merged
+
+    def _update_profile_from_summary(self, profile: UserProfile, summary_data: Dict) -> None:
+        weak_areas = summary_data.get("weak_areas") or summary_data.get("weak_concepts") or []
+        strong_areas = summary_data.get("strong_areas") or summary_data.get("strong_concepts") or []
+
+        merged_weak = self._merge_unique_topics(profile.weak_areas or [], weak_areas)
+        merged_strong = self._merge_unique_topics(profile.strong_areas or [], strong_areas)
+
+        update_fields: List[str] = []
+        if merged_weak != (profile.weak_areas or []):
+            profile.weak_areas = merged_weak
+            update_fields.append("weak_areas")
+
+        if merged_strong != (profile.strong_areas or []):
+            profile.strong_areas = merged_strong
+            update_fields.append("strong_areas")
+
+        learning_insights = str(summary_data.get("learning_insights") or "").strip()
+        if learning_insights:
+            profile.profile_notes = learning_insights
+            update_fields.append("profile_notes")
+
+        profile.last_active_at = timezone.now()
+        update_fields.append("last_active_at")
+
+        if update_fields:
+            profile.save(update_fields=update_fields + ["updated_at"])
 
     def _is_retryable_error(self, error_message: str) -> bool:
         message = (error_message or "").lower()
@@ -490,7 +540,12 @@ class RealtimeVoiceTutorPipeline:
 
         return None, None, None, errors
 
-    def _upsert_summary(self, session: VoiceConversationSession, summary_data: Dict) -> None:
+    def _upsert_summary(
+        self,
+        session: VoiceConversationSession,
+        thread: ConversationThread,
+        summary_data: Dict,
+    ) -> None:
         if not summary_data:
             return
 
@@ -502,6 +557,7 @@ class RealtimeVoiceTutorPipeline:
             user=session.user,
             voice_session=session,
             defaults={
+                "thread": thread,
                 "summary_text": summary_data.get("summary", ""),
                 "key_concepts": summary_data.get("key_concepts", []),
                 "doubts_cleared": summary_data.get("doubts_cleared", []),
@@ -514,23 +570,110 @@ class RealtimeVoiceTutorPipeline:
             },
         )
 
-    def maybe_generate_incremental_summary(self, session: VoiceConversationSession) -> None:
-        total_messages = session.messages.count()
+    def _generate_summary_job(
+        self,
+        *,
+        session_id: int,
+        thread_id: int,
+        target_message_count: int,
+    ) -> None:
+        close_old_connections()
+        try:
+            session = VoiceConversationSession.objects.select_related("user").get(id=session_id)
+            thread = ConversationThread.objects.select_related("user_profile").get(id=thread_id)
+
+            metadata = thread.metadata or {}
+            last_summary_count = int(metadata.get("last_summary_message_count", 0))
+            if last_summary_count >= target_message_count:
+                return
+
+            if thread.messages.count() < target_message_count:
+                return
+
+            context = VoiceConversationContextManager.get_student_context(
+                user=session.user,
+                subject=session.subject or "",
+                topic=session.topic or "",
+            )
+            summary_data = ConversationSummaryGenerator.generate_session_summary(
+                session=session,
+                context=context,
+                ai_service=self.ai_service,
+            )
+            if not summary_data:
+                return
+
+            self._upsert_summary(session, thread, summary_data)
+
+            memory_snapshot = str(summary_data.get("summary") or "").strip()
+            if memory_snapshot:
+                thread.memory_snapshot = memory_snapshot
+
+            thread.last_summary_at = timezone.now()
+            metadata["last_summary_message_count"] = target_message_count
+            thread.metadata = metadata
+            thread.save(update_fields=["memory_snapshot", "last_summary_at", "metadata", "updated_at"])
+
+            self._update_profile_from_summary(thread.user_profile, summary_data)
+        except Exception:
+            logger.exception(
+                "Failed to generate incremental summary for thread=%s target_count=%s",
+                thread_id,
+                target_message_count,
+            )
+        finally:
+            close_old_connections()
+
+    def _schedule_summary_generation(
+        self,
+        *,
+        session_id: int,
+        thread_id: int,
+        target_message_count: int,
+    ) -> None:
+        with self._summary_jobs_lock:
+            if thread_id in self._summary_jobs:
+                return
+            self._summary_jobs.add(thread_id)
+
+        def _runner() -> None:
+            try:
+                async def _job():
+                    await asyncio.sleep(0)
+                    self._generate_summary_job(
+                        session_id=session_id,
+                        thread_id=thread_id,
+                        target_message_count=target_message_count,
+                    )
+
+                asyncio.run(_job())
+            except Exception:
+                logger.exception("Failed to run async summary task for thread=%s", thread_id)
+            finally:
+                with self._summary_jobs_lock:
+                    self._summary_jobs.discard(thread_id)
+
+        threading.Thread(target=_runner, name=f"voice-summary-{thread_id}", daemon=True).start()
+
+    def maybe_generate_incremental_summary(
+        self,
+        session: VoiceConversationSession,
+        thread: ConversationThread,
+    ) -> None:
+        total_messages = thread.messages.count()
         if total_messages == 0 or total_messages % 20 != 0:
             return
 
-        context = VoiceConversationContextManager.get_student_context(
-            user=session.user,
-            subject=session.subject or "",
-            topic=session.topic or "",
+        metadata = thread.metadata or {}
+        last_summary_count = int(metadata.get("last_summary_message_count", 0))
+        if total_messages <= last_summary_count:
+            return
+
+        self._schedule_summary_generation(
+            session_id=session.id,
+            thread_id=thread.id,
+            target_message_count=total_messages,
         )
-        summary_data = ConversationSummaryGenerator.generate_session_summary(
-            session=session,
-            context=context,
-            ai_service=self.ai_service,
-        )
-        if summary_data:
-            self._upsert_summary(session, summary_data)
 
     def process_turn(
         self,
@@ -549,6 +692,7 @@ class RealtimeVoiceTutorPipeline:
         if not session.is_active:
             raise ValueError("Session is not active")
 
+        thread = self._ensure_thread(session)
         provider_settings = self._provider_settings()
 
         transcript = (text_message or "").strip()
@@ -568,7 +712,7 @@ class RealtimeVoiceTutorPipeline:
         if not transcript:
             raise ValueError("Speech could not be transcribed")
 
-        VoiceConversationMessage.objects.create(
+        user_voice_message = VoiceConversationMessage.objects.create(
             session=session,
             message_text=transcript,
             message_type="question" if session.mode == "tutor" else "quiz_question",
@@ -576,16 +720,36 @@ class RealtimeVoiceTutorPipeline:
             transcript=transcript,
         )
 
+        Message.objects.create(
+            thread=thread,
+            voice_message=user_voice_message,
+            role="user",
+            content=transcript,
+            transcript=transcript,
+            provider_trace={
+                "stt_provider": stt_provider,
+                "stt_fallback_errors": stt_errors,
+            },
+        )
+
+        thread_snapshot = self._thread_memory_snapshot(thread)
+
         response_text, llm_provider, llm_errors = self.generate_response(
             session=session,
             user_text=transcript,
             provider_settings=provider_settings,
+            thread_snapshot=thread_snapshot,
         )
 
         if not response_text:
             response_text = (
                 "আমি এখনই উত্তর তৈরি করতে পারছি না। একটু পরে আবার চেষ্টা করো।"
             )
+
+        audio_base64, audio_mime_type, tts_provider, tts_errors = self.synthesize_audio(
+            response_text,
+            provider_settings,
+        )
 
         ai_message = VoiceConversationMessage.objects.create(
             session=session,
@@ -596,15 +760,23 @@ class RealtimeVoiceTutorPipeline:
             confidence_score=0.85 if llm_provider else 0.0,
         )
 
+        Message.objects.create(
+            thread=thread,
+            voice_message=ai_message,
+            role="assistant",
+            content=response_text,
+            provider_trace={
+                "llm_provider": llm_provider,
+                "tts_provider": tts_provider,
+                "llm_fallback_errors": llm_errors,
+                "tts_fallback_errors": tts_errors,
+            },
+        )
+
         session.total_questions_asked += 1
         session.save(update_fields=["total_questions_asked", "updated_at"])
 
-        self.maybe_generate_incremental_summary(session)
-
-        audio_base64, audio_mime_type, tts_provider, tts_errors = self.synthesize_audio(
-            response_text,
-            provider_settings,
-        )
+        self.maybe_generate_incremental_summary(session, thread)
 
         return {
             "session_id": session.session_id,

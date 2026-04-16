@@ -201,7 +201,8 @@ class ProviderSettings(AIProviderSettings):
 
     @classmethod
     def get_settings(cls):
-        return AIProviderSettings.get_settings()
+        settings_obj, _ = cls.objects.get_or_create(pk=1)
+        return settings_obj
 
 
 class UserProfile(models.Model):

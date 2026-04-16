@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -40,7 +46,12 @@ interface ChatMessage {
 }
 
 type ConversationMode = "tutor" | "exam" | "quiz" | "general";
-type VoiceState = "idle" | "listening" | "thinking" | "speaking" | "disconnected";
+type VoiceState =
+  | "idle"
+  | "listening"
+  | "thinking"
+  | "speaking"
+  | "disconnected";
 
 interface ProviderTrace {
   stt?: string | null;
@@ -68,7 +79,9 @@ const AIVoiceCall: React.FC = () => {
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [lastProviders, setLastProviders] = useState<ProviderTrace | null>(null);
+  const [lastProviders, setLastProviders] = useState<ProviderTrace | null>(
+    null,
+  );
 
   const isPopupWindow = typeof window !== "undefined" && window.opener !== null;
 
@@ -119,7 +132,10 @@ const AIVoiceCall: React.FC = () => {
   }, []);
 
   const stopMicrophone = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
       mediaRecorderRef.current.stop();
     }
     mediaRecorderRef.current = null;
@@ -173,7 +189,8 @@ const AIVoiceCall: React.FC = () => {
       };
 
       try {
-        const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextCtor =
+          window.AudioContext || (window as any).webkitAudioContext;
         if (!AudioContextCtor) {
           await playWithElement();
           return;
@@ -188,7 +205,9 @@ const AIVoiceCall: React.FC = () => {
         }
 
         const arrayBuffer = decodeBase64(audioBase64);
-        const decodedBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer.slice(0));
+        const decodedBuffer = await audioContextRef.current.decodeAudioData(
+          arrayBuffer.slice(0),
+        );
 
         await new Promise<void>((resolve) => {
           if (!audioContextRef.current) {
@@ -229,24 +248,25 @@ const AIVoiceCall: React.FC = () => {
     [playAudioBase64, resolveIdleState],
   );
 
-  const sendSocketEvent = useCallback((
-    payload: Record<string, unknown>,
-    options?: { silent?: boolean },
-  ) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      if (!options?.silent) {
-        appendMessage({
-          role: "assistant",
-          content: "Realtime socket not connected. Please restart the session.",
-        });
+  const sendSocketEvent = useCallback(
+    (payload: Record<string, unknown>, options?: { silent?: boolean }) => {
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        if (!options?.silent) {
+          appendMessage({
+            role: "assistant",
+            content:
+              "Realtime socket not connected. Please restart the session.",
+          });
+        }
+        setVoiceState("disconnected");
+        return false;
       }
-      setVoiceState("disconnected");
-      return false;
-    }
 
-    wsRef.current.send(JSON.stringify(payload));
-    return true;
-  }, [appendMessage]);
+      wsRef.current.send(JSON.stringify(payload));
+      return true;
+    },
+    [appendMessage],
+  );
 
   const connectSocket = useCallback(
     (targetSessionId: string, token: string): Promise<void> => {
@@ -358,7 +378,10 @@ const AIVoiceCall: React.FC = () => {
     ];
 
     const supportedMimeType = mimeTypeCandidates.find((candidate) => {
-      return typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(candidate);
+      return (
+        typeof MediaRecorder !== "undefined" &&
+        MediaRecorder.isTypeSupported(candidate)
+      );
     });
 
     const recorder = supportedMimeType
@@ -435,7 +458,8 @@ const AIVoiceCall: React.FC = () => {
       setIsSessionActive(true);
       appendMessage({
         role: "assistant",
-        content: "Voice session started. Speak naturally and press 'Process Voice' when you finish a turn.",
+        content:
+          "Voice session started. Speak naturally and press 'Process Voice' when you finish a turn.",
       });
       resolveIdleState();
     } catch (error) {
@@ -497,10 +521,10 @@ const AIVoiceCall: React.FC = () => {
     if (!isSessionActive) return "Session not started";
     if (isMicMuted) return "Mic muted";
     if (!isSocketConnected) return "Socket disconnected";
-    if (voiceState === "thinking") return "Thinking";
-    if (voiceState === "speaking") return "Speaking";
+    if (voiceState === "thinking") return "Thinking...";
+    if (voiceState === "speaking") return "Speaking...";
     if (voiceState === "disconnected") return "Connection lost";
-    return "Listening";
+    return "Listening...";
   }, [isMicMuted, isSessionActive, isSocketConnected, voiceState]);
 
   useEffect(() => {
