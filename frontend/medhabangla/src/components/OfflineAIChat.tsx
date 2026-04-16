@@ -208,8 +208,8 @@ export const OfflineAIChat: React.FC = () => {
         await Promise.all(cacheNames.map((name) => caches.delete(name)));
       }
 
-      localStorage.removeItem("sopan-models-auto-installed");
-      localStorage.removeItem("sopan-model-metadata");
+      localStorage.removeItem("sopna-models-auto-installed");
+      localStorage.removeItem("sopna-model-metadata");
       window.location.reload();
     } catch {
       window.location.reload();

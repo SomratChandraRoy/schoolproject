@@ -24,7 +24,7 @@ interface FileSystemNotes {
   generateAINotes: (topic: string) => Promise<void>;
 }
 
-const FOLDER_HANDLE_KEY = "sopan_notes_folder_handle";
+const FOLDER_HANDLE_KEY = "sopna_notes_folder_handle";
 const NOTES_INDEX_FILE = "notes_index.json";
 
 export const useFileSystemNotes = (): FileSystemNotes => {

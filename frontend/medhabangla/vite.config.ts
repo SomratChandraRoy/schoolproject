@@ -27,24 +27,50 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: "autoUpdate",
-        injectRegister: "auto",
+        injectRegister: false,
         manifest: false,
         workbox: {
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
+          navigateFallbackDenylist: [
+            /^\/admin(?:\/.*)?$/,
+            /^\/api(?:\/.*)?$/,
+            /^\/ws(?:\/.*)?$/,
+            /^\/static(?:\/.*)?$/,
+            /^\/media(?:\/.*)?$/,
+          ],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
           globPatterns: [
             "**/*.{js,css,html,ico,png,svg,webmanifest,json,woff,woff2}",
           ],
           runtimeCaching: [
             {
-              urlPattern: ({ request }) =>
-                request.destination === "document" ||
-                request.destination === "script" ||
-                request.destination === "style" ||
-                request.destination === "image" ||
-                request.destination === "font",
+              urlPattern: ({ request, url }) => {
+                const backendPrefixes = [
+                  "/admin",
+                  "/api",
+                  "/ws",
+                  "/static",
+                  "/media",
+                ];
+                if (
+                  backendPrefixes.some(
+                    (prefix) =>
+                      url.pathname === prefix ||
+                      url.pathname.startsWith(`${prefix}/`),
+                  )
+                ) {
+                  return false;
+                }
+
+                return (
+                  request.destination === "script" ||
+                  request.destination === "style" ||
+                  request.destination === "image" ||
+                  request.destination === "font"
+                );
+              },
               handler: "CacheFirst",
               options: {
                 cacheName: "app-shell-cache",

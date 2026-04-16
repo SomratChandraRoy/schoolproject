@@ -19,7 +19,7 @@ interface SyncEvent extends ExtendableEvent {
 }
 
 // Cache name
-const CACHE_NAME = "sopan-v1";
+const CACHE_NAME = "sopna-v1";
 const urlsToCache = [
   "/",
   "/index.html",

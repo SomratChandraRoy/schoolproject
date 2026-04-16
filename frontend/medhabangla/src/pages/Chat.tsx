@@ -1288,7 +1288,7 @@ const Chat: React.FC = () => {
 
     const popup = window.open(
       popupPath,
-      "sopan-ai-voice-visualizer",
+      "sopna-ai-voice-visualizer",
       `popup=yes,width=${Math.round(popupWidth)},height=${Math.round(popupHeight)},left=${Math.round(popupLeft)},top=${Math.round(popupTop)},resizable=yes,scrollbars=yes`,
     );
 
