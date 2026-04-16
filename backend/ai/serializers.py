@@ -1,8 +1,19 @@
 from rest_framework import serializers
 from .models import (
-    AIChatSession, AIChatMessage, OfflineNote, RemedialExplanation, AIProviderSettings,
-    VoiceConversationSession, VoiceConversationMessage, VoiceQuizSession, 
-    VoiceQuizQuestion, VoiceQuizAnswer, ConversationSummary
+    AIChatSession,
+    AIChatMessage,
+    OfflineNote,
+    RemedialExplanation,
+    ProviderSettings,
+    UserProfile,
+    ConversationThread,
+    Message,
+    VoiceConversationSession,
+    VoiceConversationMessage,
+    VoiceQuizSession,
+    VoiceQuizQuestion,
+    VoiceQuizAnswer,
+    ConversationSummary,
 )
 
 
@@ -11,7 +22,7 @@ class AIProviderSettingsSerializer(serializers.ModelSerializer):
     updated_by_username = serializers.CharField(source='updated_by.username', read_only=True, allow_null=True)
     
     class Meta:
-        model = AIProviderSettings
+        model = ProviderSettings
         fields = [
             'id',
             'provider',
@@ -55,6 +66,27 @@ class AIProviderSettingsSerializer(serializers.ModelSerializer):
             'flashcard_groq_extra_keys': {'write_only': True},
             'flashcard_alibaba_extra_keys': {'write_only': True},
         }
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class ConversationThreadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConversationThread
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at', 'started_at')
+
+
+class ThreadMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = '__all__'
+        read_only_fields = ('created_at',)
 
 
 class AIChatSessionSerializer(serializers.ModelSerializer):

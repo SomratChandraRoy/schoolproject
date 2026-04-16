@@ -9,10 +9,14 @@ from typing import Dict, List, Optional, Tuple
 
 import requests
 from django.conf import settings
+from django.utils import timezone
 
 from .ai_service import get_ai_service
 from .models import (
-    AIProviderSettings,
+    ProviderSettings,
+    UserProfile,
+    ConversationThread,
+    Message,
     ConversationSummary,
     VoiceConversationMessage,
     VoiceConversationSession,
@@ -39,7 +43,8 @@ class RealtimeVoiceTutorPipeline:
         return list(default_order)
 
     def _provider_settings(self) -> Dict[str, Optional[str]]:
-        settings_obj = AIProviderSettings.get_settings()
+        # API keys should be stored in .env and optionally overridden in the admin settings.
+        settings_obj = ProviderSettings.get_settings()
         return {
             "voice_stt_provider": settings_obj.voice_stt_provider or "auto",
             "voice_llm_provider": settings_obj.voice_llm_provider or "auto",
@@ -51,6 +56,56 @@ class RealtimeVoiceTutorPipeline:
             "groq_api_key": settings_obj.groq_api_key or getattr(settings, "GROQ_API_KEY", None),
             "gemini_api_key": settings_obj.gemini_api_key or getattr(settings, "GEMINI_API_KEY", None),
         }
+
+    def _ensure_profile(self, user) -> UserProfile:
+        profile, _ = UserProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                "preferred_language": "bn",
+            },
+        )
+        return profile
+
+    def _ensure_thread(self, session: VoiceConversationSession) -> ConversationThread:
+        profile = self._ensure_profile(session.user)
+        thread, created = ConversationThread.objects.get_or_create(
+            voice_session=session,
+            defaults={
+                "user_profile": profile,
+                "subject": session.subject or "",
+                "topic": session.topic or "",
+                "mode": session.mode,
+                "thread_title": session.topic or session.subject or "Bangla Voice Tutor",
+            },
+        )
+        if not created:
+            updates = []
+            if thread.subject != (session.subject or ""):
+                thread.subject = session.subject or ""
+                updates.append("subject")
+            if thread.topic != (session.topic or ""):
+                thread.topic = session.topic or ""
+                updates.append("topic")
+            if thread.mode != session.mode:
+                thread.mode = session.mode
+                updates.append("mode")
+            if updates:
+                thread.save(update_fields=updates + ["updated_at"])
+
+        profile.last_active_at = timezone.now()
+        profile.save(update_fields=["last_active_at", "updated_at"])
+        return thread
+
+    def _thread_memory_snapshot(self, thread: ConversationThread) -> str:
+        if thread.memory_snapshot:
+            return thread.memory_snapshot
+
+        summary = (
+            ConversationSummary.objects.filter(thread=thread)
+            .order_by("-created_at")
+            .first()
+        )
+        return summary.summary_text if summary else ""
 
     def _is_retryable_error(self, error_message: str) -> bool:
         message = (error_message or "").lower()

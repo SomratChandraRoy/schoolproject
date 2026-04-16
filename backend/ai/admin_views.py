@@ -4,7 +4,7 @@ Admin Views for AI Provider Settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
-from .models import AIProviderSettings
+from .models import ProviderSettings
 from .serializers import AIProviderSettingsSerializer
 
 
@@ -17,7 +17,7 @@ class AIProviderSettingsView(APIView):
     def get(self, request):
         """Get current AI provider settings"""
         # Allow all authenticated users to view settings
-        settings = AIProviderSettings.get_settings()
+        settings = ProviderSettings.get_settings()
         serializer = AIProviderSettingsSerializer(settings)
         return Response(serializer.data)
     
@@ -30,7 +30,7 @@ class AIProviderSettingsView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        settings = AIProviderSettings.get_settings()
+        settings = ProviderSettings.get_settings()
         serializer = AIProviderSettingsSerializer(settings, data=request.data, partial=True)
         
         if serializer.is_valid():
@@ -58,7 +58,7 @@ class TestAIProviderView(APIView):
             )
         
         provider = request.data.get('provider', 'auto')
-        settings_obj = AIProviderSettings.get_settings()
+        settings_obj = ProviderSettings.get_settings()
         
         from .ai_service import get_ai_service
         ai_service = get_ai_service()

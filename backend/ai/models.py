@@ -188,6 +188,109 @@ class AIProviderSettings(models.Model):
         pass
 
 
+class ProviderSettings(AIProviderSettings):
+    """
+    Compatibility singleton alias used by the real-time voice tutor pipeline.
+    Uses the same database table as AIProviderSettings.
+    """
+
+    class Meta:
+        proxy = True
+        verbose_name = 'Provider Settings'
+        verbose_name_plural = 'Provider Settings'
+
+    @classmethod
+    def get_settings(cls):
+        return AIProviderSettings.get_settings()
+
+
+class UserProfile(models.Model):
+    """Long-term learner profile for realtime voice tutoring."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='voice_profile')
+    preferred_language = models.CharField(max_length=20, default='bn', help_text='Preferred tutoring language code.')
+    profile_notes = models.TextField(blank=True, null=True)
+    weak_areas = models.JSONField(default=list, blank=True)
+    strong_areas = models.JSONField(default=list, blank=True)
+    last_active_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Voice Profile - {self.user.username}"
+
+
+class ConversationThread(models.Model):
+    """Thread-level memory container for a user's real-time voice session."""
+
+    THREAD_MODES = [
+        ('tutor', 'Tutor'),
+        ('exam', 'Exam'),
+        ('quiz', 'Quiz'),
+        ('general', 'General'),
+    ]
+
+    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='threads')
+    voice_session = models.OneToOneField(
+        'VoiceConversationSession',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='thread',
+    )
+    thread_title = models.CharField(max_length=255, blank=True, null=True)
+    subject = models.CharField(max_length=100, blank=True, null=True)
+    topic = models.CharField(max_length=255, blank=True, null=True)
+    mode = models.CharField(max_length=20, choices=THREAD_MODES, default='tutor')
+    is_active = models.BooleanField(default=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(blank=True, null=True)
+    last_summary_at = models.DateTimeField(blank=True, null=True)
+    memory_snapshot = models.TextField(blank=True, null=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Thread {self.id} - {self.user_profile.user.username}"
+
+
+class Message(models.Model):
+    """Normalized thread messages used for memory summarization cadence."""
+
+    ROLE_CHOICES = [
+        ('user', 'User'),
+        ('assistant', 'Assistant'),
+        ('system', 'System'),
+    ]
+
+    thread = models.ForeignKey(ConversationThread, on_delete=models.CASCADE, related_name='messages')
+    voice_message = models.OneToOneField(
+        'VoiceConversationMessage',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='thread_message',
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    content = models.TextField()
+    transcript = models.TextField(blank=True, null=True)
+    provider_trace = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.role}: {self.content[:40]}"
+
+
 class AIChatSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     session_id = models.CharField(max_length=100, unique=True)
@@ -455,6 +558,13 @@ class VoiceQuizAnswer(models.Model):
 
 class ConversationSummary(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversation_summaries')
+    thread = models.ForeignKey(
+        ConversationThread,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='summaries',
+    )
     voice_session = models.OneToOneField(VoiceConversationSession, on_delete=models.CASCADE,
                                          related_name='summary')
     

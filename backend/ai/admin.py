@@ -1,9 +1,18 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import AIChatSession, AIChatMessage, OfflineNote, RemedialExplanation, AIProviderSettings
+from .models import (
+    AIChatSession,
+    AIChatMessage,
+    OfflineNote,
+    RemedialExplanation,
+    ProviderSettings,
+    UserProfile,
+    ConversationThread,
+    Message,
+)
 
-@admin.register(AIProviderSettings)
-class AIProviderSettingsAdmin(ModelAdmin):
+@admin.register(ProviderSettings)
+class ProviderSettingsAdmin(ModelAdmin):
     list_display = ('provider', 'updated_at', 'updated_by')
     fieldsets = (
         ('Global / Fallback Provider', {
@@ -55,6 +64,30 @@ class AIProviderSettingsAdmin(ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(ModelAdmin):
+    list_display = ('user', 'preferred_language', 'last_active_at', 'updated_at')
+    list_filter = ('preferred_language', 'updated_at')
+    search_fields = ('user__username', 'user__email')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ConversationThread)
+class ConversationThreadAdmin(ModelAdmin):
+    list_display = ('id', 'user_profile', 'mode', 'subject', 'is_active', 'last_summary_at', 'updated_at')
+    list_filter = ('mode', 'is_active', 'updated_at')
+    search_fields = ('user_profile__user__username', 'subject', 'topic', 'thread_title')
+    readonly_fields = ('created_at', 'updated_at', 'started_at')
+
+
+@admin.register(Message)
+class ThreadMessageAdmin(ModelAdmin):
+    list_display = ('id', 'thread', 'role', 'created_at')
+    list_filter = ('role', 'created_at')
+    search_fields = ('thread__user_profile__user__username', 'content')
+    readonly_fields = ('created_at',)
 
 @admin.register(AIChatSession)
 class AIChatSessionAdmin(ModelAdmin):
