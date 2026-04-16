@@ -171,14 +171,17 @@ const Plans: React.FC = () => {
       setError("");
 
       try {
-        const response = await fetch(toApiUrl("/api/billing/checkout-session/"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
+        const response = await fetch(
+          toApiUrl("/api/billing/checkout-session/"),
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Token ${token}`,
+            },
+            body: JSON.stringify({ plan_id: planId }),
           },
-          body: JSON.stringify({ plan_id: planId }),
-        });
+        );
 
         const data = await response.json();
 
@@ -218,7 +221,9 @@ const Plans: React.FC = () => {
     }
 
     if (checkout === "cancel") {
-      setStatusMessage("Payment was cancelled. No changes were made to your role.");
+      setStatusMessage(
+        "Payment was cancelled. No changes were made to your role.",
+      );
       navigate("/plans", { replace: true });
     }
   }, [location.search, navigate, verifyCheckoutSession]);
@@ -234,7 +239,8 @@ const Plans: React.FC = () => {
             Choose your learning plan
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-            Your current role: <span className="font-semibold">{currentRole}</span>
+            Your current role:{" "}
+            <span className="font-semibold">{currentRole}</span>
           </p>
         </div>
 
@@ -278,11 +284,17 @@ const Plans: React.FC = () => {
                   </span>
                 )}
 
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{plan.name}</h2>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{plan.description}</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {plan.name}
+                </h2>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  {plan.description}
+                </p>
 
                 {plan.details && (
-                  <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{plan.details}</p>
+                  <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                    {plan.details}
+                  </p>
                 )}
 
                 <div className="mt-5">
@@ -290,7 +302,8 @@ const Plans: React.FC = () => {
                     {formatPrice(plan.amount, plan.currency)}
                   </p>
                   <p className="mt-1 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {plan.billing_type.replace("_", " ")} • role: {plan.role_label || plan.role_to_assign}
+                    {plan.billing_type.replace("_", " ")} • role:{" "}
+                    {plan.role_label || plan.role_to_assign}
                   </p>
                 </div>
 

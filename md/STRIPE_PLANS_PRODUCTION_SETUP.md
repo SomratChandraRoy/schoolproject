@@ -32,6 +32,7 @@ STRIPE_CANCEL_URL=https://bipulroy.me/plans
 ```
 
 Notes:
+
 - Do not commit secret keys to git.
 - `STRIPE_WEBHOOK_SECRET` must match the webhook endpoint configuration.
 
