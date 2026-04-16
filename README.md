@@ -2,6 +2,8 @@
 
 Full production deployment documentation is available in [live.md](live.md).
 
+Stripe plans/payment production setup is documented in [md/STRIPE_PLANS_PRODUCTION_SETUP.md](md/STRIPE_PLANS_PRODUCTION_SETUP.md).
+
 ## Quick Start (Development)
 
 1. Copy env files:

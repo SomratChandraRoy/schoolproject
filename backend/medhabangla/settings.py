@@ -41,6 +41,12 @@ DEBUG = env_bool('DEBUG', True)
 
 ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
+# Ensure container/internal health checks do not fail on host validation
+# when production ALLOWED_HOSTS is domain-only.
+for internal_host in ('localhost', '127.0.0.1'):
+    if internal_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(internal_host)
+
 
 # Application definition
 
@@ -65,6 +71,7 @@ INSTALLED_APPS = [
     'chat',
     'academics',
     'translator',  # English-Bangla Translator with PWA support
+    'billing',
 ]
 
 # Custom user model
@@ -103,14 +110,16 @@ WSGI_APPLICATION = 'medhabangla.wsgi.application'
 ASGI_APPLICATION = 'medhabangla.asgi.application'
 
 # Channels configuration
+REDIS_URL = os.getenv('REDIS_URL', '')
+
 CHANNEL_LAYERS = {
     'default': {
         # Use Redis for production
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')],
+            "hosts": [REDIS_URL or 'redis://127.0.0.1:6379/0'],
         },
-    } if os.getenv('REDIS_URL') else {
+    } if REDIS_URL else {
         # Use in-memory channel layer for development
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
@@ -206,6 +215,15 @@ WORKOS_REDIRECT_URI = os.getenv(
     'WORKOS_REDIRECT_URI',
     f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/auth/callback"
 )
+
+# Stripe payment settings
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
+
+_frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+STRIPE_SUCCESS_URL = os.getenv('STRIPE_SUCCESS_URL', f'{_frontend_url}/plans').strip()
+STRIPE_CANCEL_URL = os.getenv('STRIPE_CANCEL_URL', f'{_frontend_url}/plans').strip()
 
 # Auth redirect safety: when login form omits a `next` value, avoid Django's
 # default /accounts/profile/ target (not present in this project).
@@ -386,6 +404,27 @@ UNFOLD = {
                         "title": _("Gamification"),
                         "icon": "sports_esports",
                         "link": reverse_lazy("admin:games_gamesession_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Billing & System"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Plans"),
+                        "icon": "sell",
+                        "link": reverse_lazy("admin:billing_plan_changelist"),
+                    },
+                    {
+                        "title": _("Plan Purchases"),
+                        "icon": "payments",
+                        "link": reverse_lazy("admin:billing_planpurchase_changelist"),
+                    },
+                    {
+                        "title": _("System Health"),
+                        "icon": "monitor_heart",
+                        "link": reverse_lazy("admin:billing_systemhealthstatus_changelist"),
                     },
                 ],
             },

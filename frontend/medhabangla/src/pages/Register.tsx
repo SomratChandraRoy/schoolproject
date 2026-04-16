@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { getApiBaseUrl } from "../lib/apiBaseUrl";
+
+const API_BASE_URL = getApiBaseUrl();
 
 const Register: React.FC = () => {
   const navigate = useNavigate();

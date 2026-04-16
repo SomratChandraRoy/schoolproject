@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import PremiumLoginModal from "../components/PremiumLoginModal";
+import { getApiBaseUrl } from "../lib/apiBaseUrl";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE_URL = getApiBaseUrl();
 
 const Login: React.FC = () => {
   const navigate = useNavigate();

@@ -10,13 +10,18 @@ def environment_callback(request):
     Callback to show environment status on the top right
     """
     is_docker = os.getenv("DOCKER_ENV", "False") == "True"
-    
-    if os.getenv("DB_HOST"):
-        return ["Production", "success"] # success = green
-    elif is_docker:
-        return ["Docker Local", "warning"] # warning = orange
-    else:
-        return ["Development", "info"] # info = blue
+    db_host = (os.getenv("DB_HOST") or "").strip().lower()
+
+    if "ondigitalocean.com" in db_host:
+        return ["DigitalOcean", "success"]
+
+    if is_docker and os.getenv("DEBUG", "False") == "True":
+        return ["Docker Local", "warning"]
+
+    if is_docker:
+        return ["Docker", "success"]
+
+    return ["Development", "info"]
 
 # Core Apps
 from accounts.models import User
