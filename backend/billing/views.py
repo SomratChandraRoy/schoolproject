@@ -17,11 +17,11 @@ except Exception:  # pragma: no cover - handled by runtime configuration respons
     stripe = None
 
 
-def _append_query_params(url, params):
+def _append_query_params(url, params, safe=""):
     parsed = urlparse(url)
     existing = dict(parse_qsl(parsed.query, keep_blank_values=True))
     existing.update(params)
-    return urlunparse(parsed._replace(query=urlencode(existing)))
+    return urlunparse(parsed._replace(query=urlencode(existing, safe=safe)))
 
 
 def _stripe_is_configured():
@@ -168,6 +168,7 @@ class CreateCheckoutSessionView(APIView):
         success_url = _append_query_params(
             settings.STRIPE_SUCCESS_URL,
             {"checkout": "success", "session_id": "{CHECKOUT_SESSION_ID}"},
+            safe="{}",
         )
         cancel_url = _append_query_params(
             settings.STRIPE_CANCEL_URL,
