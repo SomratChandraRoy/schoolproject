@@ -126,44 +126,56 @@ class RealtimeVoiceTutorPipeline:
         session: VoiceConversationSession,
         user_message: str,
         context: Dict,
+        *,
+        thread_snapshot: str = "",
     ) -> str:
         recent_messages = list(session.messages.order_by("-timestamp")[:8])
         recent_messages.reverse()
 
-        history_lines = []
+        history_lines: List[str] = []
         for message in recent_messages:
             sender = "Student" if message.is_user_message else "Tutor"
             history_lines.append(f"{sender}: {message.message_text[:300]}")
 
-        session_summary = session.conversation_summary or ""
-        previous_context = session.previous_session_context or ""
+        session_summary = (session.conversation_summary or "").strip()
+        previous_context = (session.previous_session_context or "").strip()
+        long_term_memory = (thread_snapshot or "").strip()
 
         mode_instructions = {
-            "tutor": "Use Socratic style: ask one guiding question before final explanation whenever possible.",
-            "exam": "Run exam coaching: evaluate accuracy briefly, explain mistakes, then ask the next focused question.",
-            "quiz": "Run quiz coach mode: short feedback, correctness, memory trick, and one follow-up challenge.",
-            "general": "Be concise and conversational while still educational.",
+            "tutor": "সোক্রেটিক ভঙ্গি: আগে ১টি গাইডিং প্রশ্ন, তারপর ব্যাখ্যা, শেষে ১টি ফলো-আপ প্রশ্ন।",
+            "exam": "পরীক্ষা মোড: একবারে ১টি প্রশ্ন করুন, উত্তরের জন্য অপেক্ষা করুন, তারপর সংক্ষিপ্ত মূল্যায়ন+সংশোধন করে পরের প্রশ্ন করুন।",
+            "quiz": "কুইজ কোচ: সঠিক/ভুল জানান, ১ লাইনে কারণ, তারপর ১টি ছোট চ্যালেঞ্জ প্রশ্ন দিন।",
+            "general": "বন্ধুসুলভ ও সংক্ষিপ্তভাবে শেখান; অপ্রয়োজনীয় লম্বা লেখা নয়।",
         }
 
         instruction = mode_instructions.get(session.mode, mode_instructions["tutor"])
 
-        return f"""আপনি MedhaBangla এর Real-time AI Bangla Voice Tutor।
+        return f"""আপনি MedhaBangla-এর Real-time AI Bangla Voice Tutor।
 
-কোর নির্দেশনা:
-- উত্তর প্রধানত বাংলা ভাষায় দিন, প্রয়োজনে ইংরেজি টার্মের সহজ ব্যাখ্যা দিন।
-- শিক্ষার্থীকে ছোট ধাপে শেখান এবং চিন্তা করতে উৎসাহ দিন।
-- উত্তর সংক্ষিপ্ত, স্পষ্ট, এবং ভয়েসে শোনার উপযোগী রাখুন।
-- ভুল ধরলে সমালোচনা নয়, সহানুভূতিশীল সংশোধন দিন।
-- NCTB/বাংলাদেশ স্কুল কনটেক্সট মাথায় রাখুন।
+ভাষা নীতি (অবশ্যই মানবেন):
+- শুধু স্বাভাবিক, সাবলীল বাংলা ভাষায় কথা বলবেন।
+- প্রয়োজন হলে ইংরেজি টার্ম ব্যবহার করতে পারেন, কিন্তু সাথে সাথে বন্ধনীতে সহজ বাংলা ব্যাখ্যা দিন।
+
+শিক্ষকসুলভ আচরণ:
+- সহানুভূতিশীল থাকুন, ভুল হলে ভদ্রভাবে ঠিক করে দিন।
+- ধাপে ধাপে বুঝিয়ে দিন, এবং শিক্ষার্থীকে ভাবতে সাহায্য করতে প্রশ্ন করুন।
+- ভয়েসে শোনার উপযোগী করে ৪-৮ লাইনে উত্তর দিন।
 - {instruction}
+
+এক্সাম/ভাইভা নির্দেশনা:
+- যদি শিক্ষার্থী "exam"/"viva"/"পরীক্ষা" বলে বা মোড = Exam হয়, তাহলে একবারে ১টি প্রশ্ন করুন।
+- শিক্ষার্থীর উত্তরের পরে সংক্ষিপ্ত মূল্যায়ন দিন (ভুল কোথায়), ঠিক উত্তর/ইঙ্গিত দিন, তারপর পরের প্রশ্ন করুন।
 
 শিক্ষার্থী তথ্য:
 - নাম: {context.get('student_name', 'Student')}
 - শ্রেণি: {context.get('student_class', 9)}
 - বিষয়: {session.subject or 'General'}
 - টপিক: {session.topic or 'General'}
-- দুর্বল দিক: {', '.join(context.get('weak_areas', [])[:3]) or 'Not identified'}
-- শক্তিশালী দিক: {', '.join(context.get('strong_areas', [])[:3]) or 'Not identified'}
+- দুর্বল দিক: {', '.join(context.get('weak_areas', [])[:3]) or 'এখনও শনাক্ত হয়নি'}
+- শক্তিশালী দিক: {', '.join(context.get('strong_areas', [])[:3]) or 'এখনও শনাক্ত হয়নি'}
+
+দীর্ঘমেয়াদি স্মৃতি (থ্রেড সারসংক্ষেপ):
+{long_term_memory or 'N/A'}
 
 পূর্ববর্তী সেশন সংক্ষেপ:
 {previous_context or 'N/A'}
@@ -177,7 +189,7 @@ class RealtimeVoiceTutorPipeline:
 শিক্ষার্থীর বর্তমান ইনপুট:
 {user_message}
 
-এখন 3-6 লাইনের ভয়েস-ফ্রেন্ডলি সহায়ক উত্তর দিন।"""
+এখন একটি সংক্ষিপ্ত, ভয়েস-ফ্রেন্ডলি উত্তর দিন এবং শেষে ১টি ফলো-আপ প্রশ্ন করুন।"""
 
     def _transcribe_with_deepgram(self, audio_bytes: bytes, mime_type: str, api_key: str) -> str:
         url = os.getenv("DEEPGRAM_STT_URL", "https://api.deepgram.com/v1/listen")
@@ -311,6 +323,8 @@ class RealtimeVoiceTutorPipeline:
         session: VoiceConversationSession,
         user_text: str,
         provider_settings: Dict[str, Optional[str]],
+        *,
+        thread_snapshot: str = "",
     ) -> Tuple[Optional[str], Optional[str], List[str]]:
         selected = provider_settings.get("voice_llm_provider") or "auto"
         if selected == "auto":
@@ -325,7 +339,12 @@ class RealtimeVoiceTutorPipeline:
             subject=session.subject or "",
             topic=session.topic or "",
         )
-        prompt = self._build_system_prompt(session, user_text, context)
+        prompt = self._build_system_prompt(
+            session,
+            user_text,
+            context,
+            thread_snapshot=thread_snapshot,
+        )
 
         errors: List[str] = []
         for provider in order:
