@@ -2,15 +2,24 @@
 
 Use this checklist to validate Google sign-in end-to-end for production and local.
 
-## 1) Root cause that was fixed
+## 1) Root causes that were fixed
 
-The frontend auth flow had a localhost API fallback (`http://localhost:8000`).
-In production, this caused browser network errors (`Failed to fetch`) during WorkOS login/callback requests.
+There were two production-breaking causes:
 
-Code was updated to:
+1. `SECURE_SSL_REDIRECT=True` while nginx was serving HTTP-only (TLS block disabled).
 
-- use same-origin API paths by default in production
-- ignore localhost API URLs on non-local hosts
+- Result: auth API calls were redirected to `https://...` but HTTPS endpoint was not actually served.
+- Browser symptom: `Failed to fetch`.
+
+2. Frontend auth flow fallback to localhost (`http://localhost:8000`) in production builds.
+
+- Result: browser attempted local machine API instead of your server.
+- Browser symptom: `Failed to fetch`.
+
+Code/config now ensures:
+
+- nginx serves real HTTPS for `bipulroy.me` and redirects HTTP -> HTTPS
+- frontend auth uses same-origin API in production and ignores localhost values on non-local hosts
 
 ## 2) Production values to verify on server
 
@@ -23,6 +32,11 @@ Check these on droplet:
 
 - `.env`
   - `VITE_API_URL=` (empty for same-origin through nginx) OR `VITE_API_URL=https://bipulroy.me`
+  - `SECURE_SSL_REDIRECT=True` only when nginx HTTPS is enabled
+
+- `nginx.conf`
+  - must include active `server` block for `listen 443 ssl http2;`
+  - must include `ssl_certificate` and `ssl_certificate_key`
 
 ## 3) WorkOS dashboard setup (required)
 
