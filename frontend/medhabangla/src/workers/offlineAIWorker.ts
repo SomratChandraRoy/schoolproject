@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { env, pipeline } from "@xenova/transformers";
 
-env.allowLocalModels = true;
+// Root cause guard: avoid local /models resolution, which can return SPA HTML.
+env.allowLocalModels = false;
 env.allowRemoteModels = true;
 env.useBrowserCache = true;
 
@@ -151,13 +152,9 @@ async function forceBanglaResponse(answer, question) {
 }
 
 async function tryLoadCandidate(candidate, mode) {
-  if (mode === "remote") {
-    env.allowLocalModels = true;
-    env.allowRemoteModels = true;
-  } else {
-    env.allowLocalModels = true;
-    env.allowRemoteModels = false;
-  }
+  // Always use remote HF URLs (+ browser cache) to avoid local-path HTML responses.
+  env.allowLocalModels = false;
+  env.allowRemoteModels = true;
 
   const loadedPipeline = await pipeline("text2text-generation", candidate.id, {
     progress_callback: (progress) => {
@@ -210,22 +207,7 @@ async function loadModel(payload = {}) {
         });
         return;
       } catch (remoteError) {
-        try {
-          const localPipeline = await tryLoadCandidate(candidate, "local-fallback");
-          generator = localPipeline;
-          activeModel = candidate;
-          self.postMessage({
-            type: "ready",
-            source: "cache",
-            modelId: candidate.id,
-            modelLabel: candidate.label,
-          });
-          return;
-        } catch (localError) {
-          errors.push(
-            `${candidate.id}: ${formatLoadError(localError || remoteError)}`,
-          );
-        }
+        errors.push(`${candidate.id}: ${formatLoadError(remoteError)}`);
       }
     }
 

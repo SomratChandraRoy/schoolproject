@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => {
             /^\/ws(?:\/.*)?$/,
             /^\/static(?:\/.*)?$/,
             /^\/media(?:\/.*)?$/,
+            /^\/models(?:\/.*)?$/,
           ],
           maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
           globPatterns: [
@@ -53,6 +54,7 @@ export default defineConfig(({ mode }) => {
                   "/ws",
                   "/static",
                   "/media",
+                  "/models",
                 ];
                 if (
                   backendPrefixes.some(
@@ -77,17 +79,6 @@ export default defineConfig(({ mode }) => {
                 expiration: {
                   maxEntries: 300,
                   maxAgeSeconds: 60 * 60 * 24 * 30,
-                },
-              },
-            },
-            {
-              urlPattern: ({ url }) => url.pathname.startsWith("/models/"),
-              handler: "CacheFirst",
-              options: {
-                cacheName: "offline-model-pack-cache",
-                expiration: {
-                  maxEntries: 40,
-                  maxAgeSeconds: 60 * 60 * 24 * 90,
                 },
               },
             },

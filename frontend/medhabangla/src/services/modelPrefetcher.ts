@@ -32,6 +32,7 @@ interface DownloadProgress {
 
 const MODEL_METADATA_KEY = "sopna-model-metadata-v2";
 const MODEL_AUTO_INSTALL_KEY = "sopna-models-auto-installed-v2";
+const MODEL_CACHE_REPAIR_DONE_KEY = "sopna-model-cache-repair-v1";
 const PREFETCH_TIMEOUT_MS = 12 * 60 * 1000;
 
 const AVAILABLE_MODELS: ModelPackage[] = [
@@ -101,9 +102,45 @@ export class PWAModelPrefetcher {
   private listeners: Set<(progress: DownloadProgress) => void> = new Set();
 
   /**
+   * One-time repair for users who received HTML in model cache by mistake.
+   */
+  private async repairPoisonedModelCachesOnce(): Promise<void> {
+    if (typeof window === "undefined") return;
+
+    if (localStorage.getItem(MODEL_CACHE_REPAIR_DONE_KEY) === "1") {
+      return;
+    }
+
+    try {
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames
+            .filter(
+              (name) =>
+                name.includes("offline-model-pack-cache") ||
+                name.includes("transformers-remote-model-cache"),
+            )
+            .map((name) => caches.delete(name)),
+        );
+      }
+
+      // Reset model state so app can redownload clean artifacts.
+      localStorage.removeItem(MODEL_METADATA_KEY);
+      localStorage.removeItem(MODEL_AUTO_INSTALL_KEY);
+    } catch (error) {
+      console.error("[Model Prefetcher] Model cache repair failed:", error);
+    } finally {
+      localStorage.setItem(MODEL_CACHE_REPAIR_DONE_KEY, "1");
+    }
+  }
+
+  /**
    * Auto-install essential models once app is installed as a PWA.
    */
   async autoInstallForInstalledPWA(force = false): Promise<void> {
+    await this.repairPoisonedModelCachesOnce();
+
     if (!isStandalonePWA()) {
       return;
     }
@@ -442,6 +479,8 @@ export class PWAModelPrefetcher {
     totalSize: number;
     requiresPwaInstall: boolean;
   }> {
+    await this.repairPoisonedModelCachesOnce();
+
     const metadata = this.getModelMetadata();
     const installedModels = metadata.map((m) => m.name);
     const essentialModelNames = AVAILABLE_MODELS.filter((m) => !m.optional).map(
