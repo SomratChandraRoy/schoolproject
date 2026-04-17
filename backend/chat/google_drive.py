@@ -3,11 +3,15 @@ Google Drive Integration for Chat File Storage
 """
 import os
 import json
+import logging
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseUpload
 from django.conf import settings
 import io
+
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleDriveService:
@@ -30,7 +34,20 @@ class GoogleDriveService:
             
             # Parse credentials
             if isinstance(credentials_json, str):
-                credentials_info = json.loads(credentials_json)
+                normalized = credentials_json.strip()
+
+                # Allow env values wrapped in a single pair of quotes.
+                # This commonly happens when values are copied from .env snippets.
+                if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] in {'"', "'"}:
+                    normalized = normalized[1:-1].strip()
+
+                try:
+                    credentials_info = json.loads(normalized)
+                except json.JSONDecodeError:
+                    # Fallback for values that were escaped once before reaching env.
+                    # This keeps compatibility with CI secret paste variations.
+                    unescaped = bytes(normalized, 'utf-8').decode('unicode_escape')
+                    credentials_info = json.loads(unescaped)
             else:
                 credentials_info = credentials_json
             
@@ -44,7 +61,10 @@ class GoogleDriveService:
             self.service = build('drive', 'v3', credentials=credentials)
             
         except Exception as e:
-            print(f"Error initializing Google Drive service: {e}")
+            logger.exception(
+                "Error initializing Google Drive service. "
+                "Ensure GOOGLE_DRIVE_CREDENTIALS_JSON is valid one-line JSON without outer quotes."
+            )
             self.service = None
     
     def upload_file(self, file_content, file_name, mime_type, folder_id=None):

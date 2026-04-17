@@ -7,6 +7,10 @@ interface ImportMetaEnv {
   readonly VITE_WORKOS_REDIRECT_URI: string;
   readonly VITE_GEMINI_API_KEY: string;
   readonly VITE_OLLAMA_URL: string;
+  readonly VITE_SENTRY_DSN?: string;
+  readonly VITE_SENTRY_ENVIRONMENT?: string;
+  readonly VITE_SENTRY_TRACES_SAMPLE_RATE?: string;
+  readonly VITE_APP_RELEASE?: string;
 }
 
 interface ImportMeta {

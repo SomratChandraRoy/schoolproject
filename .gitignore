@@ -238,6 +238,9 @@ db.sqlite3
 
 # Django cache/session/temp artifacts
 **/cache/
+
+# Kubernetes local secret manifests
+k8s/backend-secret.yaml
 **/django_cache/
 **/file_cache/
 **/sessions/

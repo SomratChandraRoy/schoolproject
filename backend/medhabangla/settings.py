@@ -11,8 +11,16 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
+
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
+except Exception:
+    sentry_sdk = None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,6 +32,14 @@ load_dotenv(BASE_DIR / '.env')
 def env_bool(name: str, default: bool = False) -> bool:
     value = os.getenv(name, str(default))
     return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_float(name: str, default: float = 0.0) -> float:
+    value = os.getenv(name, str(default)).strip()
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def env_csv(name: str, default: str = '') -> list[str]:
@@ -38,6 +54,29 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-local-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env_bool('DEBUG', True)
+
+SENTRY_DSN = os.getenv('SENTRY_DSN', '').strip()
+SENTRY_ENVIRONMENT = os.getenv(
+    'SENTRY_ENVIRONMENT',
+    'development' if DEBUG else 'production',
+).strip()
+SENTRY_RELEASE = os.getenv('SENTRY_RELEASE', '').strip() or None
+SENTRY_TRACES_SAMPLE_RATE = env_float('SENTRY_TRACES_SAMPLE_RATE', 0.15 if not DEBUG else 0.0)
+SENTRY_PROFILES_SAMPLE_RATE = env_float('SENTRY_PROFILES_SAMPLE_RATE', 0.0)
+
+if SENTRY_DSN and sentry_sdk is not None:
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,
+        event_level=logging.ERROR,
+    )
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=SENTRY_ENVIRONMENT or ('development' if DEBUG else 'production'),
+        release=SENTRY_RELEASE,
+        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        profiles_sample_rate=SENTRY_PROFILES_SAMPLE_RATE,
+        integrations=[DjangoIntegration(), sentry_logging],
+    )
 
 ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 

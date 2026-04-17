@@ -2,6 +2,8 @@
 
 Full production deployment documentation is available in [live.md](live.md).
 
+DigitalOcean Kubernetes CI/CD deployment with GitHub Actions is documented in [md/DIGITALOCEAN_K8S_CICD.md](md/DIGITALOCEAN_K8S_CICD.md).
+
 Stripe plans/payment production setup is documented in [md/STRIPE_PLANS_PRODUCTION_SETUP.md](md/STRIPE_PLANS_PRODUCTION_SETUP.md).
 
 ## Quick Start (Development)

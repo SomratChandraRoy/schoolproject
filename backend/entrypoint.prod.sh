@@ -7,14 +7,30 @@ python manage.py migrate --noinput
 echo "[entrypoint] Collecting static files..."
 python manage.py collectstatic --noinput
 
-echo "[entrypoint] Ensuring default superuser exists..."
+echo "[entrypoint] Checking optional superuser bootstrap..."
 python manage.py shell <<'PY'
+import os
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-username = "bipulroy"
-password = "Bipul10000$"
-email = "admin@medhabangla.local"
+auto_create = os.getenv("AUTO_CREATE_SUPERUSER", "false").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
+if not auto_create:
+    print("Auto superuser bootstrap disabled (AUTO_CREATE_SUPERUSER=false)")
+    raise SystemExit(0)
+
+username = os.getenv("DJANGO_SUPERUSER_USERNAME", "").strip()
+password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "").strip()
+email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@medhabangla.local").strip() or "admin@medhabangla.local"
+
+if not username or not password:
+    print("AUTO_CREATE_SUPERUSER enabled, but username/password missing. Skipping.")
+    raise SystemExit(0)
 
 user, created = User.objects.get_or_create(
     username=username,

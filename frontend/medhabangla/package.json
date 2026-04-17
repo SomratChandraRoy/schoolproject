@@ -28,6 +28,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "@sentry/react": "^10.21.0",
     "@tabler/icons-react": "^3.41.1",
     "@types/three": "^0.183.1",
     "@workos-inc/node": "^8.12.1",

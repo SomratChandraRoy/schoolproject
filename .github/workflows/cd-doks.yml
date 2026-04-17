@@ -1,0 +1,141 @@
+name: CD - DigitalOcean Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: doks-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  K8S_NAMESPACE: schoolproject
+  BACKEND_IMAGE_NAME: schoolproject-backend
+  NGINX_IMAGE_NAME: schoolproject-nginx
+  DOCR_REGISTRY: registry.digitalocean.com/${{ secrets.DOCR_REGISTRY_NAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Authenticate Docker to DOCR
+        run: doctl registry login --expiry-seconds 1200
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image metadata
+        id: vars
+        run: |
+          SHORT_SHA="${GITHUB_SHA::12}"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "backend_image=${DOCR_REGISTRY}/${BACKEND_IMAGE_NAME}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "backend_latest=${DOCR_REGISTRY}/${BACKEND_IMAGE_NAME}:latest" >> "$GITHUB_OUTPUT"
+          echo "nginx_image=${DOCR_REGISTRY}/${NGINX_IMAGE_NAME}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "nginx_latest=${DOCR_REGISTRY}/${NGINX_IMAGE_NAME}:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.prod
+          push: true
+          tags: |
+            ${{ steps.vars.outputs.backend_image }}
+            ${{ steps.vars.outputs.backend_latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push nginx/frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.nginx
+          push: true
+          tags: |
+            ${{ steps.vars.outputs.nginx_image }}
+            ${{ steps.vars.outputs.nginx_latest }}
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
+            VITE_SENTRY_ENVIRONMENT=${{ secrets.VITE_SENTRY_ENVIRONMENT || 'production' }}
+            VITE_SENTRY_TRACES_SAMPLE_RATE=${{ secrets.VITE_SENTRY_TRACES_SAMPLE_RATE || '0.1' }}
+            VITE_APP_RELEASE=${{ steps.vars.outputs.short_sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Configure kubectl
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1200 "${{ secrets.DOKS_CLUSTER_NAME }}"
+
+      - name: Ensure namespace exists
+        run: kubectl apply -f k8s/namespace.yaml
+
+      - name: Create or update image pull secret
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" create secret docker-registry docr-auth \
+            --docker-server=registry.digitalocean.com \
+            --docker-username=doctl \
+            --docker-password="${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" \
+            --docker-email=noreply@github.com \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Sync backend environment secret from GitHub secret
+        env:
+          BACKEND_ENV_FILE: ${{ secrets.BACKEND_ENV_FILE }}
+        run: |
+          printf '%s' "$BACKEND_ENV_FILE" > backend.env
+          kubectl -n "${K8S_NAMESPACE}" create secret generic backend-secrets \
+            --from-env-file=backend.env \
+            --dry-run=client -o yaml | kubectl apply -f -
+          rm -f backend.env
+
+      - name: Apply Kubernetes manifests
+        run: kubectl apply -k k8s
+
+      - name: Update deployment images
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" set image deployment/web backend="${{ steps.vars.outputs.backend_image }}"
+          kubectl -n "${K8S_NAMESPACE}" set image deployment/web nginx="${{ steps.vars.outputs.nginx_image }}"
+          kubectl -n "${K8S_NAMESPACE}" set env deployment/web SENTRY_RELEASE="${{ steps.vars.outputs.short_sha }}" --containers=backend
+
+      - name: Wait for rollout
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/postgres --timeout=600s
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/redis --timeout=600s
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/web --timeout=600s
+
+      - name: Sentry release tracking
+        if: secrets.SENTRY_AUTH_TOKEN != '' && secrets.SENTRY_ORG != '' && secrets.SENTRY_PROJECT != ''
+        uses: getsentry/action-release@v3
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          version: ${{ steps.vars.outputs.short_sha }}
+
+      - name: Send deployment failure event to Sentry
+        if: failure() && secrets.SENTRY_DSN != ''
+        run: |
+          python -m pip install sentry-sdk
+          python .github/scripts/notify_sentry_failure.py
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: production
+          SENTRY_MESSAGE: "CD workflow failed"
+          SENTRY_LEVEL: error
