@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    envPrefix: ["VITE_", "TLDRAW_"],
     plugins: [
       react(),
       VitePWA({
