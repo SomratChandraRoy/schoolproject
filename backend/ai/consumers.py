@@ -151,7 +151,11 @@ class AIVoiceTutorConsumer(AsyncWebsocketConsumer):
 
         if audio_bytes is None:
             if not self.audio_buffer:
-                await self._send_error("No buffered audio to process")
+                logger.info(
+                    "Ignoring empty audio_commit session=%s (no inline payload and no buffer)",
+                    self.session_id,
+                )
+                await self._send_status("listening")
                 return
 
             audio_bytes = bytes(self.audio_buffer)
@@ -168,6 +172,13 @@ class AIVoiceTutorConsumer(AsyncWebsocketConsumer):
             )
             await self._send_status("listening")
             return
+
+        logger.info(
+            "Processing voice payload session=%s mime=%s bytes=%s",
+            self.session_id,
+            self.audio_mime_type,
+            len(audio_bytes),
+        )
 
         await self._send_status("thinking")
 

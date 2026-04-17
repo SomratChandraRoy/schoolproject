@@ -2,13 +2,13 @@
 import json
 import uuid
 import logging
-from datetime import datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 import google.generativeai as genai
 from django.conf import settings
+from django.utils import timezone
 from quizzes.models import Quiz
 
 # Import our voice models from models.py
@@ -219,7 +219,7 @@ class EndVoiceConversationView(APIView):
                           status=status.HTTP_404_NOT_FOUND)
         
         session.is_active = False
-        session.ended_at = datetime.now()
+        session.ended_at = timezone.now()
         session.save()
         
         # Build student context

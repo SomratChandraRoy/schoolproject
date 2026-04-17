@@ -59,12 +59,13 @@ interface ProviderTrace {
   tts?: string | null;
 }
 
-const VAD_RMS_THRESHOLD = 0.016;
-const VAD_SILENCE_COMMIT_MS = 1200;
+const VAD_RMS_THRESHOLD = 0.012;
+const VAD_SILENCE_COMMIT_MS = 900;
 const VAD_MAX_TURN_MS = 9000;
-const MIN_AUTO_COMMIT_SPEECH_MS = 420;
+const MIN_AUTO_COMMIT_SPEECH_MS = 260;
 const FORCE_AUTO_COMMIT_MS = 12000;
-const MIN_SPEECH_FRAMES = 3;
+const MIN_SPEECH_FRAMES = 2;
+const RECORDER_TIMESLICE_MS = 280;
 const MIN_COMMIT_BLOB_BYTES_COMPRESSED = 120;
 const MIN_COMMIT_BLOB_BYTES_PCM = 640;
 
@@ -83,6 +84,7 @@ const AIVoiceCall: React.FC = () => {
   const analyserDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const vadIntervalRef = useRef<number | null>(null);
   const pendingAudioBytesRef = useRef(0);
+  const recorderChunksRef = useRef<Blob[]>([]);
   const lastRecorderBlobRef = useRef<Blob | null>(null);
   const captureStartedAtRef = useRef<number | null>(null);
   const lastSpeechAtRef = useRef(0);
@@ -193,6 +195,7 @@ const AIVoiceCall: React.FC = () => {
     analyserDataRef.current = null;
     supportedMimeTypeRef.current = undefined;
     pendingAudioBytesRef.current = 0;
+    recorderChunksRef.current = [];
     lastRecorderBlobRef.current = null;
     captureStartedAtRef.current = null;
     lastSpeechAtRef.current = 0;
@@ -439,12 +442,35 @@ const AIVoiceCall: React.FC = () => {
     [appendMessage],
   );
 
+  const buildBufferedRecorderBlob = useCallback((): Blob | null => {
+    const chunks = recorderChunksRef.current.filter((chunk) => chunk.size > 0);
+    if (!chunks.length) {
+      return lastRecorderBlobRef.current;
+    }
+
+    const normalizedMimeType = (
+      chunks[0].type ||
+      supportedMimeTypeRef.current ||
+      "audio/webm"
+    )
+      .split(";", 1)[0]
+      .trim();
+
+    const mergedBlob = new Blob(chunks, {
+      type: normalizedMimeType || "audio/webm",
+    });
+    lastRecorderBlobRef.current = mergedBlob;
+    return mergedBlob;
+  }, []);
+
   const startRecorderStreaming = useCallback((stream: MediaStream) => {
     const recorder = supportedMimeTypeRef.current
       ? new MediaRecorder(stream, { mimeType: supportedMimeTypeRef.current })
       : new MediaRecorder(stream);
 
     mediaRecorderRef.current = recorder;
+    recorderChunksRef.current = [];
+    pendingAudioBytesRef.current = 0;
     lastRecorderBlobRef.current = null;
     captureStartedAtRef.current = Date.now();
 
@@ -461,7 +487,8 @@ const AIVoiceCall: React.FC = () => {
         .split(";", 1)[0]
         .trim();
 
-      pendingAudioBytesRef.current = event.data.size;
+      recorderChunksRef.current.push(event.data);
+      pendingAudioBytesRef.current += event.data.size;
       lastRecorderBlobRef.current = event.data;
 
       if (normalizedMimeType) {
@@ -469,7 +496,7 @@ const AIVoiceCall: React.FC = () => {
       }
     };
 
-    recorder.start();
+    recorder.start(RECORDER_TIMESLICE_MS);
   }, []);
 
   const finalizeRecorderForCommit =
@@ -480,7 +507,7 @@ const AIVoiceCall: React.FC = () => {
       }
 
       if (recorder.state === "inactive") {
-        return lastRecorderBlobRef.current;
+        return buildBufferedRecorderBlob();
       }
 
       await new Promise<void>((resolve) => {
@@ -500,8 +527,8 @@ const AIVoiceCall: React.FC = () => {
         recorder.stop();
       });
 
-      return lastRecorderBlobRef.current;
-    }, []);
+      return buildBufferedRecorderBlob();
+    }, [buildBufferedRecorderBlob]);
 
   const commitBufferedVoice = useCallback(
     async (source: "manual" | "auto") => {
@@ -535,6 +562,7 @@ const AIVoiceCall: React.FC = () => {
       const finalizedBlob = await finalizeRecorderForCommit();
       if (!finalizedBlob || finalizedBlob.size <= 0) {
         isTurnProcessingRef.current = false;
+        recorderChunksRef.current = [];
         resolveIdleState();
 
         if (mediaStreamRef.current && sessionActiveRef.current) {
@@ -562,6 +590,7 @@ const AIVoiceCall: React.FC = () => {
         });
         isTurnProcessingRef.current = false;
         pendingAudioBytesRef.current = 0;
+        recorderChunksRef.current = [];
         lastRecorderBlobRef.current = null;
         captureStartedAtRef.current = null;
         lastSpeechAtRef.current = 0;
@@ -585,6 +614,7 @@ const AIVoiceCall: React.FC = () => {
       } catch (error) {
         console.error("Failed to encode finalized voice blob", error);
         isTurnProcessingRef.current = false;
+        recorderChunksRef.current = [];
         resolveIdleState();
 
         if (mediaStreamRef.current && sessionActiveRef.current) {
@@ -609,6 +639,7 @@ const AIVoiceCall: React.FC = () => {
       }
 
       pendingAudioBytesRef.current = 0;
+      recorderChunksRef.current = [];
       lastRecorderBlobRef.current = null;
       captureStartedAtRef.current = null;
       lastSpeechAtRef.current = 0;
@@ -762,6 +793,7 @@ const AIVoiceCall: React.FC = () => {
     });
     mediaStreamRef.current = stream;
     pendingAudioBytesRef.current = 0;
+    recorderChunksRef.current = [];
     captureStartedAtRef.current = null;
     lastSpeechAtRef.current = 0;
     speechStartAtRef.current = null;

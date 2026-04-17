@@ -8,7 +8,7 @@ import json
 import logging
 from typing import Dict, List, Tuple, Optional
 from django.db.models import QuerySet
-from datetime import datetime, timedelta
+from django.utils import timezone
 
 from .models import (
     VoiceConversationSession,
@@ -296,7 +296,29 @@ class ConversationSummaryGenerator:
         duration = "not tracked"
 
         if session.started_at and session.ended_at:
-            duration = f"{(session.ended_at - session.started_at).seconds // 60} minutes"
+            try:
+                started_at = session.started_at
+                ended_at = session.ended_at
+
+                # Normalize legacy rows that might contain naive datetimes.
+                if timezone.is_naive(started_at):
+                    started_at = timezone.make_aware(
+                        started_at,
+                        timezone.get_current_timezone(),
+                    )
+                if timezone.is_naive(ended_at):
+                    ended_at = timezone.make_aware(
+                        ended_at,
+                        timezone.get_current_timezone(),
+                    )
+
+                duration_minutes = max(
+                    0,
+                    int((ended_at - started_at).total_seconds() // 60),
+                )
+                duration = f"{duration_minutes} minutes"
+            except Exception:
+                duration = "not tracked"
 
         prompt = f"""Analyze this educational conversation and generate a comprehensive summary for the student's learning record.
 
