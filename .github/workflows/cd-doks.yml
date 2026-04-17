@@ -118,8 +118,21 @@ jobs:
           kubectl -n "${K8S_NAMESPACE}" rollout status deployment/redis --timeout=600s
           kubectl -n "${K8S_NAMESPACE}" rollout status deployment/web --timeout=600s
 
+      - name: Decide Sentry release step
+        id: sentry_release_flags
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        run: |
+          if [ -n "$SENTRY_AUTH_TOKEN" ] && [ -n "$SENTRY_ORG" ] && [ -n "$SENTRY_PROJECT" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Sentry release tracking
-        if: secrets.SENTRY_AUTH_TOKEN != '' && secrets.SENTRY_ORG != '' && secrets.SENTRY_PROJECT != ''
+        if: ${{ steps.sentry_release_flags.outputs.enabled == 'true' }}
         uses: getsentry/action-release@v3
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -130,7 +143,7 @@ jobs:
           version: ${{ steps.vars.outputs.short_sha }}
 
       - name: Send deployment failure event to Sentry
-        if: failure() && secrets.SENTRY_DSN != ''
+        if: ${{ failure() }}
         run: |
           python -m pip install sentry-sdk
           python .github/scripts/notify_sentry_failure.py

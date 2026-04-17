@@ -62,7 +62,7 @@ jobs:
     needs:
       - backend-check
       - frontend-build
-    if: failure() && secrets.SENTRY_DSN != ''
+    if: ${{ failure() }}
 
     steps:
       - name: Checkout
