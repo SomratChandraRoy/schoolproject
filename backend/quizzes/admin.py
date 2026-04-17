@@ -1,6 +1,12 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import Quiz, QuizAttempt, Analytics
+from .models import (
+    Quiz,
+    QuizAttempt,
+    Analytics,
+    SrijonshilQuestionSet,
+    SrijonshilAttempt,
+)
 
 @admin.register(Quiz)
 class QuizAdmin(ModelAdmin):
@@ -19,3 +25,32 @@ class AnalyticsAdmin(ModelAdmin):
     list_display = ('user', 'score', 'timestamp')
     list_filter = ('score', 'timestamp')
     search_fields = ('user__username',)
+
+
+@admin.register(SrijonshilQuestionSet)
+class SrijonshilQuestionSetAdmin(ModelAdmin):
+    list_display = (
+        'user',
+        'subject',
+        'class_level',
+        'chapter',
+        'difficulty',
+        'provider_used',
+        'is_submitted',
+        'created_at',
+    )
+    list_filter = ('subject', 'class_level', 'difficulty', 'provider_used', 'is_submitted')
+    search_fields = ('user__username', 'subject', 'chapter', 'uddipok')
+
+
+@admin.register(SrijonshilAttempt)
+class SrijonshilAttemptAdmin(ModelAdmin):
+    list_display = (
+        'user',
+        'question_set',
+        'total_marks',
+        'evaluation_source',
+        'submitted_at',
+    )
+    list_filter = ('evaluation_source', 'submitted_at')
+    search_fields = ('user__username', 'question_set__subject', 'question_set__chapter')

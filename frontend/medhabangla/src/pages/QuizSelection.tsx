@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -92,28 +92,32 @@ const normalizeSubjectCode = (subjectName: string) => {
   return cleaned || "custom_subject";
 };
 
-const mergeSubjects = (baseSubjects: Subject[], extraSubjects: Subject[]) => {
+const mergeSubjects = (...subjectGroups: Subject[][]) => {
   const map = new Map<string, Subject>();
-  [...baseSubjects, ...extraSubjects].forEach((subject) => {
-    map.set(subject.subject_code, subject);
+
+  subjectGroups.forEach((group) => {
+    group.forEach((subject) => {
+      const existing = map.get(subject.subject_code);
+      if (!existing) {
+        map.set(subject.subject_code, subject);
+        return;
+      }
+
+      // If a stale custom subject has the same code as a default one,
+      // keep the compulsory/default entry so defaults remain visible.
+      if (existing.is_compulsory && !subject.is_compulsory) {
+        return;
+      }
+
+      map.set(subject.subject_code, subject);
+    });
   });
 
   return Array.from(map.values());
 };
 
-const focusSearchInput = (input: HTMLInputElement | null) => {
-  if (!input) {
-    return;
-  }
-
-  input.focus();
-  const cursorPosition = input.value.length;
-  input.setSelectionRange(cursorPosition, cursorPosition);
-};
-
 const QuizSelection: React.FC = () => {
   const navigate = useNavigate();
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<"subject" | "types">("subject");
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -143,25 +147,6 @@ const QuizSelection: React.FC = () => {
   useEffect(() => {
     void fetchSubjects();
   }, []);
-
-  useEffect(() => {
-    if (step === "subject" && !showAddSubjectModal) {
-      const raf = requestAnimationFrame(() => {
-        focusSearchInput(searchInputRef.current);
-      });
-
-      const timeout = window.setTimeout(() => {
-        focusSearchInput(searchInputRef.current);
-      }, 120);
-
-      return () => {
-        cancelAnimationFrame(raf);
-        window.clearTimeout(timeout);
-      };
-    }
-
-    return undefined;
-  }, [step, showAddSubjectModal]);
 
   useEffect(() => {
     if (!selectedSubject) {
@@ -278,7 +263,8 @@ const QuizSelection: React.FC = () => {
         : [];
 
       const mergedSubjects = mergeSubjects(
-        apiSubjects.length > 0 ? apiSubjects : fallbackSubjects,
+        fallbackSubjects,
+        apiSubjects,
         localSubjects,
       );
 
@@ -467,7 +453,7 @@ const QuizSelection: React.FC = () => {
       <div className="quiz-premium-container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <header className="quiz-glass-panel mb-6 sm:mb-8 p-5 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="hidden sm:block">
+            <div className="block">
               <p className="text-sm uppercase tracking-[0.2em] text-teal-700/80 dark:text-cyan-200/80">
                 Quiz Studio
               </p>
@@ -478,6 +464,12 @@ const QuizSelection: React.FC = () => {
                 Search a subject instantly, then launch MCQ, short, and long
                 rounds designed for your current level.
               </p>
+              <div className="mt-4">
+                <Link to="/quiz/srijonshil/select" className="quiz-secondary-action inline-flex">
+                  <Sparkles className="h-4 w-4" />
+                  Open Srijonshil Board Mode
+                </Link>
+              </div>
             </div>
 
             <div className="quiz-level-card w-full sm:w-[280px]">
@@ -529,8 +521,6 @@ const QuizSelection: React.FC = () => {
                   <div className="quiz-search-shell flex-1 min-w-0">
                     <Search className="h-5 w-5 text-teal-700/80 dark:text-cyan-200/80" />
                     <input
-                      ref={searchInputRef}
-                      autoFocus
                       value={subjectSearch}
                       onChange={(event) => setSubjectSearch(event.target.value)}
                       placeholder="Search your subject and start typing..."

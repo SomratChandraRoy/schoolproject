@@ -176,6 +176,12 @@ class AIProviderSettings(models.Model):
         max_length=20, choices=PROVIDER_CHOICES, default='auto',
         help_text='AI Model Provider for generating Study Plans and Suggestions.'
     )
+    srijonshil_provider = models.CharField(
+        max_length=20,
+        choices=PROVIDER_CHOICES,
+        default='auto',
+        help_text='AI Model Provider for generating and evaluating Srijonshil question sets.'
+    )
     quiz_flashcard_provider = models.CharField(
         max_length=20, choices=PROVIDER_CHOICES, default='auto',
         help_text='AI Model Provider for generating Quizzes and Flashcards.'

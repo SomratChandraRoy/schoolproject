@@ -51,6 +51,7 @@ class AIProviderSettingsSerializer(serializers.ModelSerializer):
             'gemini_tts_url',
             'gemini_tts_voice',
             'study_plan_provider',
+            'srijonshil_provider',
             'quiz_flashcard_provider',
             'doc_vision_provider',
             'general_chat_provider',

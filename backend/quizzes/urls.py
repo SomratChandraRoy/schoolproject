@@ -11,6 +11,12 @@ from .adaptive_views import (
 from .fallback_views import (
     FallbackQuizView, ValidateQuizQuestionsView
 )
+from .srijonshil_views import (
+    SrijonshilQuizStartView,
+    SrijonshilQuizSubmitView,
+    SrijonshilQuizHistoryView,
+    SrijonshilQuizDetailView,
+)
 
 urlpatterns = [
     path('', QuizListCreateView.as_view(), name='quiz-list-create'),
@@ -31,4 +37,10 @@ urlpatterns = [
     # Fallback AI generation endpoints
     path('fallback/', FallbackQuizView.as_view(), name='quiz-fallback'),
     path('validate/', ValidateQuizQuestionsView.as_view(), name='quiz-validate'),
+
+    # Srijonshil quiz endpoints
+    path('srijonshil/start/', SrijonshilQuizStartView.as_view(), name='srijonshil-start'),
+    path('srijonshil/submit/', SrijonshilQuizSubmitView.as_view(), name='srijonshil-submit'),
+    path('srijonshil/history/', SrijonshilQuizHistoryView.as_view(), name='srijonshil-history'),
+    path('srijonshil/<int:set_id>/', SrijonshilQuizDetailView.as_view(), name='srijonshil-detail'),
 ]

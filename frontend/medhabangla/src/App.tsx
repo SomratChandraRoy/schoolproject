@@ -12,6 +12,8 @@ import Dashboard from "./pages/Dashboard";
 import Quiz from "./pages/Quiz";
 import QuizSelection from "./pages/QuizSelection";
 import AdaptiveQuiz from "./pages/AdaptiveQuiz";
+import SrijonshilQuizSelection from "./pages/SrijonshilQuizSelection";
+import SrijonshilQuiz from "./pages/SrijonshilQuiz";
 import Books from "./pages/Books";
 import VideoCall from "./pages/VideoCall";
 import Games from "./pages/Games";
@@ -192,6 +194,11 @@ function App() {
                 <Route path="/quiz/select" element={<QuizSelection />} />
                 <Route path="/quiz" element={<Quiz />} />
                 <Route path="/quiz/adaptive" element={<AdaptiveQuiz />} />
+                <Route
+                  path="/quiz/srijonshil/select"
+                  element={<SrijonshilQuizSelection />}
+                />
+                <Route path="/quiz/srijonshil" element={<SrijonshilQuiz />} />
                 <Route path="/books" element={<Books />} />
                 <Route path="/pdfd" element={<Pdfd />} />
                 <Route path="/videocall" element={<VideoCall />} />

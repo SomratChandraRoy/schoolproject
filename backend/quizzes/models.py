@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from accounts.models import User
 
@@ -253,3 +254,92 @@ class AIGeneratedQuestion(models.Model):
     def __str__(self):
         status = "Answered" if self.is_answered else "Pending"
         return f"{self.user.username} - {self.subject} - {status} - {self.question_text[:50]}..."
+
+
+class SrijonshilQuestionSet(models.Model):
+    """Board-style Srijonshil question set with one uddipok and four parts."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='srijonshil_sets')
+    subject = models.CharField(max_length=80)
+    class_level = models.IntegerField(choices=[(i, f'Class {i}') for i in range(6, 13)])
+    chapter = models.CharField(max_length=255)
+    difficulty = models.CharField(
+        max_length=10,
+        choices=Quiz.DIFFICULTY_CHOICES,
+        default='medium'
+    )
+
+    uddipok = models.TextField()
+    question_1 = models.TextField()
+    question_2 = models.TextField()
+    question_3 = models.TextField()
+    question_4 = models.TextField()
+
+    model_answer_1 = models.TextField(blank=True)
+    model_answer_2 = models.TextField(blank=True)
+    model_answer_3 = models.TextField(blank=True)
+    model_answer_4 = models.TextField(blank=True)
+
+    provider_used = models.CharField(max_length=30, default='auto')
+    is_submitted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'subject', 'class_level']),
+            models.Index(fields=['user', 'is_submitted', 'created_at']),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.user.username} - {self.subject} - {self.chapter} "
+            f"({self.created_at:%Y-%m-%d})"
+        )
+
+
+class SrijonshilAttempt(models.Model):
+    """User answer sheet and evaluation for a Srijonshil question set."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='srijonshil_attempts')
+    question_set = models.ForeignKey(
+        SrijonshilQuestionSet,
+        on_delete=models.CASCADE,
+        related_name='attempts'
+    )
+
+    answer_1 = models.TextField(blank=True)
+    answer_2 = models.TextField(blank=True)
+    answer_3 = models.TextField(blank=True)
+    answer_4 = models.TextField(blank=True)
+
+    feedback_1 = models.TextField(blank=True)
+    feedback_2 = models.TextField(blank=True)
+    feedback_3 = models.TextField(blank=True)
+    feedback_4 = models.TextField(blank=True)
+    overall_feedback = models.TextField(blank=True)
+
+    marks_1 = models.FloatField(default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(1.0)])
+    marks_2 = models.FloatField(default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(2.0)])
+    marks_3 = models.FloatField(default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(3.0)])
+    marks_4 = models.FloatField(default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(4.0)])
+    total_marks = models.FloatField(default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(10.0)])
+
+    evaluation_source = models.CharField(max_length=30, default='rule_based')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    evaluated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+        unique_together = ['user', 'question_set']
+        indexes = [
+            models.Index(fields=['user', 'submitted_at']),
+            models.Index(fields=['question_set', 'submitted_at']),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.user.username} - {self.question_set.subject} - "
+            f"{self.total_marks}/10"
+        )
