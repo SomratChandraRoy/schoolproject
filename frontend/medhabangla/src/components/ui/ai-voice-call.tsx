@@ -1010,6 +1010,7 @@ const AIVoiceCall: React.FC = () => {
       await startMicStreaming();
 
       setIsSessionActive(true);
+      sessionActiveRef.current = true;
       appendMessage({
         role: "assistant",
         content:
@@ -1026,6 +1027,7 @@ const AIVoiceCall: React.FC = () => {
       closeSocket();
       setSessionId(null);
       setIsSessionActive(false);
+      sessionActiveRef.current = false;
       setVoiceState("disconnected");
     }
   }, [
@@ -1069,6 +1071,7 @@ const AIVoiceCall: React.FC = () => {
       stopMicrophone();
       closeSocket();
       setIsSessionActive(false);
+      sessionActiveRef.current = false;
       setSessionId(null);
       setVoiceState("idle");
       setLastProviders(null);
