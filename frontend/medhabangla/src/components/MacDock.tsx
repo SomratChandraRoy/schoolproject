@@ -684,19 +684,12 @@ const MacDockNav: React.FC<{ unreadCount?: number }> = ({
       id: "chat",
       name: "Chat",
       path: "/chat",
-      icon: "https://cdn.jim-nielsen.com/macos/1024/messages-2021-06-25.png",
+      icon: "/chat.png",
       badge: unreadCount,
     });
   }
 
-  if (user && user.is_admin) {
-    dockApps.push({
-      id: "admin",
-      name: "Admin",
-      path: "/admin-dashboard",
-      icon: "https://cdn.jim-nielsen.com/macos/1024/system-preferences-2021-05-25.png",
-    });
-  }
+  
 
   if (user) {
     dockApps.push({
