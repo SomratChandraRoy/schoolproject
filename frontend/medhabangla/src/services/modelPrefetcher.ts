@@ -32,7 +32,7 @@ interface DownloadProgress {
 
 const MODEL_METADATA_KEY = "sopna-model-metadata-v2";
 const MODEL_AUTO_INSTALL_KEY = "sopna-models-auto-installed-v2";
-const MODEL_CACHE_REPAIR_DONE_KEY = "sopna-model-cache-repair-v2";
+const MODEL_CACHE_REPAIR_DONE_KEY = "sopna-model-cache-repair-v3";
 const PREFETCH_TIMEOUT_MS = 12 * 60 * 1000;
 
 const AVAILABLE_MODELS: ModelPackage[] = [
@@ -485,6 +485,7 @@ export class PWAModelPrefetcher {
 
       localStorage.removeItem(MODEL_METADATA_KEY);
       localStorage.removeItem(MODEL_AUTO_INSTALL_KEY);
+      localStorage.removeItem(MODEL_CACHE_REPAIR_DONE_KEY);
       return true;
     } catch (error) {
       console.error("[Model Prefetcher] Error clearing cache:", error);

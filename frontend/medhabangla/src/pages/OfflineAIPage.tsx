@@ -135,7 +135,7 @@ export const OfflineAIPage: React.FC = () => {
       });
   }, [isInstalledPwa, status]);
 
-  const canUseOfflineAI = isInstalledPwa;
+  const canUseOfflineAI = isInstalledPwa && !loading;
 
   const storageLabel = useMemo(() => {
     if (!status) return "0 MB";
@@ -221,6 +221,29 @@ export const OfflineAIPage: React.FC = () => {
       </div>
     </div>
   );
+
+  const preparingGate = (
+    <div className="offline-premium-shell">
+      <div className="offline-bg-orb offline-bg-orb-a" />
+      <div className="offline-bg-orb offline-bg-orb-b" />
+      <div className="offline-bg-orb offline-bg-orb-c" />
+
+      <div className="offline-center-wrap">
+        <section className="offline-glass-card offline-install-card">
+          <p className="offline-eyebrow">Offline Premium AI</p>
+          <h1 className="offline-title">Preparing Secure Offline Runtime</h1>
+          <p className="offline-subtitle">
+            Checking model cache and finalizing offline initialization. Please
+            keep the app open for a few seconds.
+          </p>
+        </section>
+      </div>
+    </div>
+  );
+
+  if (isInstalledPwa && loading) {
+    return preparingGate;
+  }
 
   if (!canUseOfflineAI) {
     return installGate;

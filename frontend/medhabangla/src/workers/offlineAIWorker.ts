@@ -1,9 +1,20 @@
 // @ts-nocheck
 import { env, pipeline } from "@xenova/transformers";
 
-// Root cause guard: avoid local /models resolution, which can return SPA HTML.
-env.allowLocalModels = false;
-env.allowRemoteModels = true;
+const DISABLED_LOCAL_MODEL_PATH = "/__sopna_local_models_disabled__/";
+const REMOTE_MODEL_HOST = "https://huggingface.co/";
+const REMOTE_MODEL_PATH_TEMPLATE = "{model}/resolve/{revision}/";
+
+function applyWorkerModelEnv() {
+  // Root cause guard: avoid local /models resolution, which can return SPA HTML.
+  env.allowLocalModels = false;
+  env.allowRemoteModels = true;
+  env.localModelPath = DISABLED_LOCAL_MODEL_PATH;
+  env.remoteHost = REMOTE_MODEL_HOST;
+  env.remotePathTemplate = REMOTE_MODEL_PATH_TEMPLATE;
+}
+
+applyWorkerModelEnv();
 env.useBrowserCache = true;
 
 type ModelCandidate = {
@@ -43,6 +54,7 @@ const MODEL_CANDIDATES: ModelCandidate[] = [
 let generator = null;
 let loadingPromise = null;
 let activeModel: ModelCandidate | null = null;
+let recoveryAttempted = false;
 
 function formatLoadError(error) {
   const raw = error?.message || String(error || "Unknown load error");
@@ -50,6 +62,48 @@ function formatLoadError(error) {
     return "মডেল ফাইলের জায়গায় HTML এসেছে। ক্যাশ/সার্ভিস ওয়ার্কার ক্লিয়ার করে আবার চেষ্টা করুন।";
   }
   return raw;
+}
+
+function isHtmlPayloadError(error) {
+  const raw = (error?.message || String(error || "")).toLowerCase();
+  return (
+    raw.includes("unexpected token '<'") ||
+    raw.includes("<!doctype") ||
+    raw.includes("<html")
+  );
+}
+
+async function clearPoisonedRuntimeCaches() {
+  try {
+    if (typeof caches !== "undefined") {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames
+          .filter((name) => {
+            const lower = String(name).toLowerCase();
+            return (
+              lower.includes("transformers") ||
+              lower.includes("workbox") ||
+              lower.includes("model") ||
+              lower.includes("huggingface")
+            );
+          })
+          .map((name) => caches.delete(name)),
+      );
+    }
+  } catch {
+    // Best-effort cache cleanup.
+  }
+
+  ["transformers-cache", "transformers-js", "onnxruntime-web"].forEach(
+    (dbName) => {
+      try {
+        indexedDB.deleteDatabase(dbName);
+      } catch {
+        // Ignore IndexedDB cleanup errors in worker context.
+      }
+    },
+  );
 }
 
 function extractGeneratedText(output) {
@@ -153,10 +207,11 @@ async function forceBanglaResponse(answer, question) {
 
 async function tryLoadCandidate(candidate, mode) {
   // Always use remote HF URLs (+ browser cache) to avoid local-path HTML responses.
-  env.allowLocalModels = false;
-  env.allowRemoteModels = true;
+  applyWorkerModelEnv();
 
   const loadedPipeline = await pipeline("text2text-generation", candidate.id, {
+    revision: "main",
+    local_files_only: false,
     progress_callback: (progress) => {
       self.postMessage({
         type: "loading-progress",
@@ -169,6 +224,32 @@ async function tryLoadCandidate(candidate, mode) {
   });
 
   return loadedPipeline;
+}
+
+async function tryLoadCandidateWithRecovery(candidate) {
+  try {
+    return await tryLoadCandidate(candidate, "download");
+  } catch (error) {
+    if (!recoveryAttempted && isHtmlPayloadError(error)) {
+      recoveryAttempted = true;
+      self.postMessage({
+        type: "loading-start",
+        recovery: true,
+      });
+
+      await clearPoisonedRuntimeCaches();
+
+      const previousBrowserCacheMode = env.useBrowserCache;
+      env.useBrowserCache = false;
+      try {
+        return await tryLoadCandidate(candidate, "recovery-download");
+      } finally {
+        env.useBrowserCache = previousBrowserCacheMode;
+      }
+    }
+
+    throw error;
+  }
 }
 
 async function loadModel(payload = {}) {
@@ -196,7 +277,7 @@ async function loadModel(payload = {}) {
 
     for (const candidate of candidates) {
       try {
-        const remotePipeline = await tryLoadCandidate(candidate, "download");
+        const remotePipeline = await tryLoadCandidateWithRecovery(candidate);
         generator = remotePipeline;
         activeModel = candidate;
         self.postMessage({
