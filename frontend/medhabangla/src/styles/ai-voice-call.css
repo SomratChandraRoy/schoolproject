@@ -82,8 +82,282 @@
   animation: aiVoicePulseRing 1.8s ease-out infinite;
 }
 
+.ai-voice-ai-icon {
+  position: relative;
+  display: grid;
+  height: 2.3rem;
+  width: 2.3rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid rgba(56, 189, 248, 0.58);
+  background: linear-gradient(
+    160deg,
+    rgba(14, 165, 233, 0.2) 0%,
+    rgba(59, 130, 246, 0.2) 100%
+  );
+  box-shadow: 0 10px 24px rgba(14, 116, 144, 0.26);
+  isolation: isolate;
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+.ai-voice-ai-icon::before {
+  content: "";
+  position: absolute;
+  inset: -28%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(56, 189, 248, 0) 0%,
+    rgba(56, 189, 248, 0.56) 32%,
+    rgba(59, 130, 246, 0.12) 60%,
+    rgba(56, 189, 248, 0) 100%
+  );
+  opacity: 0.2;
+  animation: aiVoiceIconAura 5.8s linear infinite;
+  z-index: 1;
+}
+
+.ai-voice-ai-icon-ring {
+  position: absolute;
+  inset: 2px;
+  z-index: 3;
+  border-radius: 9999px;
+  border: 1px solid rgba(240, 249, 255, 0.72);
+  pointer-events: none;
+}
+
+.ai-voice-ai-icon-core {
+  position: relative;
+  z-index: 2;
+  height: 1.8rem;
+  width: 1.8rem;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+.ai-voice-ai-icon-bars {
+  position: absolute;
+  bottom: 0.2rem;
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  gap: 2px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.ai-voice-ai-icon-bars span {
+  display: block;
+  width: 2px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  transform-origin: center bottom;
+}
+
+.ai-voice-ai-icon.is-thinking {
+  border-color: rgba(56, 189, 248, 0.74);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.34);
+}
+
+.ai-voice-ai-icon.is-thinking::after {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(56, 189, 248, 0.68);
+  animation: aiVoiceThinkingPulse 1.65s ease-out infinite;
+}
+
+.ai-voice-ai-icon.is-thinking .ai-voice-ai-icon-bars span {
+  animation: aiVoiceThinkingBars 1.15s ease-in-out infinite;
+}
+
+.ai-voice-ai-icon.is-thinking .ai-voice-ai-icon-bars span:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.ai-voice-ai-icon.is-thinking .ai-voice-ai-icon-bars span:nth-child(3) {
+  animation-delay: 220ms;
+}
+
+.ai-voice-ai-icon.is-responding {
+  border-color: rgba(59, 130, 246, 0.86);
+  box-shadow: 0 13px 30px rgba(14, 116, 144, 0.42);
+  transform: translateY(-0.5px);
+}
+
+.ai-voice-ai-icon.is-responding::after {
+  content: "";
+  position: absolute;
+  inset: -14%;
+  z-index: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(125, 211, 252, 0.84);
+  animation: aiVoiceRespondingPulse 0.9s ease-out infinite;
+}
+
+.ai-voice-ai-icon.is-responding .ai-voice-ai-icon-bars {
+  opacity: 0.84;
+}
+
+.ai-voice-ai-icon.is-responding .ai-voice-ai-icon-bars span {
+  animation: aiVoiceRespondingBars 620ms ease-in-out infinite;
+}
+
+.ai-voice-ai-icon.is-responding .ai-voice-ai-icon-bars span:nth-child(2) {
+  animation-delay: 90ms;
+}
+
+.ai-voice-ai-icon.is-responding .ai-voice-ai-icon-bars span:nth-child(3) {
+  animation-delay: 170ms;
+}
+
+.ai-voice-ai-icon.is-ready {
+  box-shadow: 0 9px 22px rgba(37, 99, 235, 0.2);
+}
+
+.ai-voice-ai-icon.is-ready .ai-voice-ai-icon-bars span {
+  animation: aiVoiceReadyBars 2.2s ease-in-out infinite;
+}
+
+.ai-voice-ai-icon.is-ready .ai-voice-ai-icon-bars span:nth-child(2) {
+  animation-delay: 200ms;
+}
+
+.ai-voice-ai-icon.is-ready .ai-voice-ai-icon-bars span:nth-child(3) {
+  animation-delay: 340ms;
+}
+
+.ai-voice-ai-icon.is-offline {
+  border-color: rgba(148, 163, 184, 0.6);
+  box-shadow: none;
+  background: linear-gradient(
+    160deg,
+    rgba(148, 163, 184, 0.2) 0%,
+    rgba(100, 116, 139, 0.2) 100%
+  );
+}
+
+.ai-voice-ai-icon.is-offline::before {
+  opacity: 0.08;
+}
+
+.ai-voice-ai-icon.is-offline .ai-voice-ai-icon-bars {
+  opacity: 0.24;
+}
+
+.ai-voice-ai-icon.is-offline .ai-voice-ai-icon-bars span {
+  animation: none;
+}
+
+@keyframes aiVoiceIconAura {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes aiVoiceThinkingPulse {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.82);
+  }
+
+  70% {
+    opacity: 0;
+    transform: scale(1.22);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.22);
+  }
+}
+
+@keyframes aiVoiceRespondingPulse {
+  0% {
+    opacity: 0.92;
+    transform: scale(0.8);
+  }
+
+  70% {
+    opacity: 0;
+    transform: scale(1.34);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.34);
+  }
+}
+
+@keyframes aiVoiceThinkingBars {
+  0%,
+  100% {
+    transform: scaleY(0.7);
+    opacity: 0.65;
+  }
+
+  45% {
+    transform: scaleY(1.55);
+    opacity: 1;
+  }
+}
+
+@keyframes aiVoiceRespondingBars {
+  0%,
+  100% {
+    transform: scaleY(0.6);
+  }
+
+  40% {
+    transform: scaleY(2.2);
+  }
+
+  65% {
+    transform: scaleY(1.35);
+  }
+}
+
+@keyframes aiVoiceReadyBars {
+  0%,
+  100% {
+    transform: scaleY(0.65);
+    opacity: 0.55;
+  }
+
+  30% {
+    transform: scaleY(1.15);
+    opacity: 0.9;
+  }
+
+  62% {
+    transform: scaleY(0.75);
+    opacity: 0.65;
+  }
+}
+
 @media (max-width: 768px) {
   .ai-voice-shell-in {
     animation-duration: 300ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-voice-ai-icon,
+  .ai-voice-ai-icon::before,
+  .ai-voice-ai-icon::after,
+  .ai-voice-ai-icon-bars span {
+    animation: none !important;
+    transition: none !important;
   }
 }

@@ -951,6 +951,42 @@ const AIVoiceCall: React.FC = () => {
     return "Listening...";
   }, [isMicMuted, isSessionActive, isSocketConnected, voiceState]);
 
+  const aiIconMode: "thinking" | "responding" | "ready" | "offline" =
+    voiceState === "thinking"
+      ? "thinking"
+      : voiceState === "speaking"
+        ? "responding"
+        : !isSessionActive || voiceState === "disconnected"
+          ? "offline"
+          : "ready";
+
+  const aiOrbAgentState =
+    aiIconMode === "thinking"
+      ? "thinking"
+      : aiIconMode === "responding"
+        ? "talking"
+        : aiIconMode === "ready"
+          ? "listening"
+          : null;
+
+  const aiIconTitle =
+    aiIconMode === "thinking"
+      ? "AI Thinking"
+      : aiIconMode === "responding"
+        ? "AI Responding"
+        : aiIconMode === "ready"
+          ? "AI Ready"
+          : "AI Offline";
+
+  const aiIconHint =
+    aiIconMode === "thinking"
+      ? "Analyzing your voice"
+      : aiIconMode === "responding"
+        ? "Generating and speaking"
+        : aiIconMode === "ready"
+          ? "Waiting for your next turn"
+          : "Start session to activate";
+
   useEffect(() => {
     const panel = messagePanelRef.current;
     if (!panel) {
@@ -1088,6 +1124,38 @@ const AIVoiceCall: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 rounded-full border border-sky-300/50 bg-sky-100/45 px-1.5 py-1 dark:border-sky-500/35 dark:bg-sky-900/20">
+              <div
+                className={cn(
+                  "ai-voice-ai-icon",
+                  aiIconMode === "thinking" && "is-thinking",
+                  aiIconMode === "responding" && "is-responding",
+                  aiIconMode === "ready" && "is-ready",
+                  aiIconMode === "offline" && "is-offline",
+                )}
+                role="status"
+                aria-live="polite"
+                aria-label={`${aiIconTitle}. ${aiIconHint}`}>
+                <div className="ai-voice-ai-icon-ring" />
+                <div className="ai-voice-ai-icon-core">
+                  <Orb className="h-full w-full" agentState={aiOrbAgentState} />
+                </div>
+                <div className="ai-voice-ai-icon-bars" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              </div>
+              <div className="hidden leading-tight md:block">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-700 dark:text-slate-200">
+                  {aiIconTitle}
+                </p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {aiIconHint}
+                </p>
+              </div>
+            </div>
+
             <div className="hidden items-center gap-1.5 rounded-full border border-sky-300/65 bg-sky-100/75 px-2.5 py-1 text-[11px] font-semibold text-sky-800 dark:border-sky-500/45 dark:bg-sky-900/35 dark:text-sky-200 sm:inline-flex">
               <Sparkles className="size-3.5" />
               Premium Voice Mode
