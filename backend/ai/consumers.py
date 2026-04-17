@@ -116,6 +116,23 @@ class AIVoiceTutorConsumer(AsyncWebsocketConsumer):
             }
         )
 
+    def _min_voice_payload_bytes(self) -> int:
+        """
+        Determine minimal payload size by MIME type.
+
+        Compressed browser formats (webm/mp4/aac/mpeg) can be very small even for
+        clear short utterances, so keep threshold low to avoid false negatives.
+        """
+        mime = (self.audio_mime_type or "").lower()
+
+        if any(token in mime for token in ("webm", "mp4", "aac", "mpeg", "mp3")):
+            return 120
+
+        if any(token in mime for token in ("wav", "pcm", "l16", "raw")):
+            return 640
+
+        return 160
+
     async def _handle_audio_commit(self, payload: dict):
         inline_audio_base64 = payload.get("audio_base64")
         mime_type = payload.get("mime_type")
@@ -140,7 +157,15 @@ class AIVoiceTutorConsumer(AsyncWebsocketConsumer):
             audio_bytes = bytes(self.audio_buffer)
             self.audio_buffer.clear()
 
-        if len(audio_bytes) < 1024:
+        min_payload = self._min_voice_payload_bytes()
+        if len(audio_bytes) < min_payload:
+            logger.info(
+                "Dropping too-short voice payload session=%s mime=%s bytes=%s threshold=%s",
+                self.session_id,
+                self.audio_mime_type,
+                len(audio_bytes),
+                min_payload,
+            )
             await self._send_error("Voice input too short. Please speak a little longer.")
             await self._send_status("listening")
             return
