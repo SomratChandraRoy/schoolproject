@@ -689,9 +689,11 @@ const MacDockNav: React.FC<{ unreadCount?: number }> = ({
     });
   }
 
-  
+  const hasChatDockIcon = dockApps.some(
+    (app) => app.id === "chat" && app.icon === "/chat.png",
+  );
 
-  if (user) {
+  if (user && !hasChatDockIcon) {
     dockApps.push({
       id: "profile",
       name: "Profile",
