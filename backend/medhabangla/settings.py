@@ -241,6 +241,10 @@ ALIBABA_API_KEY = os.getenv('ALIBABA_API_KEY')
 # Google Gemini API settings
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')  # Legacy single key
 
+# Voice pipeline STT/TTS provider keys
+DEEPGRAM_API_KEY = os.getenv('DEEPGRAM_API_KEY')
+SARVAM_API_KEY = os.getenv('SARVAM_API_KEY')
+
 # Multiple Gemini API Keys for rotation (comma-separated)
 GEMINI_API_KEYS_STR = os.getenv('GEMINI_API_KEYS', '')
 if GEMINI_API_KEYS_STR:
