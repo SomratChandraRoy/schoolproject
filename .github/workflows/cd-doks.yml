@@ -110,6 +110,19 @@ jobs:
             rm -f backend.env
             exit 1
           fi
+          non_empty_keys=(DB_NAME DB_USER DB_PASSWORD DB_HOST REDIS_URL ALLOWED_HOSTS CORS_ALLOWED_ORIGINS CSRF_TRUSTED_ORIGINS)
+          empty_keys=()
+          for key in "${non_empty_keys[@]}"; do
+            value="$(grep -m1 "^${key}=" backend.env | cut -d '=' -f2-)"
+            if [ -z "${value}" ]; then
+              empty_keys+=("${key}")
+            fi
+          done
+          if [ "${#empty_keys[@]}" -gt 0 ]; then
+            echo "::error title=Invalid BACKEND_ENV_FILE::Empty required values: ${empty_keys[*]}"
+            rm -f backend.env
+            exit 1
+          fi
           kubectl -n "${K8S_NAMESPACE}" create secret generic backend-secrets \
             --from-env-file=backend.env \
             --dry-run=client -o yaml | kubectl apply -f -
@@ -129,6 +142,12 @@ jobs:
           kubectl -n "${K8S_NAMESPACE}" set image deployment/web backend="${{ steps.vars.outputs.backend_image }}"
           kubectl -n "${K8S_NAMESPACE}" set image deployment/web nginx="${{ steps.vars.outputs.nginx_image }}"
           kubectl -n "${K8S_NAMESPACE}" set env deployment/web SENTRY_RELEASE="${{ steps.vars.outputs.short_sha }}" --containers=backend
+
+      - name: Restart workloads to clear stale rollout conditions
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" rollout restart deployment/postgres
+          kubectl -n "${K8S_NAMESPACE}" rollout restart deployment/redis
+          kubectl -n "${K8S_NAMESPACE}" rollout restart deployment/web
 
       - name: Wait for rollout
         run: |

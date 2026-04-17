@@ -7,4 +7,5 @@ resources:
   - redis.yaml
   - nginx-configmap.yaml
   - web.yaml
+  - web-loadbalancer.yaml
   - ingress.yaml
