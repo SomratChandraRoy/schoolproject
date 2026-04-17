@@ -2,9 +2,11 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count
+from django.utils.text import slugify
 from .models import Quiz, QuizAttempt, Analytics, UserPerformance, Subject
 from .serializers import QuizSerializer, QuizAttemptSerializer, AnalyticsSerializer, SubjectSerializer
 from .evaluation import evaluate_quiz_answer, format_answer_for_display
+from .leveling import get_level_info
 from accounts.models import User
 from accounts.permissions import IsTeacher, IsTeacherOrAdmin
 from threading import Thread
@@ -133,6 +135,12 @@ class QuizListCreateView(generics.ListCreateAPIView):
 
         # Parse question types
         types_list = parse_question_types(question_types)
+        level_info = get_level_info(
+            user=user,
+            subject=subject,
+            class_level=class_level_int,
+        )
+        generation_difficulty = level_info['recommended_difficulty']
 
         answered_question_ids = QuizAttempt.objects.filter(
             user=user
@@ -178,7 +186,7 @@ class QuizListCreateView(generics.ListCreateAPIView):
                                     user=request.user,
                                     subject=subject,
                                     class_level=class_level_int,
-                                    difficulty='medium',
+                                    difficulty=generation_difficulty,
                                     question_type=selected_type,
                                     batch_size=needed_count,
                                     timeout_seconds=20,
@@ -194,7 +202,8 @@ class QuizListCreateView(generics.ListCreateAPIView):
                 'next': None,
                 'previous': None,
                 'results': serializer.data,
-                'source': 'database'
+                'source': 'database',
+                'level_info': level_info,
             })
 
         # If static DB is empty, serve unanswered AI questions for selected types.
@@ -233,7 +242,8 @@ class QuizListCreateView(generics.ListCreateAPIView):
                     'next': None,
                     'previous': None,
                     'results': ai_data,
-                    'source': 'ai_generated_groq'
+                    'source': 'ai_generated_groq',
+                    'level_info': level_info,
                 })
 
         # No DB/AI questions left: generate selected types in background and return fast.
@@ -259,7 +269,7 @@ class QuizListCreateView(generics.ListCreateAPIView):
                             user=request.user,
                             subject=subject,
                             class_level=class_level_int,
-                            difficulty='medium',
+                            difficulty=generation_difficulty,
                             question_type=selected_type,
                             batch_size=batch_size,
                             timeout_seconds=20,
@@ -276,7 +286,8 @@ class QuizListCreateView(generics.ListCreateAPIView):
                 'previous': None,
                 'results': [],
                 'source': 'generation_started',
-                'message': f'Generating {", ".join(types_list)} quiz questions with Groq. Please retry shortly.'
+                'message': f'Generating {", ".join(types_list)} quiz questions with Groq. Please retry shortly.',
+                'level_info': level_info,
             })
 
         return Response({
@@ -285,7 +296,8 @@ class QuizListCreateView(generics.ListCreateAPIView):
             'previous': None,
             'results': [],
             'source': 'empty',
-            'message': 'No quiz questions available yet. Please retry shortly.'
+            'message': 'No quiz questions available yet. Please retry shortly.',
+            'level_info': level_info,
         })
     
     def perform_create(self, serializer):
@@ -425,6 +437,17 @@ class QuizAttemptView(APIView):
                 ).count()
             
             progress.update_progress()
+
+            level_info = get_level_info(
+                user=user,
+                subject=quiz.subject,
+                class_level=quiz.class_target,
+            )
+            generation_difficulty = level_info['recommended_difficulty']
+
+            if progress.current_difficulty != generation_difficulty:
+                progress.current_difficulty = generation_difficulty
+                progress.save(update_fields=['current_difficulty', 'last_activity'])
             
             # Calculate completion percentage
             completion_percentage = progress.static_completion_percentage
@@ -444,7 +467,7 @@ class QuizAttemptView(APIView):
                             user=user,
                             subject=quiz.subject,
                             class_level=quiz.class_target,
-                            difficulty=progress.current_difficulty,
+                            difficulty=generation_difficulty,
                             question_type=quiz.question_type
                         )
                         print(f"[QuizAttempt] Background AI generation completed")
@@ -483,7 +506,8 @@ class QuizAttemptView(APIView):
                     'completion_percentage': completion_percentage,
                     'all_static_completed': all_static_completed,
                     'status': progress.status
-                }
+                },
+                'level_info': level_info,
             }, status=status.HTTP_201_CREATED)
             
         except Quiz.DoesNotExist:
@@ -524,7 +548,7 @@ class SubmitQuizResultsView(APIView):
 
 
 class SubjectListView(APIView):
-    """Get subjects filtered by user's class level"""
+    """Get or create subjects filtered by user's class level."""
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
@@ -542,14 +566,139 @@ class SubjectListView(APIView):
                 {'error': 'Class level not found. Please complete your profile.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        try:
+            class_level_int = int(class_level)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'class_level must be an integer'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Get all subjects for the user's class
-        subjects = Subject.objects.filter(class_level=class_level)
+        subjects = Subject.objects.filter(class_level=class_level_int)
         serializer = SubjectSerializer(subjects, many=True)
+
+        subject_levels = {}
+        for subject_obj in subjects:
+            subject_levels[subject_obj.subject_code] = get_level_info(
+                user=user,
+                subject=subject_obj.subject_code,
+                class_level=class_level_int,
+            )
+
+        overall_level = get_level_info(user=user, class_level=class_level_int)
         
         return Response({
-            'class_level': class_level,
-            'subjects': serializer.data
+            'class_level': class_level_int,
+            'subjects': serializer.data,
+            'subject_levels': subject_levels,
+            'overall_level': overall_level,
+        })
+
+    def post(self, request):
+        user = request.user
+        name = str(request.data.get('name', '')).strip()
+        description = str(request.data.get('description', '')).strip()
+        requested_class_level = request.data.get('class_level')
+
+        if not name:
+            return Response(
+                {'error': 'Subject name is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not (user.is_admin or user.is_teacher):
+            class_level = user.class_level
+        else:
+            class_level = requested_class_level or user.class_level
+
+        try:
+            class_level_int = int(class_level)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'class_level must be an integer'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if class_level_int < 6 or class_level_int > 12:
+            return Response(
+                {'error': 'class_level must be between 6 and 12'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        base_code = slugify(name).replace('-', '_')[:40] or 'custom_subject'
+        subject_code = base_code
+        suffix = 2
+
+        while Subject.objects.filter(
+            class_level=class_level_int,
+            subject_code=subject_code,
+        ).exists():
+            suffix_str = f'_{suffix}'
+            subject_code = f"{base_code[:max(1, 50 - len(suffix_str))]}{suffix_str}"
+            suffix += 1
+
+        subject = Subject.objects.create(
+            name=name,
+            bengali_title=str(request.data.get('bengali_title', '')).strip(),
+            subject_code=subject_code,
+            class_level=class_level_int,
+            stream=request.data.get('stream') or None,
+            is_compulsory=False,
+            icon='✨',
+            color='bg-cyan-100',
+            description=description[:500],
+        )
+
+        return Response(
+            {
+                'message': 'Subject created successfully',
+                'subject': SubjectSerializer(subject).data,
+                'level_info': get_level_info(
+                    user=user,
+                    subject=subject.subject_code,
+                    class_level=class_level_int,
+                ),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class QuizLevelView(APIView):
+    """Expose user quiz level for a specific subject/class combination."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        subject = request.query_params.get('subject')
+        requested_class_level = request.query_params.get('class_level')
+
+        if not (user.is_admin or user.is_teacher):
+            class_level = user.class_level
+        else:
+            class_level = requested_class_level or user.class_level
+
+        class_level_int = None
+        if class_level is not None and class_level != '':
+            try:
+                class_level_int = int(class_level)
+            except (TypeError, ValueError):
+                return Response(
+                    {'error': 'class_level must be an integer'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        level_info = get_level_info(
+            user=user,
+            subject=subject,
+            class_level=class_level_int,
+        )
+
+        return Response({
+            'subject': subject,
+            'class_level': class_level_int,
+            'level_info': level_info,
         })
 
 
@@ -585,6 +734,13 @@ class ContinueWithAIQuestionsView(APIView):
             f"[ContinueAI] User {user.username} continuing with AI questions for "
             f"{subject} (types: {selected_types})"
         )
+
+        level_info = get_level_info(
+            user=user,
+            subject=subject,
+            class_level=class_level_int,
+        )
+        generation_difficulty = level_info['recommended_difficulty']
         
         # Get progress
         from .models import UserQuizProgress, AIGeneratedQuestion
@@ -593,6 +749,10 @@ class ContinueWithAIQuestionsView(APIView):
             subject=subject,
             class_level=class_level_int
         )
+
+        if progress.current_difficulty != generation_difficulty:
+            progress.current_difficulty = generation_difficulty
+            progress.save(update_fields=['current_difficulty', 'last_activity'])
         
         # Verify user has completed static questions
         if progress.static_completion_percentage < 100:
@@ -658,7 +818,7 @@ class ContinueWithAIQuestionsView(APIView):
                     user=user,
                     subject=subject,
                     class_level=class_level_int,
-                    difficulty=progress.current_difficulty,
+                    difficulty=generation_difficulty,
                     question_type=selected_type,
                     batch_size=needed_count
                 )
@@ -755,5 +915,10 @@ class ContinueWithAIQuestionsView(APIView):
                 'ai_questions_answered': progress.ai_questions_answered,
                 'ai_questions_correct': progress.ai_questions_correct
             },
-            'user_status': user.static_question_status
+            'user_status': user.static_question_status,
+            'level_info': get_level_info(
+                user=user,
+                subject=subject,
+                class_level=class_level_int,
+            ),
         }, status=status.HTTP_200_OK)

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Sparkles, Trophy } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import AILearningModal from "../components/AILearningModal";
 import QuizResultsLoading from "../components/QuizResultsLoading";
@@ -7,6 +8,31 @@ import {
   formatAnswerForDisplay,
   getOptionEntries,
 } from "../utils/quizEvaluation";
+import "../styles/quiz-premium.css";
+
+interface LevelInfo {
+  level: number;
+  title: string;
+  xp: number;
+  next_level_xp: number;
+  level_progress_percent: number;
+  accuracy: number;
+  total_attempts: number;
+  completion_percentage: number;
+  recommended_difficulty: string;
+}
+
+const defaultLevelInfo = (): LevelInfo => ({
+  level: 1,
+  title: "Rising Starter",
+  xp: 0,
+  next_level_xp: 120,
+  level_progress_percent: 0,
+  accuracy: 0,
+  total_attempts: 0,
+  completion_percentage: 0,
+  recommended_difficulty: "easy",
+});
 
 const Quiz: React.FC = () => {
   const QUIZ_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -35,6 +61,7 @@ const Quiz: React.FC = () => {
   const [submittedQuestionIds, setSubmittedQuestionIds] = useState<
     Record<string, boolean>
   >({});
+  const [levelInfo, setLevelInfo] = useState<LevelInfo>(defaultLevelInfo());
 
   const location = useLocation();
   const selectedQuestionTypes = (() => {
@@ -65,6 +92,14 @@ const Quiz: React.FC = () => {
         setLoadError(null);
 
         const { subjects, difficulty, classLevel } = location.state || {};
+        const stateLevelInfo = (location.state as any)?.levelInfo;
+
+        if (stateLevelInfo && Number.isFinite(Number(stateLevelInfo.level))) {
+          setLevelInfo({
+            ...defaultLevelInfo(),
+            ...stateLevelInfo,
+          });
+        }
 
         if (!subjects || subjects.length === 0) {
           alert("Please select at least one subject");
@@ -81,6 +116,31 @@ const Quiz: React.FC = () => {
 
         const selectedSubject = subjects[0];
         const cacheKey = `quiz_cache_${selectedSubject}_${classLevel}_${selectedQuestionTypes.join("_")}`;
+        let resolvedLevel = Number(stateLevelInfo?.level) || 1;
+
+        try {
+          const levelResponse = await fetch(
+            `/api/quizzes/level/?subject=${encodeURIComponent(selectedSubject)}&class_level=${classLevel}`,
+            {
+              headers: {
+                Authorization: `Token ${token}`,
+              },
+            },
+          );
+
+          if (levelResponse.ok) {
+            const levelData = await levelResponse.json();
+            if (levelData?.level_info) {
+              resolvedLevel = Number(levelData.level_info.level) || resolvedLevel;
+              setLevelInfo({
+                ...defaultLevelInfo(),
+                ...levelData.level_info,
+              });
+            }
+          }
+        } catch (levelError) {
+          console.warn("Failed to load level info:", levelError);
+        }
 
         const cachedRaw = sessionStorage.getItem(cacheKey);
         if (cachedRaw) {
@@ -102,6 +162,7 @@ const Quiz: React.FC = () => {
 
         let queryParams = `subject=${selectedSubject}&class_level=${classLevel}`;
         queryParams += `&question_types=${selectedQuestionTypes.join(",")}`;
+        queryParams += `&user_level=${resolvedLevel}`;
 
         let response: Response | null = null;
         let data: any = null;
@@ -142,6 +203,13 @@ const Quiz: React.FC = () => {
 
         if (!data) {
           data = await response.json();
+        }
+
+        if (data?.level_info) {
+          setLevelInfo({
+            ...defaultLevelInfo(),
+            ...data.level_info,
+          });
         }
 
         let questions = data.results || data;
@@ -404,6 +472,12 @@ const Quiz: React.FC = () => {
 
           if (response.ok) {
             const data = await response.json();
+            if (data.level_info) {
+              setLevelInfo({
+                ...defaultLevelInfo(),
+                ...data.level_info,
+              });
+            }
             if (data.quiz_progress) {
               latestProgress = data.quiz_progress;
             }
@@ -571,7 +645,7 @@ const Quiz: React.FC = () => {
         throw new Error("No selected subject found");
       }
 
-      const queryParams = `subject=${subjects[0]}&class_level=${classLevel}&question_types=${selectedQuestionTypes.join(",")}`;
+      const queryParams = `subject=${subjects[0]}&class_level=${classLevel}&question_types=${selectedQuestionTypes.join(",")}&user_level=${levelInfo.level}`;
       const response = await fetch(`/api/quizzes/?${queryParams}`, {
         headers: {
           Authorization: `Token ${token}`,
@@ -584,6 +658,12 @@ const Quiz: React.FC = () => {
       }
 
       const data = await response.json();
+      if (data?.level_info) {
+        setLevelInfo({
+          ...defaultLevelInfo(),
+          ...data.level_info,
+        });
+      }
       const source = data?.source;
       let newQuestions = (data?.results || data || []).filter((q: any) =>
         selectedQuestionTypes.includes(q.question_type),
@@ -675,6 +755,12 @@ const Quiz: React.FC = () => {
       }
 
       const data = await response.json();
+      if (data?.level_info) {
+        setLevelInfo({
+          ...defaultLevelInfo(),
+          ...data.level_info,
+        });
+      }
 
       const existingIds = new Set(
         quizData.questions.map((question: any) => String(question.id)),
@@ -724,7 +810,7 @@ const Quiz: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-emerald-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen quiz-premium-page quiz-live-page flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">
@@ -737,7 +823,7 @@ const Quiz: React.FC = () => {
 
   if (!quizData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-emerald-50 dark:bg-gray-900 flex items-center justify-center px-4">
+      <div className="min-h-screen quiz-premium-page quiz-live-page flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-red-500 dark:text-red-400">
             {loadError || "Failed to load quiz data"}
@@ -760,7 +846,7 @@ const Quiz: React.FC = () => {
   const currentQ = quizData.questions[currentQuestion] || quizData.questions[0];
   if (!currentQ) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-emerald-50 dark:bg-gray-900 flex items-center justify-center px-4">
+      <div className="min-h-screen quiz-premium-page quiz-live-page flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-300">
             No questions available for continuation.
@@ -811,9 +897,9 @@ const Quiz: React.FC = () => {
     const analysisText = aiAnalysisReport || analysisResult?.ai_analysis || "";
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-emerald-50 dark:bg-gray-900">
+      <div className="min-h-screen quiz-premium-page quiz-live-page">
         <div className="max-w-4xl mx-auto py-6 sm:py-8 px-3 sm:px-4">
-          <div className="bg-white/95 dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-sky-100 dark:border-gray-700">
+          <div className="quiz-glass-panel overflow-hidden">
             <div className="px-6 py-8 sm:p-10">
               <div className="text-center">
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-2">
@@ -822,6 +908,32 @@ const Quiz: React.FC = () => {
                 <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 mb-8">
                   {quizData.title}
                 </p>
+
+                <div className="max-w-sm mx-auto mb-6 quiz-level-card text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="quiz-level-label inline-flex items-center gap-2">
+                      <Trophy className="h-4 w-4" />
+                      Level {levelInfo.level}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      {levelInfo.recommended_difficulty.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 mt-1">
+                    {levelInfo.title}
+                  </p>
+                  <div className="quiz-level-progress mt-2">
+                    <span
+                      className="quiz-level-progress-bar"
+                      style={{
+                        width: `${Math.max(6, levelInfo.level_progress_percent)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                    Accuracy {levelInfo.accuracy}% • Attempts {levelInfo.total_attempts}
+                  </p>
+                </div>
 
                 <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 mb-6 shadow-md">
                   <span className="text-3xl font-bold text-blue-600 dark:text-blue-300">
@@ -1113,9 +1225,9 @@ const Quiz: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-cyan-50 to-emerald-50 dark:bg-gray-900">
+    <div className="min-h-screen quiz-premium-page quiz-live-page">
       <div className="max-w-4xl mx-auto py-5 sm:py-6 px-3 sm:px-6">
-        <div className="bg-white/95 dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-sky-100 dark:border-gray-700">
+        <div className="quiz-glass-panel overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
@@ -1126,6 +1238,10 @@ const Quiz: React.FC = () => {
                   {quizData.subject} • Class {quizData.classLevel} •{" "}
                   {quizData.difficulty}
                 </p>
+                <div className="mt-2 quiz-level-pill w-fit">
+                  <Trophy className="h-4 w-4" />
+                  Level {levelInfo.level} • {levelInfo.title}
+                </div>
               </div>
               <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 w-fit">
                 ⏱ {formatTime(timeLeft)}
@@ -1166,6 +1282,10 @@ const Quiz: React.FC = () => {
                 {currentQ.type === "short" && "✍️ Write a short answer"}
                 {currentQ.type === "long" && "📄 Write a detailed answer"}
               </span>
+              <span className="ml-2 inline-flex items-center gap-1 text-xs quiz-level-pill">
+                <Sparkles className="h-3.5 w-3.5" />
+                AI tuned for level {levelInfo.level}
+              </span>
             </div>
 
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-5">
@@ -1180,9 +1300,9 @@ const Quiz: React.FC = () => {
                       key={key}
                       type="button"
                       onClick={() => handleAnswerSelect(key)}
-                      className={`w-full p-4 sm:p-5 border-2 rounded-2xl text-left transition min-h-[56px] ${
+                      className={`quiz-option-card w-full p-4 sm:p-5 border-2 rounded-2xl text-left transition min-h-[56px] ${
                         selectedAnswers[currentQuestion] === key
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30"
+                          ? "is-selected border-blue-500"
                           : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                       }`}>
                       <div className="flex items-center">
@@ -1232,7 +1352,7 @@ const Quiz: React.FC = () => {
                   value={selectedAnswers[currentQuestion] || ""}
                   onChange={(e) => handleAnswerSelect(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-none"
+                  className="quiz-answer-input w-full px-4 py-3 rounded-2xl border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white transition resize-none"
                   placeholder="Type your short answer..."
                   maxLength={500}
                 />
@@ -1252,7 +1372,7 @@ const Quiz: React.FC = () => {
                   value={selectedAnswers[currentQuestion] || ""}
                   onChange={(e) => handleAnswerSelect(e.target.value)}
                   rows={10}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition resize-y"
+                  className="quiz-answer-input w-full px-4 py-3 rounded-2xl border-2 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white transition resize-y"
                   placeholder="Type your detailed answer..."
                   maxLength={2000}
                 />

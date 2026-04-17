@@ -289,7 +289,7 @@ const HeroPage: React.FC = () => {
                 Start Your Journey
               </Link>
               <Link
-                to="/quiz"
+                to="/quiz/select"
                 className="rounded-xl border border-[#173d2f]/20 bg-white/80 px-6 py-3 text-sm font-semibold tracking-wide text-[#173d2f] transition-all duration-300 hover:border-[#bd852c] hover:text-[#8f5f17] hover:-translate-y-0.5">
                 Explore Smart Quiz
               </Link>

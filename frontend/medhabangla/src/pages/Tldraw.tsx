@@ -1,8 +1,10 @@
+import { env } from "node:process";
 import React from "react";
 import { Tldraw } from "tldraw";
 import "tldraw/tldraw.css";
 
 const TldrawPage: React.FC = () => {
+  const licenceKey = env.TLDRAW_LICENSE_KEY || "free";
   return (
     <div
       style={{
@@ -12,7 +14,7 @@ const TldrawPage: React.FC = () => {
         width: "100vw",
         height: "100vh",
       }}>
-      <Tldraw persistenceKey="sopna-tldraw-board" autoFocus />
+      <Tldraw licenseKey={licenceKey} persistenceKey="sopna-tldraw-board" autoFocus />
     </div>
   );
 };

@@ -573,7 +573,7 @@ const Dashboard: React.FC = () => {
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <Link
-                  to="/quiz"
+                  to="/quiz/select"
                   className="p-4 border-2 border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-400 transition-all group">
                   <div className="mb-2 transition-transform group-hover:scale-110">
                     <BrainCircuit className="h-8 w-8 text-blue-600 dark:text-blue-300" />
@@ -583,19 +583,6 @@ const Dashboard: React.FC = () => {
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Test knowledge
-                  </p>
-                </Link>
-                <Link
-                  to="/quiz/adaptive"
-                  className="p-4 border-2 border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-400 transition-all group">
-                  <div className="mb-2 transition-transform group-hover:scale-110">
-                    <Sparkles className="h-8 w-8 text-purple-600 dark:text-purple-300" />
-                  </div>
-                  <div className="font-semibold text-sm text-gray-900 dark:text-white">
-                    Adaptive Quiz
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Smart learning
                   </p>
                 </Link>
                 <Link
@@ -1149,7 +1136,7 @@ const Dashboard: React.FC = () => {
                     Master geometry concepts and solve complex problems
                   </p>
                   <Link
-                    to="/quiz"
+                    to="/quiz/select"
                     className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
                     <BrainCircuit className="h-4 w-4" />
                     Start Quiz

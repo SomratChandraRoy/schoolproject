@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from .models import Quiz, AIGeneratedQuestion
 from .serializers import QuizSerializer
+from .leveling import get_level_info
 from accounts.models import User
 
 
@@ -54,6 +55,21 @@ class FallbackQuizView(APIView):
                 {'error': 'Subject and class_level are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        try:
+            class_level_int = int(class_level)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'class_level must be an integer'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        level_info = get_level_info(
+            user=user,
+            subject=subject,
+            class_level=class_level_int,
+        )
+        generation_difficulty = level_info['recommended_difficulty']
         
         print(f"[FallbackQuiz] Checking questions for {subject}, Class {class_level}, Types: {question_types}")
         
@@ -63,7 +79,7 @@ class FallbackQuizView(APIView):
         # Check if questions exist in database
         existing_questions = Quiz.objects.filter(
             subject=subject,
-            class_target=class_level,
+            class_target=class_level_int,
             question_type__in=types_list
         )
         
@@ -90,7 +106,8 @@ class FallbackQuizView(APIView):
             return Response({
                 'source': 'database',
                 'count': question_count,
-                'results': serializer.data
+                'results': serializer.data,
+                'level_info': level_info,
             })
         
         # Not enough questions - generate AI questions
@@ -116,8 +133,8 @@ class FallbackQuizView(APIView):
             success, questions, error = generator.generate_batch_questions(
                 user=user,
                 subject=subject,
-                class_level=int(class_level),
-                difficulty='medium',  # Start with medium
+                class_level=class_level_int,
+                difficulty=generation_difficulty,
                 question_type=selected_type,
                 batch_size=batch_size
             )
@@ -157,7 +174,8 @@ class FallbackQuizView(APIView):
             'count': len(quiz_data),
             'results': quiz_data,
             'selected_question_types': types_list,
-            'message': 'No questions found in database. AI generated questions for you!'
+            'message': 'No questions found in database. AI generated questions for you!',
+            'level_info': level_info,
         })
 
 

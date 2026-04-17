@@ -12,6 +12,7 @@ from threading import Thread
 from .models import Quiz, QuizAttempt, UserQuizProgress, AIGeneratedQuestion
 from .serializers import QuizSerializer
 from .evaluation import evaluate_quiz_answer, format_answer_for_display
+from .leveling import get_level_info
 from accounts.models import User
 
 
@@ -110,6 +111,21 @@ class AdaptiveQuizStartView(APIView):
         
         # Update progress
         progress.update_progress()
+
+        level_info = get_level_info(
+            user=user,
+            subject=subject,
+            class_level=class_level_int,
+        )
+        generation_difficulty = level_info['recommended_difficulty']
+        if progress.current_difficulty != generation_difficulty:
+            progress.current_difficulty = generation_difficulty
+            progress.save(update_fields=['current_difficulty', 'last_activity'])
+            level_info = get_level_info(
+                user=user,
+                subject=subject,
+                class_level=class_level_int,
+            )
         
         return Response({
             'progress': {
@@ -122,7 +138,8 @@ class AdaptiveQuizStartView(APIView):
                 'ai_questions_correct': progress.ai_questions_correct
             },
             'selected_question_types': selected_types,
-            'message': 'Quiz session initialized'
+            'message': 'Quiz session initialized',
+            'level_info': level_info,
         })
 
 
@@ -165,6 +182,21 @@ class AdaptiveQuizNextQuestionView(APIView):
             return Response(
                 {'error': 'Quiz session not initialized. Call /start first.'},
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+        level_info = get_level_info(
+            user=user,
+            subject=subject,
+            class_level=class_level_int,
+        )
+        generation_difficulty = level_info['recommended_difficulty']
+        if progress.current_difficulty != generation_difficulty:
+            progress.current_difficulty = generation_difficulty
+            progress.save(update_fields=['current_difficulty', 'last_activity'])
+            level_info = get_level_info(
+                user=user,
+                subject=subject,
+                class_level=class_level_int,
             )
         
         print(f"[AdaptiveQuiz] Getting next question for {user.username}")
@@ -219,7 +251,8 @@ class AdaptiveQuizNextQuestionView(APIView):
                         'completion_percentage': progress.static_completion_percentage,
                         'current_difficulty': progress.current_difficulty
                     },
-                    'selected_question_types': selected_types
+                    'selected_question_types': selected_types,
+                    'level_info': level_info,
                 })
             else:
                 # All static questions completed
@@ -293,7 +326,8 @@ class AdaptiveQuizNextQuestionView(APIView):
                         'current_difficulty': progress.current_difficulty,
                         'ai_questions_answered': progress.ai_questions_answered
                     },
-                    'selected_question_types': selected_types
+                    'selected_question_types': selected_types,
+                    'level_info': level_info,
                 })
             else:
                 # Generate new AI questions by selected type so users see all requested formats.
@@ -318,7 +352,7 @@ class AdaptiveQuizNextQuestionView(APIView):
                         user=user,
                         subject=subject,
                         class_level=class_level_int,
-                        difficulty=progress.current_difficulty,
+                        difficulty=generation_difficulty,
                         question_type=selected_type,
                         batch_size=needed_count
                     )
@@ -377,7 +411,8 @@ class AdaptiveQuizNextQuestionView(APIView):
                                 'completion_percentage': progress.static_completion_percentage,
                                 'current_difficulty': progress.current_difficulty
                             },
-                            'selected_question_types': selected_types
+                            'selected_question_types': selected_types,
+                            'level_info': level_info,
                         })
 
                 if generation_errors:
@@ -397,7 +432,8 @@ class AdaptiveQuizNextQuestionView(APIView):
                 'ai_questions_answered': progress.ai_questions_answered,
                 'ai_questions_correct': progress.ai_questions_correct
             },
-            'selected_question_types': selected_types
+            'selected_question_types': selected_types,
+            'level_info': level_info,
         }, status=status.HTTP_200_OK)
 
 
@@ -441,6 +477,17 @@ class AdaptiveQuizSubmitAnswerView(APIView):
             class_level=class_level_int,
             defaults={'status': 'ai_active'}
         )
+
+        level_info = get_level_info(
+            user=user,
+            subject=subject,
+            class_level=class_level_int,
+        )
+        generation_difficulty = level_info['recommended_difficulty']
+
+        if progress.current_difficulty != generation_difficulty:
+            progress.current_difficulty = generation_difficulty
+            progress.save(update_fields=['current_difficulty', 'last_activity'])
         
         is_correct = False
         correct_answer = ""
@@ -585,7 +632,7 @@ class AdaptiveQuizSubmitAnswerView(APIView):
                                 user=user,
                                 subject=subject,
                                 class_level=class_level_int,
-                                difficulty=progress.current_difficulty,
+                                difficulty=generation_difficulty,
                                 question_type=selected_type,
                                 batch_size=needed_count
                             )
@@ -623,7 +670,12 @@ class AdaptiveQuizSubmitAnswerView(APIView):
                 'current_difficulty': progress.current_difficulty,
                 'ai_questions_answered': progress.ai_questions_answered,
                 'ai_questions_correct': progress.ai_questions_correct
-            }
+            },
+            'level_info': get_level_info(
+                user=user,
+                subject=subject,
+                class_level=class_level_int,
+            ),
         })
 
 
@@ -642,10 +694,18 @@ class AdaptiveQuizProgressView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        try:
+            class_level_int = int(class_level)
+        except (TypeError, ValueError):
+            return Response(
+                {'error': 'class_level must be an integer'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         progress = UserQuizProgress.objects.filter(
             user=user,
             subject=subject,
-            class_level=class_level
+            class_level=class_level_int
         ).first()
         
         if not progress:
@@ -667,5 +727,10 @@ class AdaptiveQuizProgressView(APIView):
                 'started_at': progress.started_at,
                 'last_activity': progress.last_activity,
                 'finished_at': progress.finished_at
-            }
+            },
+            'level_info': get_level_info(
+                user=user,
+                subject=subject,
+                class_level=class_level_int,
+            ),
         })
