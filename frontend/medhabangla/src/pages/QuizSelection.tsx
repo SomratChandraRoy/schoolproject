@@ -101,6 +101,16 @@ const mergeSubjects = (baseSubjects: Subject[], extraSubjects: Subject[]) => {
   return Array.from(map.values());
 };
 
+const focusSearchInput = (input: HTMLInputElement | null) => {
+  if (!input) {
+    return;
+  }
+
+  input.focus();
+  const cursorPosition = input.value.length;
+  input.setSelectionRange(cursorPosition, cursorPosition);
+};
+
 const QuizSelection: React.FC = () => {
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -135,15 +145,23 @@ const QuizSelection: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (step === "subject") {
+    if (step === "subject" && !showAddSubjectModal) {
       const raf = requestAnimationFrame(() => {
-        searchInputRef.current?.focus();
+        focusSearchInput(searchInputRef.current);
       });
-      return () => cancelAnimationFrame(raf);
+
+      const timeout = window.setTimeout(() => {
+        focusSearchInput(searchInputRef.current);
+      }, 120);
+
+      return () => {
+        cancelAnimationFrame(raf);
+        window.clearTimeout(timeout);
+      };
     }
 
     return undefined;
-  }, [step]);
+  }, [step, showAddSubjectModal]);
 
   useEffect(() => {
     if (!selectedSubject) {
@@ -376,7 +394,7 @@ const QuizSelection: React.FC = () => {
         if (createdSubject) {
           setSubjects((previous) => mergeSubjects(previous, [createdSubject]));
           setSelectedSubject(createdSubject);
-          setSubjectSearch(createdSubject.name);
+          setSubjectSearch("");
 
           if (data.level_info) {
             setSubjectLevels((previous) => ({
@@ -401,7 +419,7 @@ const QuizSelection: React.FC = () => {
 
         setSubjects((previous) => mergeSubjects(previous, [fallbackSubject]));
         setSelectedSubject(fallbackSubject);
-        setSubjectSearch(fallbackSubject.name);
+        setSubjectSearch("");
         setSubjectLevels((previous) => ({
           ...previous,
           [fallbackSubject.subject_code]: defaultLevelInfo(),
@@ -449,7 +467,7 @@ const QuizSelection: React.FC = () => {
       <div className="quiz-premium-container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <header className="quiz-glass-panel mb-6 sm:mb-8 p-5 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+            <div className="hidden sm:block">
               <p className="text-sm uppercase tracking-[0.2em] text-teal-700/80 dark:text-cyan-200/80">
                 Quiz Studio
               </p>
@@ -507,8 +525,8 @@ const QuizSelection: React.FC = () => {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.35 }}
                 className="quiz-glass-panel p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <div className="quiz-search-shell flex-1">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="quiz-search-shell flex-1 min-w-0">
                     <Search className="h-5 w-5 text-teal-700/80 dark:text-cyan-200/80" />
                     <input
                       ref={searchInputRef}
@@ -554,7 +572,6 @@ const QuizSelection: React.FC = () => {
                           type="button"
                           onClick={() => {
                             setSelectedSubject(subject);
-                            setSubjectSearch(subject.name);
                           }}
                           className={`quiz-subject-card ${selected ? "is-selected" : ""}`}>
                           <div className="flex items-start justify-between gap-2">

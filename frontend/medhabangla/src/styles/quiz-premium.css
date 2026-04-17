@@ -146,8 +146,8 @@
 }
 
 .quiz-search-shell:focus-within {
-  border-color: rgba(15, 143, 134, 0.55);
-  box-shadow: 0 0 0 4px rgba(69, 214, 193, 0.2);
+  border-color: var(--quiz-border);
+  box-shadow: none;
 }
 
 .quiz-search-input {
@@ -157,6 +157,12 @@
   background: transparent;
   font-size: 1rem;
   color: var(--quiz-ink);
+}
+
+.quiz-search-input:focus,
+.quiz-search-input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .dark .quiz-search-input {
@@ -179,6 +185,10 @@
   background: linear-gradient(135deg, var(--quiz-accent), #46dfc7);
   color: white;
   transition: transform 180ms ease, filter 180ms ease;
+}
+
+.quiz-plus-button {
+  flex: 0 0 48px;
 }
 
 .quiz-plus-button:hover,
