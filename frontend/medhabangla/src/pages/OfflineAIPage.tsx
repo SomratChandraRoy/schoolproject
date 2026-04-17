@@ -1,15 +1,23 @@
 /**
  * Offline AI Chat Page
- * Main page for accessing offline AI capabilities
- * Handles PWA installation and model management
+ * Requires installed PWA for local model download and usage.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import OfflineAIChat from "../components/OfflineAIChat";
 import {
-  modelPrefetcher,
+  autoInstallForInstalledPWA,
+  downloadEssentialModels,
   getInstallationStatus,
+  isPwaInstalled,
+  modelPrefetcher,
 } from "../services/modelPrefetcher";
+import "../styles/offline-ai-premium.css";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
 
 export interface InstallationStatus {
   isInstalled: boolean;
@@ -17,197 +25,260 @@ export interface InstallationStatus {
   missingModels: string[];
   cacheSize: number;
   totalSize: number;
+  requiresPwaInstall: boolean;
+}
+
+interface DownloadProgressState {
+  modelName: string;
+  percentage: number;
+  status: "pending" | "downloading" | "completed" | "failed";
+  error?: string;
 }
 
 export const OfflineAIPage: React.FC = () => {
   const [status, setStatus] = useState<InstallationStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [isInstalledPwa, setIsInstalledPwa] = useState(isPwaInstalled());
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [downloadProgress, setDownloadProgress] =
+    useState<DownloadProgressState | null>(null);
+  const [installNote, setInstallNote] = useState("");
 
-  // Load installation status
-  useEffect(() => {
-    const loadStatus = async () => {
-      try {
-        const installStatus = await getInstallationStatus();
-        setStatus(installStatus);
-      } catch (error) {
-        console.error("[OfflineAIPage] Error loading status:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const autoStartedRef = useRef(false);
 
-    loadStatus();
-  }, []);
-
-  /**
-   * Handle clear cache
-   */
-  const handleClearCache = async () => {
-    if (
-      window.confirm(
-        "Are you sure you want to clear the cache? This will remove all downloaded models.",
-      )
-    ) {
-      try {
-        const success = await modelPrefetcher.clearCache();
-        if (success) {
-          alert("✅ Cache cleared successfully");
-          window.location.reload();
-        }
-      } catch (error) {
-        console.error("[OfflineAIPage] Error clearing cache:", error);
-        alert("❌ Error clearing cache");
-      }
+  const refreshStatus = async () => {
+    try {
+      const installStatus = await getInstallationStatus();
+      setStatus(installStatus);
+      setIsInstalledPwa(isPwaInstalled());
+    } catch (error) {
+      console.error("[OfflineAIPage] Error loading status:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Main Chat Component */}
-      {!showSettings && <OfflineAIChat />}
+  useEffect(() => {
+    void refreshStatus();
+  }, []);
 
-      {/* Settings Modal */}
+  useEffect(() => {
+    const unsubscribe = modelPrefetcher.onProgressUpdate((progress) => {
+      setDownloadProgress({
+        modelName: progress.modelName,
+        percentage: progress.percentage,
+        status: progress.status,
+        error: progress.error,
+      });
+
+      if (progress.status === "completed") {
+        void refreshStatus();
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setDeferredPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    const handleInstalled = () => {
+      setIsInstalledPwa(true);
+      setDeferredPrompt(null);
+      setInstallNote("PWA installed. Offline model download has started.");
+      void autoInstallForInstalledPWA(true).then(() => {
+        void refreshStatus();
+      });
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isInstalledPwa) {
+      return;
+    }
+
+    if (!status || status.isInstalled || autoStartedRef.current) {
+      return;
+    }
+
+    autoStartedRef.current = true;
+    setInstallNote("Downloading offline model pack in background...");
+
+    void downloadEssentialModels()
+      .then((result) => {
+        if (result.failed.length > 0) {
+          setInstallNote(
+            `Some model downloads failed: ${result.failed.join(", ")}. Open settings and retry.`,
+          );
+        } else {
+          setInstallNote("Offline model download completed.");
+        }
+      })
+      .finally(() => {
+        void refreshStatus();
+      });
+  }, [isInstalledPwa, status]);
+
+  const canUseOfflineAI = isInstalledPwa;
+
+  const storageLabel = useMemo(() => {
+    if (!status) return "0 MB";
+    return `${status.cacheSize} MB`;
+  }, [status]);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      await deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === "dismissed") {
+        setInstallNote("Install prompt dismissed. You can try again anytime.");
+      }
+      return;
+    }
+
+    setInstallNote(
+      "On iPhone: Share -> Add to Home Screen. On Android: browser menu -> Install app.",
+    );
+  };
+
+  const handleClearCache = async () => {
+    if (
+      !window.confirm(
+        "Clear all downloaded offline models and cache? You will need to download again.",
+      )
+    ) {
+      return;
+    }
+
+    const success = await modelPrefetcher.clearCache();
+    if (success) {
+      setInstallNote("Offline model cache cleared.");
+      autoStartedRef.current = false;
+      await refreshStatus();
+    }
+  };
+
+  const installGate = (
+    <div className="offline-premium-shell">
+      <div className="offline-bg-orb offline-bg-orb-a" />
+      <div className="offline-bg-orb offline-bg-orb-b" />
+      <div className="offline-bg-orb offline-bg-orb-c" />
+
+      <div className="offline-center-wrap">
+        <section className="offline-glass-card offline-install-card">
+          <p className="offline-eyebrow">Offline Premium AI</p>
+          <h1 className="offline-title">Install PWA To Unlock Local 3GB AI</h1>
+          <p className="offline-subtitle">
+            Offline AI model download starts only after app installation. This
+            protects mobile storage and enables reliable local Q&A.
+          </p>
+
+          <div className="offline-feature-grid">
+            <div className="offline-feature-tile">
+              <h3>Mobile-First Local Model</h3>
+              <p>Largest reliable model path for around 3GB RAM devices.</p>
+            </div>
+            <div className="offline-feature-tile">
+              <h3>Auto Download After Install</h3>
+              <p>Model warm-up starts automatically when PWA is installed.</p>
+            </div>
+            <div className="offline-feature-tile">
+              <h3>Glassy Premium UX</h3>
+              <p>Emotion-driven interface tuned for full mobile screens.</p>
+            </div>
+          </div>
+
+          <div className="offline-cta-row">
+            <button
+              type="button"
+              onClick={() => void handleInstallClick()}
+              className="offline-primary-btn">
+              Install PWA Now
+            </button>
+            <a className="offline-secondary-link" href="/dashboard">
+              Back To Dashboard
+            </a>
+          </div>
+
+          {!!installNote && <p className="offline-install-note">{installNote}</p>}
+        </section>
+      </div>
+    </div>
+  );
+
+  if (!canUseOfflineAI) {
+    return installGate;
+  }
+
+  return (
+    <div className="offline-page-wrapper">
+      <OfflineAIChat />
+
       {showSettings && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-96 overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold">⚙️ Offline AI Settings</h2>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="text-2xl hover:opacity-75 transition">
-                ✕
+        <div className="offline-modal-overlay">
+          <div className="offline-modal-panel">
+            <div className="offline-modal-header">
+              <h2>Offline AI Settings</h2>
+              <button type="button" onClick={() => setShowSettings(false)}>
+                Close
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Installation Status */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-                <h3 className="font-semibold text-lg mb-3">
-                  📥 Installation Status
-                </h3>
+            <div className="offline-modal-body">
+              <div className="offline-settings-card">
+                <p className="label">Model Status</p>
                 {loading ? (
-                  <p className="text-gray-600 dark:text-gray-400">Loading...</p>
-                ) : status ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold">Status:</span>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                          status.isInstalled
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
-                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300"
-                        }`}>
-                        {status.isInstalled ? "✅ Installed" : "⏳ Incomplete"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span>Installed Models:</span>
-                      <span className="font-semibold">
-                        {status.installedModels.length}
-                      </span>
-                    </div>
-
-                    {status.missingModels.length > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span>Missing Models:</span>
-                        <span className="font-semibold text-red-600">
-                          {status.missingModels.length}
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                      <span>Cache Size:</span>
-                      <span className="font-semibold">
-                        {status.cacheSize} MB
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span>Total Model Size:</span>
-                      <span className="font-semibold">
-                        {status.totalSize} MB
-                      </span>
-                    </div>
-
-                    {/* Installed Models List */}
-                    {status.installedModels.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
-                        <p className="font-semibold mb-2">✅ Downloaded:</p>
-                        <ul className="space-y-1 text-sm">
-                          {status.installedModels.map((model) => (
-                            <li
-                              key={model}
-                              className="text-gray-700 dark:text-gray-300">
-                              • {model}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Missing Models List */}
-                    {status.missingModels.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
-                        <p className="font-semibold mb-2 text-red-600">
-                          ⏳ Missing:
-                        </p>
-                        <ul className="space-y-1 text-sm">
-                          {status.missingModels.map((model) => (
-                            <li
-                              key={model}
-                              className="text-gray-700 dark:text-gray-300">
-                              • {model}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
+                  <p>Loading...</p>
                 ) : (
-                  <p className="text-red-600">Error loading status</p>
+                  <>
+                    <p>
+                      Core Model: {status?.isInstalled ? "Installed" : "Missing"}
+                    </p>
+                    <p>Storage Used: {storageLabel}</p>
+                    <p>Expected Total: {status?.totalSize || 0} MB</p>
+                    <p>
+                      Installed Packs: {status?.installedModels.length || 0}
+                    </p>
+                  </>
                 )}
               </div>
 
-              {/* Available Models */}
-              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
-                <h3 className="font-semibold text-lg mb-3">
-                  📚 Available Models
-                </h3>
-                <div className="space-y-2 text-sm">
-                  {modelPrefetcher.getAvailableModels().map((model) => (
-                    <div
-                      key={model.name}
-                      className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold">{model.name}</p>
-                        <p className="text-gray-600 dark:text-gray-400 text-xs">
-                          {model.description} • {model.size} MB
-                        </p>
-                      </div>
-                      {model.optional && (
-                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 text-xs rounded">
-                          Optional
-                        </span>
-                      )}
-                    </div>
-                  ))}
+              {downloadProgress && (
+                <div className="offline-settings-card">
+                  <p className="label">Current Download</p>
+                  <p>{downloadProgress.modelName}</p>
+                  <p>{downloadProgress.status}</p>
+                  <p>{downloadProgress.percentage}%</p>
+                  {!!downloadProgress.error && (
+                    <p className="offline-error">{downloadProgress.error}</p>
+                  )}
                 </div>
-              </div>
+              )}
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={handleClearCache}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-                  🗑️ Clear Cache
+              {!!installNote && <p className="offline-install-note">{installNote}</p>}
+
+              <div className="offline-settings-actions">
+                <button type="button" onClick={() => void refreshStatus()}>
+                  Refresh Status
                 </button>
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
-                  Back to Chat
+                <button type="button" onClick={() => void handleClearCache()}>
+                  Clear Model Cache
                 </button>
               </div>
             </div>
@@ -215,15 +286,12 @@ export const OfflineAIPage: React.FC = () => {
         </div>
       )}
 
-      {/* Floating Settings Button */}
-      {!showSettings && (
-        <button
-          onClick={() => setShowSettings(true)}
-          className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all"
-          title="Settings">
-          ⚙️
-        </button>
-      )}
+      <button
+        type="button"
+        className="offline-settings-fab"
+        onClick={() => setShowSettings(true)}>
+        Settings
+      </button>
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import "../styles/offline-ai-premium.css";
 
 type AppState =
   | "initializing"
@@ -19,8 +20,10 @@ export const OfflineAIChat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [state, setState] = useState<AppState>("initializing");
-  const [statusText, setStatusText] = useState("লোকাল AI মডেল চালু হচ্ছে...");
-  const [activeModelLabel, setActiveModelLabel] = useState("লোড হয়নি");
+  const [statusText, setStatusText] = useState(
+    "Initializing offline premium model...",
+  );
+  const [activeModelLabel, setActiveModelLabel] = useState("Not loaded");
   const [downloadPercent, setDownloadPercent] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -43,7 +46,7 @@ export const OfflineAIChat: React.FC = () => {
 
       if (msg.type === "loading-start") {
         setState("downloading");
-        setStatusText("লোকাল মডেল ফাইল প্রস্তুত হচ্ছে...");
+        setStatusText("Preparing offline model...");
         setErrorMessage("");
         setDownloadPercent(0);
         return;
@@ -60,31 +63,28 @@ export const OfflineAIChat: React.FC = () => {
           msg?.progress?.progress ?? msg?.progress?.percentage ?? 0,
         );
 
-        let raw = 0;
+        let rawPercent = 0;
         if (Number.isFinite(loaded) && Number.isFinite(total) && total > 0) {
-          raw = (loaded / total) * 100;
+          rawPercent = (loaded / total) * 100;
         } else if (Number.isFinite(reported)) {
-          raw = reported <= 1 ? reported * 100 : reported;
+          rawPercent = reported <= 1 ? reported * 100 : reported;
         }
 
-        const pct = Number.isFinite(raw)
-          ? Math.max(0, Math.min(100, Math.round(raw)))
+        const pct = Number.isFinite(rawPercent)
+          ? Math.max(0, Math.min(100, Math.round(rawPercent)))
           : downloadPercent;
 
-        const statusHint = msg?.progress?.status
-          ? ` (${String(msg.progress.status)})`
-          : "";
         setState("downloading");
         setDownloadPercent(pct);
-        setStatusText(`মডেল ডাউনলোড হচ্ছে: ${pct}%${statusHint}`);
+        setStatusText(`Model download in progress: ${pct}%`);
         return;
       }
 
       if (msg.type === "ready") {
-        const modelName = String(msg?.modelLabel || "লোকাল মডেল");
+        const modelName = String(msg?.modelLabel || "Offline model");
         setActiveModelLabel(modelName);
         setState("ready");
-        setStatusText(`প্রস্তুত - অফলাইন মোড চালু (${modelName})`);
+        setStatusText(`Ready in offline mode (${modelName})`);
         setDownloadPercent(100);
         setErrorMessage("");
 
@@ -95,7 +95,7 @@ export const OfflineAIChat: React.FC = () => {
               id: `welcome-${Date.now()}`,
               role: "assistant",
               content:
-                "অফলাইন AI প্রস্তুত। এখন ইন্টারনেট বন্ধ থাকলেও আপনি প্রশ্ন করতে পারবেন।",
+                "Offline premium AI is ready. Ask normal study or general questions now.",
               timestamp: new Date(),
             },
           ];
@@ -105,7 +105,7 @@ export const OfflineAIChat: React.FC = () => {
 
       if (msg.type === "generating") {
         setState("processing");
-        setStatusText("AI উত্তর তৈরি করছে...");
+        setStatusText("Analyzing your question...");
         return;
       }
 
@@ -115,29 +115,34 @@ export const OfflineAIChat: React.FC = () => {
           {
             id: `assistant-${Date.now()}`,
             role: "assistant",
-            content: msg.answer || "কোনো উত্তর পাওয়া যায়নি।",
+            content: msg.answer || "No answer was generated.",
             timestamp: new Date(),
           },
         ]);
         setState("ready");
-        setStatusText("প্রস্তুত - অফলাইন মোড চালু");
+        setStatusText("Ready for the next question");
         return;
       }
 
       if (msg.type === "error") {
         setState("error");
-        setStatusText("অফলাইন মডেল ত্রুটি");
-        setErrorMessage(msg.message || "অজানা ত্রুটি");
+        setStatusText("Offline model error");
+        setErrorMessage(msg.message || "Unknown model error");
       }
     };
 
     worker.onerror = (event) => {
       setState("error");
-      setStatusText("ওয়ার্কার ক্র্যাশ করেছে");
-      setErrorMessage(event.message || "ওয়ার্কার রানটাইম ত্রুটি");
+      setStatusText("Worker crashed");
+      setErrorMessage(event.message || "Worker runtime error");
     };
 
-    worker.postMessage({ type: "load" });
+    worker.postMessage({
+      type: "load",
+      payload: {
+        deviceMemoryGb: Number((navigator as any).deviceMemory || 3),
+      },
+    });
 
     return () => {
       worker.terminate();
@@ -145,20 +150,12 @@ export const OfflineAIChat: React.FC = () => {
     };
   }, []);
 
-  const badgeClasses = useMemo(() => {
-    if (state === "downloading") {
-      return "bg-yellow-100 text-yellow-800 border-yellow-300";
-    }
-    if (state === "ready") {
-      return "bg-green-100 text-green-800 border-green-300";
-    }
-    if (state === "processing") {
-      return "bg-blue-100 text-blue-800 border-blue-300";
-    }
-    if (state === "error") {
-      return "bg-red-100 text-red-800 border-red-300";
-    }
-    return "bg-slate-100 text-slate-700 border-slate-300";
+  const badgeClass = useMemo(() => {
+    if (state === "downloading") return "status-chip warning";
+    if (state === "ready") return "status-chip success";
+    if (state === "processing") return "status-chip info";
+    if (state === "error") return "status-chip error";
+    return "status-chip neutral";
   }, [state]);
 
   const canAsk = state === "ready";
@@ -189,145 +186,95 @@ export const OfflineAIChat: React.FC = () => {
     if (!workerRef.current) return;
     setErrorMessage("");
     setState("downloading");
-    setStatusText("মডেল আবার ডাউনলোড করা হচ্ছে...");
+    setStatusText("Retrying model warm-up...");
     setDownloadPercent(0);
-    workerRef.current.postMessage({ type: "load" });
-  };
-
-  const handleHardReset = async () => {
-    try {
-      if ("serviceWorker" in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(
-          registrations.map((registration) => registration.unregister()),
-        );
-      }
-
-      if ("caches" in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map((name) => caches.delete(name)));
-      }
-
-      localStorage.removeItem("sopna-models-auto-installed");
-      localStorage.removeItem("sopna-model-metadata");
-      window.location.reload();
-    } catch {
-      window.location.reload();
-    }
+    workerRef.current.postMessage({
+      type: "load",
+      payload: {
+        deviceMemoryGb: Number((navigator as any).deviceMemory || 3),
+      },
+    });
   };
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50 dark:bg-slate-950">
-      <div className="border-b border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                অফলাইন AI প্রশ্নোত্তর
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                সম্পূর্ণ ব্রাউজারভিত্তিক লোকাল মডেল, প্রথম ডাউনলোডের পর
-                ব্যাকএন্ড ছাড়াই চলবে।
-              </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                সক্রিয় মডেল: {activeModelLabel}
-              </p>
-            </div>
+    <div className="offline-premium-shell">
+      <div className="offline-bg-orb offline-bg-orb-a" />
+      <div className="offline-bg-orb offline-bg-orb-b" />
+      <div className="offline-bg-orb offline-bg-orb-c" />
 
-            <span
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeClasses}`}>
-              {statusText}
-            </span>
+      <div className="offline-chat-container">
+        <header className="offline-glass-card offline-chat-header">
+          <div>
+            <p className="offline-eyebrow">Premium Offline AI</p>
+            <h1 className="offline-chat-title">Ask Anything, Even Offline</h1>
+            <p className="offline-subtitle">Active model: {activeModelLabel}</p>
           </div>
+          <span className={badgeClass}>{statusText}</span>
+        </header>
 
-          {state === "downloading" && (
-            <div className="space-y-1">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                <div
-                  className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-300"
-                  style={{ width: `${downloadPercent}%` }}
-                />
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                {downloadPercent}%
-              </p>
+        {state === "downloading" && (
+          <section className="offline-glass-card offline-progress-card">
+            <div className="offline-progress-track">
+              <div
+                className="offline-progress-fill"
+                style={{ width: `${downloadPercent}%` }}
+              />
             </div>
-          )}
+            <p className="offline-progress-text">{downloadPercent}% downloaded</p>
+          </section>
+        )}
 
-          {errorMessage && (
-            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-300">
-              <div>{errorMessage}</div>
-              <button
-                onClick={handleRetryLoad}
-                className="mt-2 rounded border border-red-400 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/40">
-                মডেল আবার লোড করুন
-              </button>
-              <button
-                onClick={() => void handleHardReset()}
-                className="ml-2 mt-2 rounded border border-red-400 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/40">
-                ক্যাশ মুছে রিলোড
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+        {errorMessage && (
+          <section className="offline-glass-card offline-error-card">
+            <p>{errorMessage}</p>
+            <button type="button" onClick={handleRetryLoad}>
+              Retry Model Load
+            </button>
+          </section>
+        )}
 
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden px-4 pb-4 pt-3">
-        <div className="flex-1 space-y-3 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <section className="offline-glass-card offline-chat-stream">
           {messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-center text-sm text-slate-500 dark:text-slate-400">
-              মডেল ডাউনলোড শেষ হলে আপনার প্রথম প্রশ্ন করুন।
+            <div className="offline-empty-state">
+              Model initialization is in progress. Your chat will open once ready.
             </div>
           ) : (
             messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[90%] rounded-xl px-4 py-3 text-sm shadow-sm md:max-w-[80%] ${
-                    message.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "border border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  }`}>
-                  <p className="whitespace-pre-wrap break-words">
-                    {message.content}
-                  </p>
-                  <p className="mt-2 text-[10px] opacity-70">
-                    {message.timestamp.toLocaleTimeString()}
-                  </p>
-                </div>
+                className={`offline-bubble-row ${message.role === "user" ? "user" : "assistant"}`}>
+                <article
+                  className={`offline-bubble ${message.role === "user" ? "user" : "assistant"}`}>
+                  <p>{message.content}</p>
+                  <time>{message.timestamp.toLocaleTimeString()}</time>
+                </article>
               </div>
             ))
           )}
           <div ref={messagesEndRef} />
-        </div>
+        </section>
 
-        <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAsk();
-                }
-              }}
-              placeholder="প্রশ্ন লিখুন..."
-              disabled={busy || !canAsk}
-              className="h-11 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            />
-            <button
-              onClick={handleAsk}
-              disabled={busy || !canAsk || !input.trim()}
-              className="h-11 rounded-lg bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400">
-              {state === "processing"
-                ? "প্রসেস হচ্ছে..."
-                : "AI-কে জিজ্ঞাসা করুন"}
-            </button>
-          </div>
-        </div>
+        <section className="offline-glass-card offline-input-area">
+          <input
+            type="text"
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                handleAsk();
+              }
+            }}
+            placeholder="Type your question here..."
+            disabled={busy || !canAsk}
+          />
+          <button
+            type="button"
+            onClick={handleAsk}
+            disabled={busy || !canAsk || !input.trim()}>
+            {state === "processing" ? "Thinking..." : "Ask Offline AI"}
+          </button>
+        </section>
       </div>
     </div>
   );

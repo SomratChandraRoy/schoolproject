@@ -1,5 +1,6 @@
 import * as React from "react";
 import { autoInstallForInstalledPWA } from "../services/modelPrefetcher";
+import "../styles/offline-ai-premium.css";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -28,13 +29,11 @@ const PWAInstallPrompt: React.FC = () => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
 
-      // Show install prompt after 30 seconds or on user interaction
+      // Show install prompt after a short delay for better mobile conversion.
       setTimeout(() => {
-        console.log(
-          "[PWAInstallPrompt] Showing install prompt after 30s delay",
-        );
+        console.log("[PWAInstallPrompt] Showing install prompt after delay");
         setShowInstallPrompt(true);
-      }, 30000);
+      }, 8000);
     };
 
     // Listen for app installed event
@@ -89,10 +88,10 @@ const PWAInstallPrompt: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-50 animate-slideUp">
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-2xl p-4 sm:p-6 text-white">
+      <div className="offline-glass-card rounded-2xl p-4 sm:p-6 text-white">
         <div className="flex items-start space-x-4">
           <div className="flex-shrink-0">
-            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+            <div className="w-12 h-12 bg-white/15 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/20">
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -108,20 +107,20 @@ const PWAInstallPrompt: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold mb-1">Install SOPNA</h3>
-            <p className="text-sm text-white/90 mb-4">
-              Install our app for offline access to notes, faster performance,
-              and a better experience!
+            <h3 className="text-lg font-bold mb-1">Install SOPNA PWA</h3>
+            <p className="text-sm text-white/90 mb-4 leading-relaxed">
+              Install now to unlock premium offline AI. After installation,
+              your mobile will automatically start downloading the local model.
             </p>
             <div className="flex space-x-3">
               <button
                 onClick={handleInstallClick}
-                className="px-4 py-2 bg-white text-blue-600 font-medium rounded-lg hover:bg-gray-100 transition-colors">
+                className="px-4 py-2 bg-white text-slate-900 font-semibold rounded-lg hover:bg-cyan-100 transition-colors">
                 Install Now
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 font-medium rounded-lg transition-colors">
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 font-semibold rounded-lg transition-colors">
                 Maybe Later
               </button>
             </div>

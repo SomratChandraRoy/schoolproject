@@ -2,34 +2,51 @@
 import { env, pipeline } from "@xenova/transformers";
 
 env.allowLocalModels = true;
+env.allowRemoteModels = true;
 env.useBrowserCache = true;
 
-const MODEL_CANDIDATES = [
+type ModelCandidate = {
+  id: string;
+  label: string;
+  approxSizeMb: number;
+  minRamGb: number;
+};
+
+const MODEL_CANDIDATES: ModelCandidate[] = [
   {
-    id: "Xenova/mt5-base",
-    label: "mT5-Base (Large Multilingual)",
+    id: "Xenova/LaMini-Flan-T5-248M",
+    label: "LaMini Flan-T5 248M (3GB Mobile Optimized)",
+    approxSizeMb: 620,
+    minRamGb: 3,
+  },
+  {
+    id: "Xenova/flan-t5-small",
+    label: "Flan-T5 Small (Balanced Fallback)",
+    approxSizeMb: 300,
+    minRamGb: 2,
   },
   {
     id: "Xenova/mt5-small",
-    label: "mT5-Small (Multilingual)",
-  },
-  {
-    id: "Xenova/LaMini-Flan-T5-248M",
-    label: "LaMini-Flan-T5-248M",
+    label: "mT5 Small (Multilingual Fallback)",
+    approxSizeMb: 420,
+    minRamGb: 2,
   },
   {
     id: "Xenova/LaMini-Flan-T5-77M",
-    label: "LaMini-Flan-T5-77M",
+    label: "LaMini Flan-T5 77M (Emergency Lite)",
+    approxSizeMb: 130,
+    minRamGb: 1,
   },
 ];
+
 let generator = null;
 let loadingPromise = null;
-let activeModel = null;
+let activeModel: ModelCandidate | null = null;
 
 function formatLoadError(error) {
   const raw = error?.message || String(error || "Unknown load error");
   if (raw.includes("Unexpected token '<'")) {
-    return "মডেল ফাইলের জায়গায় HTML এসেছে, JSON আসেনি। ব্রাউজারের cache/service worker ক্লিয়ার করে আবার চেষ্টা করুন।";
+    return "মডেল ফাইলের জায়গায় HTML এসেছে। ক্যাশ/সার্ভিস ওয়ার্কার ক্লিয়ার করে আবার চেষ্টা করুন।";
   }
   return raw;
 }
@@ -38,12 +55,11 @@ function extractGeneratedText(output) {
   if (Array.isArray(output) && output[0]?.generated_text) {
     return String(output[0].generated_text);
   }
-
   return String(output?.generated_text || "");
 }
 
 function hasBangla(text) {
-  return /[\u0980-\u09FF]/.test(text || "");
+  return /[\u0980-\u09FF]/.test(String(text || ""));
 }
 
 function cleanupResponseText(text) {
@@ -53,6 +69,46 @@ function cleanupResponseText(text) {
     .replace(/^\s*(answer|উত্তর)\s*[:：-]?\s*/i, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+function uniqueCandidatesById(candidates: ModelCandidate[]) {
+  const seen = new Set<string>();
+  const ordered: ModelCandidate[] = [];
+  for (const candidate of candidates) {
+    if (seen.has(candidate.id)) continue;
+    seen.add(candidate.id);
+    ordered.push(candidate);
+  }
+  return ordered;
+}
+
+function resolveModelOrder(payload) {
+  const preferredModelId = String(payload?.preferredModelId || "").trim();
+  const deviceMemoryGb = Number(payload?.deviceMemoryGb || 3);
+
+  const viableByRam = MODEL_CANDIDATES.filter(
+    (candidate) => candidate.minRamGb <= Math.max(1, deviceMemoryGb),
+  );
+
+  const baseOrder = viableByRam.length > 0 ? viableByRam : MODEL_CANDIDATES;
+
+  const prioritized = [...baseOrder];
+  const preferred = MODEL_CANDIDATES.find(
+    (candidate) => candidate.id === preferredModelId,
+  );
+  if (preferred) {
+    prioritized.unshift(preferred);
+  }
+
+  if (deviceMemoryGb <= 3.2) {
+    prioritized.sort((a, b) => a.approxSizeMb - b.approxSizeMb);
+    const mobilePriority = MODEL_CANDIDATES.find(
+      (candidate) => candidate.id === "Xenova/LaMini-Flan-T5-248M",
+    );
+    if (mobilePriority) prioritized.unshift(mobilePriority);
+  }
+
+  return uniqueCandidatesById(prioritized);
 }
 
 async function forceBanglaResponse(answer, question) {
@@ -65,12 +121,11 @@ async function forceBanglaResponse(answer, question) {
     return cleanedAnswer;
   }
 
-  const banglaRetryPrompt = `শুধু বাংলা ভাষায় উত্তর দাও।\nপ্রশ্ন: ${question}\nউত্তর:`;
+  const banglaRetryPrompt = `শুধু প্রাকৃতিক বাংলা ভাষায় উত্তর দাও।\nপ্রশ্ন: ${question}\nউত্তর:`;
   const retryOutput = await generator(banglaRetryPrompt, {
-    max_new_tokens: 280,
-    temperature: 0.1,
+    max_new_tokens: 220,
+    temperature: 0.2,
     do_sample: false,
-    num_beams: 5,
   });
   const retryText = cleanupResponseText(extractGeneratedText(retryOutput));
 
@@ -80,10 +135,9 @@ async function forceBanglaResponse(answer, question) {
 
   const translatePrompt = `নিচের লেখাটি সহজ বাংলায় অনুবাদ করো। শুধুমাত্র অনুবাদ দাও:\n${cleanedAnswer}`;
   const translatedOutput = await generator(translatePrompt, {
-    max_new_tokens: 320,
-    temperature: 0.1,
+    max_new_tokens: 260,
+    temperature: 0.2,
     do_sample: false,
-    num_beams: 5,
   });
   const translatedText = cleanupResponseText(
     extractGeneratedText(translatedOutput),
@@ -96,7 +150,31 @@ async function forceBanglaResponse(answer, question) {
   return "দুঃখিত, মডেলটি এই উত্তরের বাংলা রূপ দিতে পারেনি। অনুগ্রহ করে প্রশ্নটি একটু ছোট করে আবার করুন।";
 }
 
-async function loadModel() {
+async function tryLoadCandidate(candidate, mode) {
+  if (mode === "remote") {
+    env.allowLocalModels = true;
+    env.allowRemoteModels = true;
+  } else {
+    env.allowLocalModels = true;
+    env.allowRemoteModels = false;
+  }
+
+  const loadedPipeline = await pipeline("text2text-generation", candidate.id, {
+    progress_callback: (progress) => {
+      self.postMessage({
+        type: "loading-progress",
+        progress,
+        mode,
+        modelId: candidate.id,
+        modelLabel: candidate.label,
+      });
+    },
+  });
+
+  return loadedPipeline;
+}
+
+async function loadModel(payload = {}) {
   if (generator) {
     self.postMessage({
       type: "ready",
@@ -112,28 +190,17 @@ async function loadModel() {
     return;
   }
 
+  const candidates = resolveModelOrder(payload);
+
   loadingPromise = (async () => {
     self.postMessage({ type: "loading-start" });
 
     const errors = [];
 
-    for (const candidate of MODEL_CANDIDATES) {
+    for (const candidate of candidates) {
       try {
-        // Remote-first to fetch better model if internet is available.
-        env.allowLocalModels = false;
-        env.allowRemoteModels = true;
-        generator = await pipeline("text2text-generation", candidate.id, {
-          progress_callback: (progress) => {
-            self.postMessage({
-              type: "loading-progress",
-              progress,
-              mode: "download",
-              modelId: candidate.id,
-              modelLabel: candidate.label,
-            });
-          },
-        });
-
+        const remotePipeline = await tryLoadCandidate(candidate, "download");
+        generator = remotePipeline;
         activeModel = candidate;
         self.postMessage({
           type: "ready",
@@ -143,22 +210,9 @@ async function loadModel() {
         });
         return;
       } catch (remoteError) {
-        // Local-only fallback for the same candidate.
         try {
-          env.allowLocalModels = true;
-          env.allowRemoteModels = false;
-          generator = await pipeline("text2text-generation", candidate.id, {
-            progress_callback: (progress) => {
-              self.postMessage({
-                type: "loading-progress",
-                progress,
-                mode: "local-fallback",
-                modelId: candidate.id,
-                modelLabel: candidate.label,
-              });
-            },
-          });
-
+          const localPipeline = await tryLoadCandidate(candidate, "local-fallback");
+          generator = localPipeline;
           activeModel = candidate;
           self.postMessage({
             type: "ready",
@@ -179,6 +233,7 @@ async function loadModel() {
       errors.length > 0
         ? `অফলাইন মডেল লোড করা যায়নি। ${errors.join(" | ")}`
         : "অফলাইন মডেল লোড করা যায়নি।";
+
     self.postMessage({
       type: "error",
       stage: "load",
@@ -199,19 +254,32 @@ async function generateAnswer(question) {
     throw new Error("মডেল এখনো লোড হয়নি");
   }
 
-  const prompt = `তুমি একজন অভিজ্ঞ শিক্ষা সহায়ক AI টিউটর।\nতুমি শুধুমাত্র বাংলা ভাষায় উত্তর দেবে।\nপ্রথমে সরাসরি উত্তর দেবে, তারপর ২-৩ লাইনের সহজ ব্যাখ্যা দেবে।\nপ্রশ্ন: ${question}\nউত্তর:`;
+  const banglaQuestion = hasBangla(question);
+
+  const prompt = banglaQuestion
+    ? `তুমি একজন প্রিমিয়াম অফলাইন AI টিউটর। শুধুমাত্র বাংলা ভাষায় উত্তর দাও।\nসংক্ষিপ্ত এবং নির্ভুল উত্তর দাও, তারপর ছোট ব্যাখ্যা দাও।\nপ্রশ্ন: ${question}\nউত্তর:`
+    : `You are a reliable offline AI tutor. Answer clearly and concisely in natural English.\nQuestion: ${question}\nAnswer:`;
+
   const output = await generator(prompt, {
-    max_new_tokens: 320,
-    temperature: 0.1,
-    do_sample: false,
-    num_beams: 5,
-    repetition_penalty: 1.12,
+    max_new_tokens: 240,
+    temperature: 0.3,
+    do_sample: true,
+    top_p: 0.92,
+    repetition_penalty: 1.15,
   });
 
-  const rawAnswer = extractGeneratedText(output);
-  const banglaAnswer = await forceBanglaResponse(rawAnswer, question);
+  const rawAnswer = cleanupResponseText(extractGeneratedText(output));
+  if (!rawAnswer) {
+    return banglaQuestion
+      ? "দুঃখিত, কোনো উত্তর তৈরি করা যায়নি।"
+      : "Sorry, I could not generate an answer right now.";
+  }
 
-  return banglaAnswer || "দুঃখিত, কোনো উত্তর তৈরি করা যায়নি।";
+  if (banglaQuestion) {
+    return await forceBanglaResponse(rawAnswer, question);
+  }
+
+  return rawAnswer;
 }
 
 self.onmessage = async (event) => {
@@ -219,7 +287,7 @@ self.onmessage = async (event) => {
 
   try {
     if (type === "load") {
-      await loadModel();
+      await loadModel(payload || {});
       return;
     }
 
