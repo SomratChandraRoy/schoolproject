@@ -302,10 +302,15 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Upload limits (aligned with nginx to avoid 413/RequestDataTooBig on large PDF uploads)
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', str(250 * 1024 * 1024)))
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', str(25 * 1024 * 1024)))
+
 # Google Drive Configuration for Chat File Storage
 USE_GOOGLE_DRIVE = env_bool('USE_GOOGLE_DRIVE', False)
 GOOGLE_DRIVE_CREDENTIALS_JSON = os.getenv('GOOGLE_DRIVE_CREDENTIALS_JSON', '')
 GOOGLE_DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID', '')
+GOOGLE_DRIVE_BOOKS_FOLDER_ID = os.getenv('GOOGLE_DRIVE_BOOKS_FOLDER_ID', '').strip() or GOOGLE_DRIVE_FOLDER_ID
 GOOGLE_DRIVE_PUBLIC_FILES = env_bool('GOOGLE_DRIVE_PUBLIC_FILES', True)
 
 # REST Framework settings

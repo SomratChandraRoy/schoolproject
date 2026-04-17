@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { BookOpen, RefreshCcw, Search, Sparkles } from 'lucide-react';
 import EnhancedPDFViewer from '../components/EnhancedPDFViewer';
+import '../styles/books-premium.css';
 
 interface Book {
   id: number;
@@ -9,10 +12,62 @@ interface Book {
   category: string;
   language: string;
   description: string;
-  pdf_file: string;
-  cover_image: string;
+  pdf_file?: string | null;
+  cover_image?: string | null;
+  pdf_url?: string | null;
+  pdf_view_url?: string | null;
+  cover_image_url?: string | null;
+  drive_download_link?: string | null;
+  drive_view_link?: string | null;
   uploaded_at: string;
+  resolvedPdfUrl?: string;
+  resolvedCoverUrl?: string;
 }
+
+const categories = [
+  { id: 'all', name: 'All Categories' },
+  { id: 'textbook', name: 'Textbooks' },
+  { id: 'story', name: 'Stories' },
+  { id: 'poem', name: 'Poems' },
+  { id: 'poetry', name: 'Poetry' },
+];
+
+const languages = [
+  { id: 'all', name: 'All Languages' },
+  { id: 'en', name: 'English' },
+  { id: 'bn', name: 'বাংলা' },
+];
+
+const classLevels = Array.from({ length: 7 }, (_, i) => i + 6);
+
+const normalizeUrl = (url?: string | null): string => {
+  if (!url) {
+    return '';
+  }
+
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  if (url.startsWith('/')) {
+    return `${window.location.origin}${url}`;
+  }
+
+  return `${window.location.origin}/${url}`;
+};
+
+const normalizeBook = (book: Book): Book => ({
+  ...book,
+  resolvedPdfUrl: normalizeUrl(
+    book.pdf_url || book.drive_download_link || book.pdf_view_url || book.drive_view_link || book.pdf_file,
+  ),
+  resolvedCoverUrl: normalizeUrl(book.cover_image_url || book.cover_image),
+});
+
+const getCategoryLabel = (category: string) => {
+  const match = categories.find((item) => item.id === category);
+  return match ? match.name : category;
+};
 
 const Books: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -23,14 +78,28 @@ const Books: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [expandedBookId, setExpandedBookId] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Get user's class level
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const userClassLevel = user?.class_level;
 
   useEffect(() => {
-    fetchBooks();
+    void fetchBooks();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setExpandedBookId(null);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const fetchBooks = async () => {
@@ -38,89 +107,68 @@ const Books: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       const headers: HeadersInit = {};
+
       if (token) {
-        headers['Authorization'] = `Token ${token}`;
+        headers.Authorization = `Token ${token}`;
       }
 
-      const response = await fetch('/api/books/books/', {
-        headers
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Handle both paginated and non-paginated responses
-        if (Array.isArray(data)) {
-          // Non-paginated response
-          setBooks(data);
-        } else if (data.results && Array.isArray(data.results)) {
-          // Paginated response
-          setBooks(data.results);
-        } else {
-          // Unexpected format
-          console.error('Unexpected API response format:', data);
-          setBooks([]);
-        }
-
-        setError(null);
-      } else {
-        setError('Failed to load books');
+      const response = await fetch('/api/books/books/', { headers });
+      if (!response.ok) {
+        setError('Failed to load books.');
+        return;
       }
-    } catch (err) {
-      console.error('Error fetching books:', err);
+
+      const data = await response.json();
+      const rawBooks = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+          ? data.results
+          : [];
+
+      setBooks(rawBooks.map((book: Book) => normalizeBook(book)));
+      setError(null);
+    } catch (fetchError) {
+      console.error('Error fetching books:', fetchError);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const categories = [
-    { id: 'all', name: 'All Categories' },
-    { id: 'textbook', name: 'Textbooks' },
-    { id: 'story', name: 'Stories' },
-    { id: 'poem', name: 'Poems' },
-    { id: 'poetry', name: 'Poetry' }
-  ];
+  const filteredBooks = useMemo(() => {
+    return books.filter((book) => {
+      const searchHaystack = [book.title, book.author, book.description, book.category]
+        .join(' ')
+        .toLowerCase();
 
-  const languages = [
-    { id: 'all', name: 'All Languages' },
-    { id: 'en', name: 'English' },
-    { id: 'bn', name: 'বাংলা' }
-  ];
+      const matchesSearch = !searchQuery.trim() || searchHaystack.includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
+      const matchesLanguage = selectedLanguage === 'all' || book.language === selectedLanguage;
+      const matchesClass = selectedClass === 'all' || book.class_level === Number(selectedClass);
 
-  const classLevels = Array.from({ length: 7 }, (_, i) => i + 6); // Classes 6-12
+      return matchesSearch && matchesCategory && matchesLanguage && matchesClass;
+    });
+  }, [books, searchQuery, selectedCategory, selectedLanguage, selectedClass]);
 
-  // Ensure books is always an array before filtering
-  const booksArray = Array.isArray(books) ? books : [];
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    selectedCategory !== 'all' ||
+    selectedLanguage !== 'all' ||
+    selectedClass !== 'all';
 
-  const filteredBooks = booksArray.filter(book => {
-    const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
-    const matchesLanguage = selectedLanguage === 'all' || book.language === selectedLanguage;
-    const matchesClass = selectedClass === 'all' || book.class_level === parseInt(selectedClass);
-    const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesLanguage && matchesClass && matchesSearch;
-  });
-
-  // Get category color
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'textbook': 'bg-blue-200 dark:bg-blue-800',
-      'story': 'bg-green-200 dark:bg-green-800',
-      'poem': 'bg-purple-200 dark:bg-purple-800',
-      'poetry': 'bg-pink-200 dark:bg-pink-800'
-    };
-    return colors[category] || 'bg-gray-200 dark:bg-gray-700';
+  const resetFilters = () => {
+    setSelectedCategory('all');
+    setSelectedLanguage('all');
+    setSelectedClass('all');
+    setSearchQuery('');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="flex justify-center items-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-300">Loading books...</p>
-          </div>
+      <div className="books-premium-page min-h-screen">
+        <div className="books-loader-wrap">
+          <div className="books-loader-ring" />
+          <p className="books-loader-text">Loading your premium library...</p>
         </div>
       </div>
     );
@@ -128,17 +176,13 @@ const Books: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="flex justify-center items-center h-screen">
-          <div className="text-center">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Error Loading Books</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
-            <button
-              onClick={fetchBooks}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Try Again
+      <div className="books-premium-page min-h-screen">
+        <div className="books-loader-wrap">
+          <div className="books-error-panel">
+            <p className="books-error-title">Could not load library</p>
+            <p className="books-error-text">{error}</p>
+            <button type="button" onClick={() => void fetchBooks()} className="books-solid-button">
+              Retry
             </button>
           </div>
         </div>
@@ -147,231 +191,201 @@ const Books: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">📚 Digital Library</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Access NCTB textbooks and educational resources in Bangla and English
-          </p>
-          {userClassLevel && (
-            <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
-              Your Class: {userClassLevel} | Total Books Available: {booksArray.length}
+    <div className="books-premium-page min-h-screen">
+      <div className="books-premium-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 sm:py-10">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="books-glass books-hero-panel">
+          <div>
+            <p className="books-hero-kicker">Digital Library</p>
+            <h1 className="books-hero-title">Premium Reading Vault</h1>
+            <p className="books-hero-subtitle">
+              Cover-first browsing with smooth glass cards. Hover to reveal full details and jump into PDF reading instantly.
             </p>
-          )}
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                🔍 Search
-              </label>
-              <input
-                type="text"
-                id="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Search books..."
-              />
-            </div>
-
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                📖 Category
-              </label>
-              <select
-                id="category"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>{category.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="language" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                🌐 Language
-              </label>
-              <select
-                id="language"
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                {languages.map(language => (
-                  <option key={language.id} value={language.id}>{language.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="class" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                🎓 Class Level
-              </label>
-              <select
-                id="class"
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">All Classes</option>
-                {classLevels.map(level => (
-                  <option key={level} value={level}>Class {level}</option>
-                ))}
-              </select>
-            </div>
           </div>
-
-          {/* Quick Filter: My Class Books */}
-          {userClassLevel && (
-            <div className="mt-4 flex items-center justify-between">
-              <button
-                onClick={() => setSelectedClass(userClassLevel.toString())}
-                className="px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 rounded-lg font-medium transition-colors"
-              >
-                📚 Show My Class Books (Class {userClassLevel})
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedClass('all');
-                  setSelectedCategory('all');
-                  setSelectedLanguage('all');
-                  setSearchQuery('');
-                }}
-                className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
-              >
-                🔄 Reset Filters
-              </button>
+          <div className="books-hero-stats">
+            <div className="books-stat-card">
+              <span>Total Books</span>
+              <strong>{books.length}</strong>
             </div>
-          )}
-        </div>
-
-        {/* Results Count */}
-        <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-          Showing {filteredBooks.length} of {booksArray.length} books
-        </div>
-
-        {/* Books Grid */}
-        {filteredBooks.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBooks.map(book => (
-              <div key={book.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-                {/* Book Cover */}
-                <div className={`${getCategoryColor(book.category)} h-48 flex items-center justify-center relative`}>
-                  {book.cover_image ? (
-                    <img
-                      src={book.cover_image}
-                      alt={book.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-center p-4">
-                      <div className="text-5xl mb-2">📚</div>
-                      <h3 className="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 px-2">{book.title}</h3>
-                    </div>
-                  )}
-                  {/* Class Badge */}
-                  <div className="absolute top-2 right-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-lg">
-                      Class {book.class_level}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Book Info */}
-                <div className="p-4">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2 mb-1">{book.title}</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">by {book.author}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{book.description}</p>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                      {book.category}
-                    </span>
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                      {book.language === 'en' ? 'English' : 'বাংলা'}
-                    </span>
-                  </div>
-
-                  {/* Action Button */}
-                  {book.pdf_file ? (
-                    <button
-                      onClick={() => setSelectedBook(book)}
-                      className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                    >
-                      📖 Read Now
-                    </button>
-                  ) : (
-                    <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-md">
-                      PDF not available
-                    </div>
-                  )}
-                </div>
+            <div className="books-stat-card">
+              <span>Matching</span>
+              <strong>{filteredBooks.length}</strong>
+            </div>
+            {userClassLevel && (
+              <div className="books-stat-card">
+                <span>Your Class</span>
+                <strong>{userClassLevel}</strong>
               </div>
-            ))}
+            )}
           </div>
-        ) : (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-            <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No books found</h3>
-            <p className="mt-2 text-gray-500 dark:text-gray-400">
-              {booksArray.length === 0
-                ? 'No books have been added yet. Please check back later.'
-                : 'Try adjusting your search or filter criteria'}
-            </p>
-            {filteredBooks.length === 0 && booksArray.length > 0 && (
+        </motion.section>
+
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.08 }}
+          className="books-glass books-filter-panel">
+          <div className="books-filter-grid">
+            <label className="books-filter-cell books-search-cell" htmlFor="books-search-input">
+              <Search className="h-4 w-4" />
+              <input
+                id="books-search-input"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search title, author, topic..."
+                className="books-search-input"
+              />
+            </label>
+
+            <label className="books-filter-cell" htmlFor="books-category-select">
+              <span className="books-filter-label">Category</span>
+              <select
+                id="books-category-select"
+                value={selectedCategory}
+                onChange={(event) => setSelectedCategory(event.target.value)}
+                className="books-filter-select">
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="books-filter-cell" htmlFor="books-language-select">
+              <span className="books-filter-label">Language</span>
+              <select
+                id="books-language-select"
+                value={selectedLanguage}
+                onChange={(event) => setSelectedLanguage(event.target.value)}
+                className="books-filter-select">
+                {languages.map((language) => (
+                  <option key={language.id} value={language.id}>
+                    {language.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="books-filter-cell" htmlFor="books-class-select">
+              <span className="books-filter-label">Class</span>
+              <select
+                id="books-class-select"
+                value={selectedClass}
+                onChange={(event) => setSelectedClass(event.target.value)}
+                className="books-filter-select">
+                <option value="all">All Classes</option>
+                {classLevels.map((level) => (
+                  <option key={level} value={level}>
+                    Class {level}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="books-filter-actions">
+            {userClassLevel && (
               <button
-                onClick={() => {
-                  setSelectedClass('all');
-                  setSelectedCategory('all');
-                  setSelectedLanguage('all');
-                  setSearchQuery('');
-                }}
-                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
+                type="button"
+                onClick={() => setSelectedClass(String(userClassLevel))}
+                className="books-soft-button">
+                <Sparkles className="h-4 w-4" />
+                My Class ({userClassLevel})
+              </button>
+            )}
+            {hasActiveFilters && (
+              <button type="button" onClick={resetFilters} className="books-soft-button">
+                <RefreshCcw className="h-4 w-4" />
+                Reset
+              </button>
+            )}
+          </div>
+        </motion.section>
+
+        {filteredBooks.length === 0 ? (
+          <div className="books-glass books-empty-state">
+            <BookOpen className="h-10 w-10" />
+            <h2>No books matched your filters</h2>
+            <p>Try different keywords or reset filters to explore the full collection.</p>
+            {hasActiveFilters && (
+              <button type="button" onClick={resetFilters} className="books-solid-button">
                 Clear Filters
               </button>
             )}
           </div>
-        )}
+        ) : (
+          <div className="books-grid mt-7 sm:mt-9">
+            {filteredBooks.map((book, index) => {
+              const canRead = Boolean(book.resolvedPdfUrl);
+              const overlayOpen = isMobile && expandedBookId === book.id;
 
-        {/* Info Section */}
-        <div className="mt-12 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <svg className="h-6 w-6 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">About Digital Library</h3>
-              <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Access NCTB textbooks and educational resources</li>
-                  <li>Available in both English and Bangla</li>
-                  <li>Books for all classes (6-12)</li>
-                  <li>Read online with our built-in PDF viewer</li>
-                  <li>Bookmark your progress and continue reading later</li>
-                </ul>
-              </div>
-            </div>
+              return (
+                <motion.article
+                  key={book.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.24) }}
+                  className="books-card group"
+                  onClick={() => {
+                    if (isMobile) {
+                      setExpandedBookId((current) => (current === book.id ? null : book.id));
+                    }
+                  }}>
+                  <div className="books-card-media">
+                    {book.resolvedCoverUrl ? (
+                      <img src={book.resolvedCoverUrl} alt={book.title} className="books-cover-image" />
+                    ) : (
+                      <div className="books-cover-fallback">
+                        <BookOpen className="h-9 w-9" />
+                        <p>No cover yet</p>
+                      </div>
+                    )}
+
+                    <div className="books-title-pill">{book.title}</div>
+
+                    <div className={`books-card-overlay ${overlayOpen ? 'is-open' : ''}`}>
+                      <h3>{book.title}</h3>
+                      <p className="books-author-line">By {book.author}</p>
+
+                      <div className="books-meta-row">
+                        <span>Class {book.class_level}</span>
+                        <span>{book.language === 'bn' ? 'বাংলা' : 'English'}</span>
+                        <span>{getCategoryLabel(book.category)}</span>
+                      </div>
+
+                      <p className="books-description-text">
+                        {book.description || 'AI-ready PDF with premium reading and smart assistant support.'}
+                      </p>
+
+                      {canRead ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedBook(book);
+                          }}
+                          className="books-solid-button w-full justify-center">
+                          Open PDF
+                        </button>
+                      ) : (
+                        <div className="books-missing-pill">PDF not uploaded yet</div>
+                      )}
+                    </div>
+                  </div>
+                </motion.article>
+              );
+            })}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Enhanced PDF Viewer Modal with AI Chat */}
-      {selectedBook && selectedBook.pdf_file && (
+      {selectedBook?.resolvedPdfUrl && (
         <EnhancedPDFViewer
-          fileUrl={selectedBook.pdf_file}
+          fileUrl={selectedBook.resolvedPdfUrl}
           fileName={selectedBook.title}
           bookId={selectedBook.id}
           onClose={() => setSelectedBook(null)}
