@@ -37,6 +37,12 @@ class RealtimeVoiceTutorPipeline:
     DEFAULT_LLM_ORDER = ("groq", "alibaba")
     DEFAULT_TTS_ORDER = ("sarvam", "gemini")
     SARVAM_ACCEPTED_MIME_TYPES = {
+        "audio/webm",
+        "audio/ogg",
+        "audio/opus",
+        "audio/mp4",
+        "audio/m4a",
+        "audio/x-m4a",
         "audio/mpeg",
         "audio/mp3",
         "audio/mpeg3",
@@ -267,6 +273,30 @@ class RealtimeVoiceTutorPipeline:
             return fallback
         # MediaRecorder often sends codec-qualified values like audio/webm;codecs=opus.
         return raw.split(";", 1)[0].strip() or fallback
+
+    def _audio_filename_for_mime(self, normalized_mime: str) -> str:
+        extension_by_mime = {
+            "audio/webm": ".webm",
+            "audio/ogg": ".ogg",
+            "audio/opus": ".opus",
+            "audio/mp4": ".mp4",
+            "audio/m4a": ".m4a",
+            "audio/x-m4a": ".m4a",
+            "audio/mpeg": ".mp3",
+            "audio/mp3": ".mp3",
+            "audio/wav": ".wav",
+            "audio/x-wav": ".wav",
+            "audio/wave": ".wav",
+            "audio/aac": ".aac",
+            "audio/x-aac": ".aac",
+            "audio/aiff": ".aiff",
+            "audio/l16": ".pcm",
+            "audio/pcm_s16le": ".pcm",
+            "audio/raw": ".raw",
+        }
+
+        extension = extension_by_mime.get(normalized_mime, ".bin")
+        return f"voice-input{extension}"
 
     def _build_system_prompt(
         self,
@@ -512,31 +542,68 @@ class RealtimeVoiceTutorPipeline:
         language_code = str(provider_settings.get("sarvam_stt_language") or "bn-IN")
         timeout_seconds = self._safe_int(provider_settings.get("voice_stt_timeout_seconds"), 35)
 
-        normalized_mime = self._normalized_mime_type(mime_type, fallback="application/octet-stream")
-        upload_mime = (
-            normalized_mime
-            if normalized_mime in self.SARVAM_ACCEPTED_MIME_TYPES
-            else "application/octet-stream"
+        normalized_mime = self._normalized_mime_type(
+            mime_type,
+            fallback="application/octet-stream",
         )
+        upload_filename = self._audio_filename_for_mime(normalized_mime)
 
-        files = {
-            "file": ("voice-input.bin", audio_bytes, upload_mime),
-        }
-        data = {
-            "language_code": language_code,
-        }
+        mime_attempts: List[str] = []
+        if normalized_mime:
+            mime_attempts.append(normalized_mime)
+
+        if "application/octet-stream" not in mime_attempts:
+            mime_attempts.append("application/octet-stream")
+
         headers = {
             "Authorization": f"Bearer {api_key}",
             "api-subscription-key": api_key,
         }
 
-        response = requests.post(
-            url,
-            headers=headers,
-            files=files,
-            data=data,
-            timeout=timeout_seconds,
-        )
+        response = None
+        last_response = None
+        for upload_mime in mime_attempts:
+            effective_mime = (
+                upload_mime
+                if upload_mime in self.SARVAM_ACCEPTED_MIME_TYPES
+                else "application/octet-stream"
+            )
+            files = {
+                "file": (upload_filename, audio_bytes, effective_mime),
+            }
+            data = {
+                "language_code": language_code,
+            }
+
+            current_response = requests.post(
+                url,
+                headers=headers,
+                files=files,
+                data=data,
+                timeout=timeout_seconds,
+            )
+
+            if current_response.status_code == 200:
+                response = current_response
+                break
+
+            last_response = current_response
+            response_text = (current_response.text or "").lower()
+            decode_error = (
+                "corrupt" in response_text
+                or "unsupported" in response_text
+                or "decode" in response_text
+                or "invalid file" in response_text
+            )
+
+            if not decode_error:
+                break
+
+        if response is None and last_response is not None:
+            response = last_response
+
+        if response is None:
+            raise RuntimeError("Sarvam STT request did not produce a response")
 
         if response.status_code != 200:
             raise RuntimeError(f"Sarvam STT error: {response.status_code} - {response.text[:300]}")

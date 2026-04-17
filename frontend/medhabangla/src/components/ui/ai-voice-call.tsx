@@ -59,15 +59,20 @@ interface ProviderTrace {
   tts?: string | null;
 }
 
-const VAD_RMS_THRESHOLD = 0.012;
-const VAD_SILENCE_COMMIT_MS = 900;
-const VAD_MAX_TURN_MS = 9000;
-const MIN_AUTO_COMMIT_SPEECH_MS = 260;
-const FORCE_AUTO_COMMIT_MS = 12000;
+const VAD_RMS_THRESHOLD = 0.0095;
+const VAD_SILENCE_COMMIT_MS = 1200;
+const VAD_MAX_TURN_MS = 12000;
+const MIN_AUTO_COMMIT_SPEECH_MS = 220;
+const FORCE_AUTO_COMMIT_MS = 15000;
 const MIN_SPEECH_FRAMES = 2;
 const RECORDER_TIMESLICE_MS = 280;
 const MIN_COMMIT_BLOB_BYTES_COMPRESSED = 120;
 const MIN_COMMIT_BLOB_BYTES_PCM = 640;
+const VAD_DYNAMIC_THRESHOLD_MIN = 0.006;
+const VAD_DYNAMIC_THRESHOLD_MAX = 0.03;
+const VAD_DYNAMIC_MARGIN = 0.0048;
+const VAD_NOISE_FLOOR_ALPHA = 0.08;
+const VAD_NOISE_FLOOR_WARMUP_ALPHA = 0.2;
 
 const AIVoiceCall: React.FC = () => {
   const navigate = useNavigate();
@@ -91,6 +96,8 @@ const AIVoiceCall: React.FC = () => {
   const speechStartAtRef = useRef<number | null>(null);
   const speechFramesRef = useRef(0);
   const hasSpeechRef = useRef(false);
+  const noiseFloorRmsRef = useRef(VAD_DYNAMIC_THRESHOLD_MIN);
+  const dynamicVadThresholdRef = useRef(VAD_RMS_THRESHOLD);
   const isTurnProcessingRef = useRef(false);
   const isTtsPlaybackActiveRef = useRef(false);
 
@@ -202,6 +209,8 @@ const AIVoiceCall: React.FC = () => {
     speechStartAtRef.current = null;
     speechFramesRef.current = 0;
     hasSpeechRef.current = false;
+    noiseFloorRmsRef.current = VAD_DYNAMIC_THRESHOLD_MIN;
+    dynamicVadThresholdRef.current = VAD_RMS_THRESHOLD;
     isTurnProcessingRef.current = false;
     isTtsPlaybackActiveRef.current = false;
 
@@ -788,7 +797,9 @@ const AIVoiceCall: React.FC = () => {
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
-        channelCount: 1,
+        channelCount: { ideal: 1 },
+        sampleRate: { ideal: 48000 },
+        sampleSize: { ideal: 16 },
       },
     });
     mediaStreamRef.current = stream;
@@ -799,6 +810,8 @@ const AIVoiceCall: React.FC = () => {
     speechStartAtRef.current = null;
     speechFramesRef.current = 0;
     hasSpeechRef.current = false;
+    noiseFloorRmsRef.current = VAD_DYNAMIC_THRESHOLD_MIN;
+    dynamicVadThresholdRef.current = VAD_RMS_THRESHOLD;
 
     const InputAudioContextCtor =
       window.AudioContext || (window as any).webkitAudioContext;
@@ -877,8 +890,34 @@ const AIVoiceCall: React.FC = () => {
         }
 
         const rms = Math.sqrt(sumSquares / dataArray.length);
+        const currentThreshold = Math.max(
+          VAD_DYNAMIC_THRESHOLD_MIN,
+          dynamicVadThresholdRef.current,
+        );
 
-        if (rms >= VAD_RMS_THRESHOLD) {
+        // Adapt threshold based on ambient floor so quieter microphones are still detected.
+        if (rms < currentThreshold) {
+          const alpha = hasSpeechRef.current
+            ? VAD_NOISE_FLOOR_ALPHA
+            : VAD_NOISE_FLOOR_WARMUP_ALPHA;
+          noiseFloorRmsRef.current =
+            noiseFloorRmsRef.current * (1 - alpha) + rms * alpha;
+
+          dynamicVadThresholdRef.current = Math.min(
+            VAD_DYNAMIC_THRESHOLD_MAX,
+            Math.max(
+              VAD_DYNAMIC_THRESHOLD_MIN,
+              noiseFloorRmsRef.current + VAD_DYNAMIC_MARGIN,
+            ),
+          );
+        }
+
+        const effectiveThreshold = Math.max(
+          VAD_DYNAMIC_THRESHOLD_MIN,
+          dynamicVadThresholdRef.current,
+        );
+
+        if (rms >= effectiveThreshold) {
           speechFramesRef.current += 1;
           if (speechFramesRef.current >= MIN_SPEECH_FRAMES) {
             hasSpeechRef.current = true;
