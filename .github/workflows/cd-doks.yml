@@ -143,12 +143,6 @@ jobs:
           kubectl -n "${K8S_NAMESPACE}" set image deployment/web nginx="${{ steps.vars.outputs.nginx_image }}"
           kubectl -n "${K8S_NAMESPACE}" set env deployment/web SENTRY_RELEASE="${{ steps.vars.outputs.short_sha }}" --containers=backend
 
-      - name: Restart workloads to clear stale rollout conditions
-        run: |
-          kubectl -n "${K8S_NAMESPACE}" rollout restart deployment/postgres
-          kubectl -n "${K8S_NAMESPACE}" rollout restart deployment/redis
-          kubectl -n "${K8S_NAMESPACE}" rollout restart deployment/web
-
       - name: Wait for rollout
         run: |
           kubectl -n "${K8S_NAMESPACE}" rollout status deployment/postgres --timeout=900s

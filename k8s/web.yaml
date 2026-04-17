@@ -44,6 +44,20 @@ spec:
       labels:
         app: web
     spec:
+      # Backend runs as non-root inside the image and needs write access to mounted
+      # media/static volumes for collectstatic and uploads.
+      initContainers:
+        - name: init-web-volume-permissions
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - mkdir -p /app/media /app/staticfiles && chmod -R 0777 /app/media /app/staticfiles
+          volumeMounts:
+            - name: backend-media
+              mountPath: /app/media
+            - name: backend-static
+              mountPath: /app/staticfiles
       imagePullSecrets:
         - name: docr-auth
       containers:
@@ -65,7 +79,9 @@ spec:
           startupProbe:
             tcpSocket:
               port: 8000
-            failureThreshold: 60
+            # Backend startup runs migrations + collectstatic before opening port 8000.
+            # Allow longer warm-up to avoid premature restart loops.
+            failureThreshold: 180
             periodSeconds: 5
           readinessProbe:
             tcpSocket:
