@@ -65,6 +65,8 @@ const VAD_MAX_TURN_MS = 9000;
 const MIN_AUTO_COMMIT_SPEECH_MS = 420;
 const FORCE_AUTO_COMMIT_MS = 12000;
 const MIN_SPEECH_FRAMES = 3;
+const MIN_COMMIT_BLOB_BYTES_COMPRESSED = 120;
+const MIN_COMMIT_BLOB_BYTES_PCM = 640;
 
 const AIVoiceCall: React.FC = () => {
   const navigate = useNavigate();
@@ -88,6 +90,7 @@ const AIVoiceCall: React.FC = () => {
   const speechFramesRef = useRef(0);
   const hasSpeechRef = useRef(false);
   const isTurnProcessingRef = useRef(false);
+  const isTtsPlaybackActiveRef = useRef(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [composerValue, setComposerValue] = useState("");
@@ -197,6 +200,7 @@ const AIVoiceCall: React.FC = () => {
     speechFramesRef.current = 0;
     hasSpeechRef.current = false;
     isTurnProcessingRef.current = false;
+    isTtsPlaybackActiveRef.current = false;
 
     if (inputAudioContextRef.current) {
       void inputAudioContextRef.current.close();
@@ -253,6 +257,7 @@ const AIVoiceCall: React.FC = () => {
         return;
       }
 
+      isTtsPlaybackActiveRef.current = true;
       setVoiceState("speaking");
       duckMicrophone();
 
@@ -304,6 +309,7 @@ const AIVoiceCall: React.FC = () => {
         console.warn("WebAudio decode failed, using HTMLAudio fallback", error);
         await playWithElement();
       } finally {
+        isTtsPlaybackActiveRef.current = false;
         restoreMicrophone();
         resolveIdleState();
       }
@@ -327,6 +333,7 @@ const AIVoiceCall: React.FC = () => {
         return;
       }
 
+      isTtsPlaybackActiveRef.current = true;
       setVoiceState("speaking");
       duckMicrophone();
 
@@ -364,11 +371,36 @@ const AIVoiceCall: React.FC = () => {
         window.speechSynthesis.speak(utterance);
       });
 
+      isTtsPlaybackActiveRef.current = false;
       restoreMicrophone();
       resolveIdleState();
     },
     [duckMicrophone, resolveIdleState, restoreMicrophone],
   );
+
+  const minCommitBlobBytesForMime = useCallback((mimeType: string) => {
+    const normalized = String(mimeType || "").toLowerCase();
+    if (
+      normalized.includes("webm") ||
+      normalized.includes("mp4") ||
+      normalized.includes("aac") ||
+      normalized.includes("mpeg") ||
+      normalized.includes("mp3")
+    ) {
+      return MIN_COMMIT_BLOB_BYTES_COMPRESSED;
+    }
+
+    if (
+      normalized.includes("wav") ||
+      normalized.includes("pcm") ||
+      normalized.includes("l16") ||
+      normalized.includes("raw")
+    ) {
+      return MIN_COMMIT_BLOB_BYTES_PCM;
+    }
+
+    return MIN_COMMIT_BLOB_BYTES_COMPRESSED;
+  }, []);
 
   const enqueueAudio = useCallback(
     (audioBase64?: string | null, audioMimeType?: string | null) => {
@@ -519,6 +551,31 @@ const AIVoiceCall: React.FC = () => {
       )
         .split(";", 1)[0]
         .trim();
+
+      const minCommitBytes = minCommitBlobBytesForMime(normalizedMimeType);
+      if (finalizedBlob.size < minCommitBytes) {
+        console.info("Skipping tiny voice commit", {
+          source,
+          bytes: finalizedBlob.size,
+          mime: normalizedMimeType,
+          minCommitBytes,
+        });
+        isTurnProcessingRef.current = false;
+        pendingAudioBytesRef.current = 0;
+        lastRecorderBlobRef.current = null;
+        captureStartedAtRef.current = null;
+        lastSpeechAtRef.current = 0;
+        speechStartAtRef.current = null;
+        speechFramesRef.current = 0;
+        hasSpeechRef.current = false;
+        resolveIdleState();
+
+        if (mediaStreamRef.current && sessionActiveRef.current) {
+          startRecorderStreaming(mediaStreamRef.current);
+        }
+
+        return false;
+      }
 
       pendingAudioBytesRef.current = finalizedBlob.size;
 
@@ -752,7 +809,8 @@ const AIVoiceCall: React.FC = () => {
         if (
           !sessionActiveRef.current ||
           micMutedRef.current ||
-          isTurnProcessingRef.current
+          isTurnProcessingRef.current ||
+          isTtsPlaybackActiveRef.current
         ) {
           return;
         }

@@ -166,7 +166,6 @@ class AIVoiceTutorConsumer(AsyncWebsocketConsumer):
                 len(audio_bytes),
                 min_payload,
             )
-            await self._send_error("Voice input too short. Please speak a little longer.")
             await self._send_status("listening")
             return
 
