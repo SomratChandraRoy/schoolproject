@@ -1,8 +1,87 @@
 #!/bin/sh
 set -eu
 
+wait_for_postgres() {
+    use_sqlite="$(printf '%s' "${USE_SQLITE:-False}" | tr '[:upper:]' '[:lower:]')"
+    if [ "$use_sqlite" = "true" ] || [ -z "${DB_HOST:-}" ]; then
+        echo "[entrypoint] PostgreSQL wait skipped (USE_SQLITE=true or DB_HOST missing)."
+        return 0
+    fi
+
+    echo "[entrypoint] Waiting for PostgreSQL to become reachable..."
+    attempts=0
+    max_attempts=60
+
+    while [ "$attempts" -lt "$max_attempts" ]; do
+        if python - <<'PY'
+import os
+import sys
+
+import psycopg2
+
+try:
+        conn = psycopg2.connect(
+                host=os.getenv("DB_HOST", ""),
+                port=os.getenv("DB_PORT", "5432"),
+                dbname=os.getenv("DB_NAME", "postgres"),
+                user=os.getenv("DB_USER", "postgres"),
+                password=os.getenv("DB_PASSWORD", ""),
+                connect_timeout=5,
+                sslmode=os.getenv("DB_SSLMODE", "prefer"),
+        )
+        conn.close()
+except Exception:
+        sys.exit(1)
+
+sys.exit(0)
+PY
+        then
+            echo "[entrypoint] PostgreSQL is reachable."
+            return 0
+        fi
+
+        attempts=$((attempts + 1))
+        echo "[entrypoint] PostgreSQL not ready yet (${attempts}/${max_attempts}); retrying in 5s..."
+        sleep 5
+    done
+
+    echo "[entrypoint][ERROR] PostgreSQL is not reachable after waiting."
+    return 1
+}
+
+ensure_writable_dir() {
+    dir_path="$1"
+    test_file="${dir_path}/.write-test"
+
+    if touch "$test_file" 2>/dev/null; then
+        rm -f "$test_file"
+        return 0
+    fi
+
+    echo "[entrypoint][ERROR] Directory is not writable: ${dir_path}"
+    ls -ld "$dir_path" || true
+    return 1
+}
+
+wait_for_postgres
+
+echo "[entrypoint] Verifying writable media/static mounts..."
+ensure_writable_dir /app/media
+ensure_writable_dir /app/staticfiles
+
 echo "[entrypoint] Running database migrations..."
-python manage.py migrate --noinput
+migration_attempt=0
+max_migration_attempts=5
+until python manage.py migrate --noinput; do
+    migration_attempt=$((migration_attempt + 1))
+    if [ "$migration_attempt" -ge "$max_migration_attempts" ]; then
+        echo "[entrypoint][ERROR] Database migrations failed after ${max_migration_attempts} attempts."
+        exit 1
+    fi
+
+    echo "[entrypoint] Migration attempt ${migration_attempt} failed; retrying in 10s..."
+    sleep 10
+done
 
 echo "[entrypoint] Collecting static files..."
 python manage.py collectstatic --noinput
