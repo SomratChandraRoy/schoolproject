@@ -267,13 +267,55 @@ class RealtimeVoiceTutorPipeline:
 
     def _transcribe_with_deepgram(self, audio_bytes: bytes, mime_type: str, api_key: str) -> str:
         url = os.getenv("DEEPGRAM_STT_URL", "https://api.deepgram.com/v1/listen")
+        language = os.getenv("DEEPGRAM_STT_LANGUAGE", "bn")
         model = os.getenv("DEEPGRAM_STT_MODEL", "general")
+        configured_tier = (os.getenv("DEEPGRAM_STT_TIER", "") or "").strip()
+
         params = {
-            "model": model,
-            "language": os.getenv("DEEPGRAM_STT_LANGUAGE", "bn"),
+            "model": (model or "general").strip() or "general",
+            "language": language,
             "smart_format": "true",
             "punctuate": "true",
         }
+
+        def _attempts_for_language(active_params: Dict[str, str]) -> List[Dict[str, str]]:
+            attempts: List[Dict[str, str]] = []
+
+            def _append(candidate: Dict[str, str]):
+                cleaned = {
+                    key: str(value).strip()
+                    for key, value in candidate.items()
+                    if value is not None and str(value).strip()
+                }
+                if cleaned and cleaned not in attempts:
+                    attempts.append(cleaned)
+
+            _append(active_params)
+
+            language_code = (active_params.get("language") or "").lower()
+            model_name = (active_params.get("model") or "").lower()
+
+            if language_code.startswith("bn"):
+                # Bangla is not supported on legacy nova-2 configs.
+                if model_name in {"nova-2", "nova2", "nova"}:
+                    _append(
+                        {
+                            **active_params,
+                            "model": "general",
+                            "tier": configured_tier or "nova-3",
+                        }
+                    )
+
+                _append(
+                    {
+                        **active_params,
+                        "model": "general",
+                        "tier": configured_tier or "nova-3",
+                    }
+                )
+                _append({**active_params, "model": "general"})
+
+            return attempts
 
         content_type = self._normalized_mime_type(mime_type, fallback="audio/webm")
 
@@ -289,18 +331,26 @@ class RealtimeVoiceTutorPipeline:
                 timeout=35,
             )
 
-        response = _post_with_params(params)
+        response = None
+        attempts = _attempts_for_language(params)
 
-        # Deepgram returns a deterministic 400 for unsupported model/language combinations.
-        # Retry once with model=general for Bangla compatibility.
-        if (
-            response.status_code == 400
-            and "No such model/language/tier combination" in response.text
-            and params.get("model") != "general"
-        ):
-            retry_params = dict(params)
-            retry_params["model"] = "general"
-            response = _post_with_params(retry_params)
+        for index, attempt in enumerate(attempts):
+            current_response = _post_with_params(attempt)
+            if current_response.status_code == 200:
+                response = current_response
+                break
+
+            is_model_combo_error = (
+                current_response.status_code == 400
+                and "No such model/language/tier combination" in current_response.text
+            )
+
+            if not is_model_combo_error or index == len(attempts) - 1:
+                response = current_response
+                break
+
+        if response is None:
+            raise RuntimeError("Deepgram STT request did not produce a response")
 
         if response.status_code != 200:
             raise RuntimeError(f"Deepgram STT error: {response.status_code} - {response.text[:300]}")
