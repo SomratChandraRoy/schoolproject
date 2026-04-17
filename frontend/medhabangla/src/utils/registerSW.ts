@@ -1,5 +1,13 @@
 // Service Worker Registration Utility
 
+const SW_RELOAD_FLAG_KEY = "sopna-sw-reloaded-once";
+const SW_UPDATE_INTERVAL_MS = 5 * 60 * 1000;
+
+function activateWorker(worker: ServiceWorker | null | undefined) {
+  if (!worker) return;
+  worker.postMessage({ type: "SKIP_WAITING" });
+}
+
 export function registerServiceWorker() {
   if (import.meta.env.DEV) {
     console.log("Skipping service worker registration in development mode");
@@ -13,10 +21,28 @@ export function registerServiceWorker() {
         .then((registration) => {
           console.log("SW registered:", registration);
 
+          // If an updated worker is already waiting, activate it immediately.
+          activateWorker(registration.waiting);
+
+          // Trigger an immediate update check after registration.
+          registration.update().catch((error) => {
+            console.warn("Initial SW update check failed:", error);
+          });
+
           // Check for updates periodically
-          setInterval(() => {
-            registration.update();
-          }, 60000); // Check every minute
+          const updateInterval = window.setInterval(() => {
+            registration.update().catch((error) => {
+              console.warn("Periodic SW update check failed:", error);
+            });
+          }, SW_UPDATE_INTERVAL_MS);
+
+          window.addEventListener(
+            "beforeunload",
+            () => {
+              window.clearInterval(updateInterval);
+            },
+            { once: true },
+          );
 
           // Handle updates
           registration.addEventListener("updatefound", () => {
@@ -27,11 +53,8 @@ export function registerServiceWorker() {
                   newWorker.state === "installed" &&
                   navigator.serviceWorker.controller
                 ) {
-                  // New service worker available
-                  if (confirm("New version available! Reload to update?")) {
-                    newWorker.postMessage({ type: "SKIP_WAITING" });
-                    window.location.reload();
-                  }
+                  // Always activate latest worker to avoid stale offline behavior.
+                  activateWorker(newWorker);
                 }
               });
             }
@@ -43,6 +66,11 @@ export function registerServiceWorker() {
 
       // Handle controller change
       navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (sessionStorage.getItem(SW_RELOAD_FLAG_KEY) === "1") {
+          return;
+        }
+
+        sessionStorage.setItem(SW_RELOAD_FLAG_KEY, "1");
         window.location.reload();
       });
 

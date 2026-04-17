@@ -32,7 +32,7 @@ interface DownloadProgress {
 
 const MODEL_METADATA_KEY = "sopna-model-metadata-v2";
 const MODEL_AUTO_INSTALL_KEY = "sopna-models-auto-installed-v2";
-const MODEL_CACHE_REPAIR_DONE_KEY = "sopna-model-cache-repair-v1";
+const MODEL_CACHE_REPAIR_DONE_KEY = "sopna-model-cache-repair-v2";
 const PREFETCH_TIMEOUT_MS = 12 * 60 * 1000;
 
 const AVAILABLE_MODELS: ModelPackage[] = [
@@ -114,16 +114,37 @@ export class PWAModelPrefetcher {
     try {
       if ("caches" in window) {
         const cacheNames = await caches.keys();
+        const cleanupTokens = [
+          "offline-model-pack-cache",
+          "transformers-remote-model-cache",
+          "transformers",
+          "huggingface",
+          "model",
+          "workbox",
+        ];
+
         await Promise.all(
           cacheNames
             .filter(
               (name) =>
-                name.includes("offline-model-pack-cache") ||
-                name.includes("transformers-remote-model-cache"),
+                cleanupTokens.some((token) =>
+                  name.toLowerCase().includes(token),
+                ),
             )
             .map((name) => caches.delete(name)),
         );
       }
+
+      // Remove potentially corrupted IndexedDB model stores.
+      ["transformers-cache", "transformers-js", "onnxruntime-web"].forEach(
+        (dbName) => {
+          try {
+            indexedDB.deleteDatabase(dbName);
+          } catch {
+            // Ignore best-effort cleanup failures.
+          }
+        },
+      );
 
       // Reset model state so app can redownload clean artifacts.
       localStorage.removeItem(MODEL_METADATA_KEY);

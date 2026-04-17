@@ -89,18 +89,6 @@ export default defineConfig(({ mode }) => {
                 cacheName: "google-fonts-cache",
               },
             },
-            {
-              urlPattern:
-                /^https:\/\/(huggingface\.co|cdn-lfs\.huggingface\.co|cdn\.jsdelivr\.net)\/.*/i,
-              handler: "CacheFirst",
-              options: {
-                cacheName: "transformers-remote-model-cache",
-                expiration: {
-                  maxEntries: 200,
-                  maxAgeSeconds: 60 * 60 * 24 * 90,
-                },
-              },
-            },
           ],
         },
         devOptions: {

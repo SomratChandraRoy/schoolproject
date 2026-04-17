@@ -7,6 +7,28 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+const INSTALL_DISMISS_KEY = "pwa-install-dismissed-at";
+const INSTALL_DISMISS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const INSTALL_PROMPT_DELAY_MS = 6000;
+
+const isStandalone = () =>
+  window.matchMedia("(display-mode: standalone)").matches ||
+  (window.navigator as any).standalone === true;
+
+const wasDismissedRecently = () => {
+  const stored = localStorage.getItem(INSTALL_DISMISS_KEY);
+  if (!stored) {
+    return false;
+  }
+
+  const dismissedAt = Number.parseInt(stored, 10);
+  if (!Number.isFinite(dismissedAt)) {
+    return false;
+  }
+
+  return Date.now() - dismissedAt < INSTALL_DISMISS_WINDOW_MS;
+};
+
 const PWAInstallPrompt: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] =
     React.useState<BeforeInstallPromptEvent | null>(null);
@@ -17,11 +39,18 @@ const PWAInstallPrompt: React.FC = () => {
     console.log("[PWAInstallPrompt] Component mounted");
 
     // Check if already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    if (isStandalone()) {
       console.log("[PWAInstallPrompt] App already installed");
       setIsInstalled(true);
       return;
     }
+
+    if (wasDismissedRecently()) {
+      console.log("[PWAInstallPrompt] Prompt dismissed recently, skipping");
+      return;
+    }
+
+    let promptTimer: number | null = null;
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -29,11 +58,15 @@ const PWAInstallPrompt: React.FC = () => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
 
+      if (promptTimer !== null) {
+        window.clearTimeout(promptTimer);
+      }
+
       // Show install prompt after a short delay for better mobile conversion.
-      setTimeout(() => {
+      promptTimer = window.setTimeout(() => {
         console.log("[PWAInstallPrompt] Showing install prompt after delay");
         setShowInstallPrompt(true);
-      }, 8000);
+      }, INSTALL_PROMPT_DELAY_MS);
     };
 
     // Listen for app installed event
@@ -42,6 +75,7 @@ const PWAInstallPrompt: React.FC = () => {
       setIsInstalled(true);
       setShowInstallPrompt(false);
       setDeferredPrompt(null);
+      localStorage.removeItem(INSTALL_DISMISS_KEY);
       // Start offline model pack installation in background.
       void autoInstallForInstalledPWA(true);
     };
@@ -55,6 +89,9 @@ const PWAInstallPrompt: React.FC = () => {
         handleBeforeInstallPrompt,
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
+      if (promptTimer !== null) {
+        window.clearTimeout(promptTimer);
+      }
     };
   }, []);
 
@@ -63,22 +100,28 @@ const PWAInstallPrompt: React.FC = () => {
       return;
     }
 
-    // Show the install prompt
-    deferredPrompt.prompt();
+    try {
+      // Show the install prompt
+      await deferredPrompt.prompt();
 
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
 
-    // Clear the deferredPrompt
-    setDeferredPrompt(null);
-    setShowInstallPrompt(false);
+      if (outcome === "dismissed") {
+        localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+      }
+    } finally {
+      // Clear the deferredPrompt
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    }
   };
 
   const handleDismiss = () => {
     setShowInstallPrompt(false);
     // Show again after 7 days
-    localStorage.setItem("pwa-install-dismissed", Date.now().toString());
+    localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
   };
 
   // Don't show if already installed or dismissed recently
@@ -87,13 +130,35 @@ const PWAInstallPrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-50 animate-slideUp">
-      <div className="offline-glass-card rounded-2xl p-4 sm:p-6 text-white">
-        <div className="flex items-start space-x-4">
-          <div className="flex-shrink-0">
-            <div className="w-12 h-12 bg-white/15 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/20">
+    <div className="pwa-install-shell" role="dialog" aria-live="polite">
+      <div className="pwa-install-aura pwa-install-aura-cyan" />
+      <div className="pwa-install-aura pwa-install-aura-pink" />
+      <div className="pwa-install-popup offline-glass-card">
+        <button
+          onClick={handleDismiss}
+          className="pwa-install-close"
+          aria-label="Close install prompt">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <p className="pwa-install-tag">Premium Offline Ready</p>
+
+        <div className="pwa-install-main">
+          <div className="pwa-install-icon-wrap">
+            <div className="pwa-install-icon">
               <svg
-                className="w-6 h-6"
+                className="w-7 h-7"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -101,47 +166,38 @@ const PWAInstallPrompt: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                  d="M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2zm5 4v5m0 0l-2-2m2 2l2-2"
                 />
               </svg>
             </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold mb-1">Install SOPNA PWA</h3>
-            <p className="text-sm text-white/90 mb-4 leading-relaxed">
-              Install now to unlock premium offline AI. After installation,
-              your mobile will automatically start downloading the local model.
+
+          <div className="pwa-install-copy">
+            <h3 className="pwa-install-title">Install SOPNA App</h3>
+            <p className="pwa-install-description">
+              Install once, then your phone auto-downloads the offline AI model
+              so answers keep working even with unstable internet.
             </p>
-            <div className="flex space-x-3">
+
+            <div className="pwa-install-points" aria-hidden="true">
+              <span>Faster startup</span>
+              <span>Offline AI chat</span>
+              <span>Premium mobile mode</span>
+            </div>
+
+            <div className="pwa-install-actions">
               <button
                 onClick={handleInstallClick}
-                className="px-4 py-2 bg-white text-slate-900 font-semibold rounded-lg hover:bg-cyan-100 transition-colors">
-                Install Now
+                className="pwa-install-primary">
+                Install and Continue
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 font-semibold rounded-lg transition-colors">
-                Maybe Later
+                className="pwa-install-secondary">
+                Later
               </button>
             </div>
           </div>
-          <button
-            onClick={handleDismiss}
-            className="flex-shrink-0 text-white/80 hover:text-white"
-            aria-label="Close">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
         </div>
       </div>
     </div>
