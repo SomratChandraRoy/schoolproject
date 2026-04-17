@@ -9,11 +9,25 @@ from .models import (
     UserProfile,
     ConversationThread,
     Message,
+    VoiceConversationSession,
+    VoiceConversationMessage,
+    VoiceQuizSession,
+    VoiceQuizQuestion,
+    VoiceQuizAnswer,
+    ConversationSummary,
 )
 
 @admin.register(ProviderSettings)
 class ProviderSettingsAdmin(ModelAdmin):
-    list_display = ('provider', 'updated_at', 'updated_by')
+    list_display = (
+        'provider',
+        'voice_stt_provider',
+        'voice_llm_provider',
+        'voice_tts_provider',
+        'voice_fast_mode',
+        'updated_at',
+        'updated_by',
+    )
     fieldsets = (
         ('Global / Fallback Provider', {
             'fields': ('provider',)
@@ -31,6 +45,36 @@ class ProviderSettingsAdmin(ModelAdmin):
                 'chat_page_provider',
             ),
             'description': 'Configure which specific AI model provider should run for which feature.'
+        }),
+        ('Voice Runtime Controls', {
+            'fields': (
+                'voice_stt_provider_order',
+                'voice_llm_provider_order',
+                'voice_tts_provider_order',
+                'voice_fast_mode',
+                'voice_force_bangla',
+                'voice_response_max_chars',
+                'voice_stt_timeout_seconds',
+                'voice_llm_timeout_seconds',
+                'voice_tts_timeout_seconds',
+            ),
+            'description': 'Fine-tune voice speed, fallback order, and timeout behavior for realtime calls.'
+        }),
+        ('Voice API Endpoints & Model Configuration', {
+            'fields': (
+                'deepgram_stt_url',
+                'deepgram_stt_language',
+                'deepgram_stt_model',
+                'deepgram_stt_tier',
+                'sarvam_stt_url',
+                'sarvam_stt_language',
+                'sarvam_tts_url',
+                'sarvam_tts_language',
+                'sarvam_tts_speaker',
+                'gemini_tts_url',
+                'gemini_tts_voice',
+            ),
+            'description': 'Complete API-level customization for Bangla voice STT/LLM/TTS orchestration.'
         }),
         ('API Keys (Gemini, Groq, Alibaba, Deepgram, Sarvam, ElevenLabs)', {
             'fields': (
@@ -88,6 +132,74 @@ class ThreadMessageAdmin(ModelAdmin):
     list_filter = ('role', 'created_at')
     search_fields = ('thread__user_profile__user__username', 'content')
     readonly_fields = ('created_at',)
+
+
+@admin.register(VoiceConversationSession)
+class VoiceConversationSessionAdmin(ModelAdmin):
+    list_display = (
+        'session_id',
+        'user',
+        'mode',
+        'subject',
+        'is_active',
+        'started_at',
+        'ended_at',
+        'total_questions_asked',
+    )
+    list_filter = ('mode', 'is_active', 'started_at', 'ended_at')
+    search_fields = ('session_id', 'user__username', 'user__email', 'subject', 'topic')
+    readonly_fields = ('session_id', 'started_at', 'ended_at', 'created_at', 'updated_at')
+
+
+@admin.register(VoiceConversationMessage)
+class VoiceConversationMessageAdmin(ModelAdmin):
+    list_display = ('id', 'session', 'message_type', 'is_user_message', 'confidence_score', 'timestamp')
+    list_filter = ('message_type', 'is_user_message', 'timestamp')
+    search_fields = ('session__session_id', 'session__user__username', 'message_text', 'transcript', 'ai_response')
+    readonly_fields = ('timestamp',)
+
+
+@admin.register(VoiceQuizSession)
+class VoiceQuizSessionAdmin(ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'quiz_type',
+        'subject',
+        'difficulty',
+        'questions_answered',
+        'correct_answers',
+        'score_percentage',
+        'is_completed',
+        'started_at',
+    )
+    list_filter = ('quiz_type', 'difficulty', 'is_completed', 'started_at')
+    search_fields = ('user__username', 'subject', 'topic')
+    readonly_fields = ('started_at', 'ended_at', 'created_at', 'updated_at')
+
+
+@admin.register(VoiceQuizQuestion)
+class VoiceQuizQuestionAdmin(ModelAdmin):
+    list_display = ('quiz_session', 'question_number', 'question_type', 'correct_option', 'created_at')
+    list_filter = ('question_type', 'created_at')
+    search_fields = ('quiz_session__user__username', 'question_text', 'correct_answer')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(VoiceQuizAnswer)
+class VoiceQuizAnswerAdmin(ModelAdmin):
+    list_display = ('quiz_question', 'user', 'answer_type', 'is_correct', 'score_points', 'answered_at')
+    list_filter = ('answer_type', 'is_correct', 'answered_at')
+    search_fields = ('user__username', 'answer_text', 'transcript', 'ai_evaluation')
+    readonly_fields = ('answered_at',)
+
+
+@admin.register(ConversationSummary)
+class ConversationSummaryAdmin(ModelAdmin):
+    list_display = ('id', 'user', 'voice_session', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('user__username', 'summary_text')
+    readonly_fields = ('created_at', 'updated_at')
 
 @admin.register(AIChatSession)
 class AIChatSessionAdmin(ModelAdmin):

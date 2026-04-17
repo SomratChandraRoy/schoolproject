@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from accounts.models import User
 from quizzes.models import Quiz
 
@@ -66,6 +67,110 @@ class AIProviderSettings(models.Model):
         choices=VOICE_TTS_PROVIDER_CHOICES,
         default='auto',
         help_text='Text-to-speech provider for real-time AI voice tutor.',
+    )
+    voice_stt_provider_order = models.CharField(
+        max_length=80,
+        default='deepgram,sarvam',
+        help_text='Fallback order for STT providers. Comma-separated (example: deepgram,sarvam).',
+    )
+    voice_llm_provider_order = models.CharField(
+        max_length=80,
+        default='groq,alibaba',
+        help_text='Fallback order for LLM providers. Comma-separated (example: groq,alibaba).',
+    )
+    voice_tts_provider_order = models.CharField(
+        max_length=80,
+        default='sarvam,gemini',
+        help_text='Fallback order for TTS providers. Comma-separated (example: sarvam,gemini).',
+    )
+    voice_fast_mode = models.BooleanField(
+        default=True,
+        help_text='Prefer faster model behavior and shorter response output for voice calls.',
+    )
+    voice_force_bangla = models.BooleanField(
+        default=True,
+        help_text='Keep voice tutor responses in Bangla-first style.',
+    )
+    voice_response_max_chars = models.PositiveIntegerField(
+        default=520,
+        validators=[MinValueValidator(120), MaxValueValidator(2000)],
+        help_text='Maximum response length for voice replies to keep TTS fast.',
+    )
+    voice_stt_timeout_seconds = models.PositiveIntegerField(
+        default=30,
+        validators=[MinValueValidator(5), MaxValueValidator(120)],
+        help_text='Network timeout for STT requests.',
+    )
+    voice_llm_timeout_seconds = models.PositiveIntegerField(
+        default=45,
+        validators=[MinValueValidator(5), MaxValueValidator(180)],
+        help_text='Network timeout for LLM generation requests.',
+    )
+    voice_tts_timeout_seconds = models.PositiveIntegerField(
+        default=35,
+        validators=[MinValueValidator(5), MaxValueValidator(120)],
+        help_text='Network timeout for TTS synthesis requests.',
+    )
+    deepgram_stt_url = models.URLField(
+        max_length=255,
+        default='https://api.deepgram.com/v1/listen',
+        blank=True,
+        help_text='Deepgram STT endpoint URL.',
+    )
+    deepgram_stt_language = models.CharField(
+        max_length=20,
+        default='bn',
+        help_text='Deepgram language code for STT (example: bn).',
+    )
+    deepgram_stt_model = models.CharField(
+        max_length=60,
+        default='general',
+        help_text='Deepgram STT model name.',
+    )
+    deepgram_stt_tier = models.CharField(
+        max_length=40,
+        blank=True,
+        null=True,
+        default='nova-3',
+        help_text='Optional Deepgram STT tier (example: nova-3).',
+    )
+    sarvam_stt_url = models.URLField(
+        max_length=255,
+        default='https://api.sarvam.ai/speech-to-text',
+        blank=True,
+        help_text='Sarvam STT endpoint URL.',
+    )
+    sarvam_stt_language = models.CharField(
+        max_length=20,
+        default='bn-IN',
+        help_text='Sarvam STT language code.',
+    )
+    sarvam_tts_url = models.URLField(
+        max_length=255,
+        default='https://api.sarvam.ai/text-to-speech',
+        blank=True,
+        help_text='Sarvam TTS endpoint URL.',
+    )
+    sarvam_tts_language = models.CharField(
+        max_length=20,
+        default='bn-IN',
+        help_text='Sarvam TTS target language code.',
+    )
+    sarvam_tts_speaker = models.CharField(
+        max_length=60,
+        default='anushka',
+        help_text='Sarvam TTS speaker voice name.',
+    )
+    gemini_tts_url = models.URLField(
+        max_length=255,
+        default='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
+        blank=True,
+        help_text='Gemini TTS endpoint URL.',
+    )
+    gemini_tts_voice = models.CharField(
+        max_length=60,
+        default='Kore',
+        help_text='Gemini TTS voice profile name.',
     )
     study_plan_provider = models.CharField(
         max_length=20, choices=PROVIDER_CHOICES, default='auto',

@@ -59,12 +59,65 @@ class RealtimeVoiceTutorPipeline:
     def __init__(self):
         self.ai_service = get_ai_service()
 
-    def _ordered_providers(self, selected: str, default_order: Tuple[str, ...]) -> List[str]:
-        if selected and selected != "auto" and selected in default_order:
-            return [selected] + [provider for provider in default_order if provider != selected]
-        return list(default_order)
+    def _safe_int(self, value, default: int) -> int:
+        try:
+            if value is None:
+                return default
+            return int(value)
+        except (TypeError, ValueError):
+            return default
 
-    def _provider_settings(self) -> Dict[str, Optional[str]]:
+    def _bool_setting(self, value, default: bool = True) -> bool:
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            return default
+
+        normalized = str(value).strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+        return default
+
+    def _parse_provider_order(
+        self,
+        order_value: Optional[str],
+        default_order: Tuple[str, ...],
+    ) -> List[str]:
+        if not order_value:
+            return list(default_order)
+
+        allowed = set(default_order)
+        seen = set()
+        ordered: List[str] = []
+
+        normalized_text = str(order_value).replace("|", ",")
+        for raw_item in normalized_text.split(","):
+            provider = str(raw_item or "").strip().lower()
+            if not provider or provider not in allowed or provider in seen:
+                continue
+            seen.add(provider)
+            ordered.append(provider)
+
+        for provider in default_order:
+            if provider not in seen:
+                ordered.append(provider)
+
+        return ordered
+
+    def _ordered_providers(
+        self,
+        selected: str,
+        default_order: Tuple[str, ...],
+        custom_order_value: Optional[str] = None,
+    ) -> List[str]:
+        base_order = self._parse_provider_order(custom_order_value, default_order)
+        if selected and selected != "auto" and selected in default_order:
+            return [selected] + [provider for provider in base_order if provider != selected]
+        return base_order
+
+    def _provider_settings(self) -> Dict[str, object]:
         # API keys should be stored in .env and optionally overridden in the admin settings.
         settings_obj = ProviderSettings.get_settings()
         return {
@@ -72,6 +125,26 @@ class RealtimeVoiceTutorPipeline:
             "voice_llm_provider": settings_obj.voice_llm_provider or "auto",
             "voice_tts_provider": settings_obj.voice_tts_provider or "auto",
             "voice_ai_provider": settings_obj.voice_ai_provider or "auto",
+            "voice_stt_provider_order": settings_obj.voice_stt_provider_order or "deepgram,sarvam",
+            "voice_llm_provider_order": settings_obj.voice_llm_provider_order or "groq,alibaba",
+            "voice_tts_provider_order": settings_obj.voice_tts_provider_order or "sarvam,gemini",
+            "voice_fast_mode": settings_obj.voice_fast_mode,
+            "voice_force_bangla": settings_obj.voice_force_bangla,
+            "voice_response_max_chars": settings_obj.voice_response_max_chars,
+            "voice_stt_timeout_seconds": settings_obj.voice_stt_timeout_seconds,
+            "voice_llm_timeout_seconds": settings_obj.voice_llm_timeout_seconds,
+            "voice_tts_timeout_seconds": settings_obj.voice_tts_timeout_seconds,
+            "deepgram_stt_url": settings_obj.deepgram_stt_url or os.getenv("DEEPGRAM_STT_URL") or "https://api.deepgram.com/v1/listen",
+            "deepgram_stt_language": settings_obj.deepgram_stt_language or os.getenv("DEEPGRAM_STT_LANGUAGE") or "bn",
+            "deepgram_stt_model": settings_obj.deepgram_stt_model or os.getenv("DEEPGRAM_STT_MODEL") or "general",
+            "deepgram_stt_tier": settings_obj.deepgram_stt_tier or os.getenv("DEEPGRAM_STT_TIER") or "nova-3",
+            "sarvam_stt_url": settings_obj.sarvam_stt_url or os.getenv("SARVAM_STT_URL") or "https://api.sarvam.ai/speech-to-text",
+            "sarvam_stt_language": settings_obj.sarvam_stt_language or os.getenv("SARVAM_STT_LANGUAGE") or "bn-IN",
+            "sarvam_tts_url": settings_obj.sarvam_tts_url or os.getenv("SARVAM_TTS_URL") or "https://api.sarvam.ai/text-to-speech",
+            "sarvam_tts_language": settings_obj.sarvam_tts_language or os.getenv("SARVAM_TTS_LANGUAGE") or "bn-IN",
+            "sarvam_tts_speaker": settings_obj.sarvam_tts_speaker or os.getenv("SARVAM_TTS_SPEAKER") or "anushka",
+            "gemini_tts_url": settings_obj.gemini_tts_url or os.getenv("GEMINI_TTS_URL") or "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent",
+            "gemini_tts_voice": settings_obj.gemini_tts_voice or os.getenv("GEMINI_TTS_VOICE") or "Kore",
             "deepgram_api_key": settings_obj.deepgram_api_key or getattr(settings, "DEEPGRAM_API_KEY", None) or os.getenv("DEEPGRAM_API_KEY"),
             "sarvam_api_key": settings_obj.sarvam_api_key or getattr(settings, "SARVAM_API_KEY", None) or os.getenv("SARVAM_API_KEY"),
             "alibaba_api_key": settings_obj.alibaba_api_key or getattr(settings, "ALIBABA_API_KEY", None) or os.getenv("ALIBABA_API_KEY"),
@@ -200,6 +273,7 @@ class RealtimeVoiceTutorPipeline:
         session: VoiceConversationSession,
         user_message: str,
         context: Dict,
+        provider_settings: Dict[str, object],
         *,
         thread_snapshot: str = "",
     ) -> str:
@@ -214,6 +288,19 @@ class RealtimeVoiceTutorPipeline:
         session_summary = (session.conversation_summary or "").strip()
         previous_context = (session.previous_session_context or "").strip()
         long_term_memory = (thread_snapshot or "").strip()
+        voice_fast_mode = self._bool_setting(provider_settings.get("voice_fast_mode"), True)
+        voice_force_bangla = self._bool_setting(provider_settings.get("voice_force_bangla"), True)
+        response_max_chars = self._safe_int(provider_settings.get("voice_response_max_chars"), 520)
+
+        if voice_force_bangla:
+            language_policy_line = "শুধু স্বাভাবিক, সাবলীল বাংলা ভাষায় কথা বলবেন।"
+        else:
+            language_policy_line = "বাংলা-প্রথম রাখবেন, প্রয়োজনে সহজ ইংরেজি ব্যাখ্যা যুক্ত করতে পারবেন।"
+
+        if voice_fast_mode:
+            speed_instruction = "দ্রুত ভয়েস আউটপুটের জন্য ২-৪ ছোট অনুচ্ছেদে, পরিষ্কার পয়েন্টে উত্তর দিন।"
+        else:
+            speed_instruction = "প্রয়োজনে ব্যাখ্যা একটু বিস্তারিত দিন, তবে ভয়েসে প্রাকৃতিক রাখুন।"
 
         mode_instructions = {
             "tutor": "সোক্রেটিক ভঙ্গি: আগে ১টি গাইডিং প্রশ্ন, তারপর ব্যাখ্যা, শেষে ১টি ফলো-আপ প্রশ্ন।",
@@ -227,13 +314,15 @@ class RealtimeVoiceTutorPipeline:
         return f"""আপনি MedhaBangla-এর Real-time AI Bangla Voice Tutor।
 
 ভাষা নীতি (অবশ্যই মানবেন):
-- শুধু স্বাভাবিক, সাবলীল বাংলা ভাষায় কথা বলবেন।
+- {language_policy_line}
 - প্রয়োজন হলে ইংরেজি টার্ম ব্যবহার করতে পারেন, কিন্তু সাথে সাথে বন্ধনীতে সহজ বাংলা ব্যাখ্যা দিন।
 
 শিক্ষকসুলভ আচরণ:
 - সহানুভূতিশীল থাকুন, ভুল হলে ভদ্রভাবে ঠিক করে দিন।
 - ধাপে ধাপে বুঝিয়ে দিন, এবং শিক্ষার্থীকে ভাবতে সাহায্য করতে প্রশ্ন করুন।
 - ভয়েসে শোনার উপযোগী করে ৪-৮ লাইনে উত্তর দিন।
+- উত্তর সর্বোচ্চ প্রায় {response_max_chars} অক্ষরের মধ্যে রাখুন (অতিরিক্ত বড় হলে নিজেই সংক্ষিপ্ত করুন)।
+- {speed_instruction}
 - {instruction}
 
 এক্সাম/ভাইভা নির্দেশনা:
@@ -265,11 +354,21 @@ class RealtimeVoiceTutorPipeline:
 
 এখন একটি সংক্ষিপ্ত, ভয়েস-ফ্রেন্ডলি উত্তর দিন এবং শেষে ১টি ফলো-আপ প্রশ্ন করুন।"""
 
-    def _transcribe_with_deepgram(self, audio_bytes: bytes, mime_type: str, api_key: str) -> str:
-        url = os.getenv("DEEPGRAM_STT_URL", "https://api.deepgram.com/v1/listen")
-        language = os.getenv("DEEPGRAM_STT_LANGUAGE", "bn")
-        model = os.getenv("DEEPGRAM_STT_MODEL", "general")
-        configured_tier = (os.getenv("DEEPGRAM_STT_TIER", "") or "").strip()
+    def _transcribe_with_deepgram(
+        self,
+        audio_bytes: bytes,
+        mime_type: str,
+        provider_settings: Dict[str, object],
+    ) -> str:
+        api_key = provider_settings.get("deepgram_api_key")
+        if not api_key:
+            raise RuntimeError("Deepgram API key missing")
+
+        url = str(provider_settings.get("deepgram_stt_url") or "https://api.deepgram.com/v1/listen")
+        language = str(provider_settings.get("deepgram_stt_language") or "bn")
+        model = str(provider_settings.get("deepgram_stt_model") or "general")
+        configured_tier = str(provider_settings.get("deepgram_stt_tier") or "").strip()
+        timeout_seconds = self._safe_int(provider_settings.get("voice_stt_timeout_seconds"), 35)
 
         params = {
             "model": (model or "general").strip() or "general",
@@ -317,9 +416,18 @@ class RealtimeVoiceTutorPipeline:
 
             return attempts
 
-        content_type = self._normalized_mime_type(mime_type, fallback="audio/webm")
+        content_type_candidates = []
+        normalized_content_type = self._normalized_mime_type(mime_type, fallback="audio/webm")
+        for candidate in (
+            normalized_content_type,
+            "audio/webm",
+            "audio/mp4",
+            "application/octet-stream",
+        ):
+            if candidate and candidate not in content_type_candidates:
+                content_type_candidates.append(candidate)
 
-        def _post_with_params(active_params: Dict[str, str]):
+        def _post_with_params(active_params: Dict[str, str], content_type: str):
             return requests.post(
                 url,
                 params=active_params,
@@ -328,26 +436,47 @@ class RealtimeVoiceTutorPipeline:
                     "Content-Type": content_type,
                 },
                 data=audio_bytes,
-                timeout=35,
+                timeout=timeout_seconds,
             )
 
         response = None
+        last_response = None
         attempts = _attempts_for_language(params)
 
-        for index, attempt in enumerate(attempts):
-            current_response = _post_with_params(attempt)
-            if current_response.status_code == 200:
-                response = current_response
+        for attempt in attempts:
+            for content_type in content_type_candidates:
+                current_response = _post_with_params(attempt, content_type)
+                if current_response.status_code == 200:
+                    response = current_response
+                    break
+
+                last_response = current_response
+                response_text = (current_response.text or "").lower()
+                is_model_combo_error = (
+                    current_response.status_code == 400
+                    and "no such model/language/tier combination" in response_text
+                )
+                is_decode_error = (
+                    "corrupt or unsupported data" in response_text
+                    or "failed to read file" in response_text
+                    or "failed to read the file" in response_text
+                )
+
+                if is_model_combo_error:
+                    # Model/tier mismatch should move to next model attempt.
+                    break
+
+                if is_decode_error and content_type != content_type_candidates[-1]:
+                    # Retry same model with another content type hint.
+                    continue
+
                 break
 
-            is_model_combo_error = (
-                current_response.status_code == 400
-                and "No such model/language/tier combination" in current_response.text
-            )
-
-            if not is_model_combo_error or index == len(attempts) - 1:
-                response = current_response
+            if response is not None:
                 break
+
+        if response is None and last_response is not None:
+            response = last_response
 
         if response is None:
             raise RuntimeError("Deepgram STT request did not produce a response")
@@ -369,9 +498,19 @@ class RealtimeVoiceTutorPipeline:
 
         return transcript
 
-    def _transcribe_with_sarvam(self, audio_bytes: bytes, mime_type: str, api_key: str) -> str:
-        url = os.getenv("SARVAM_STT_URL", "https://api.sarvam.ai/speech-to-text")
-        language_code = os.getenv("SARVAM_STT_LANGUAGE", "bn-IN")
+    def _transcribe_with_sarvam(
+        self,
+        audio_bytes: bytes,
+        mime_type: str,
+        provider_settings: Dict[str, object],
+    ) -> str:
+        api_key = provider_settings.get("sarvam_api_key")
+        if not api_key:
+            raise RuntimeError("Sarvam API key missing")
+
+        url = str(provider_settings.get("sarvam_stt_url") or "https://api.sarvam.ai/speech-to-text")
+        language_code = str(provider_settings.get("sarvam_stt_language") or "bn-IN")
+        timeout_seconds = self._safe_int(provider_settings.get("voice_stt_timeout_seconds"), 35)
 
         normalized_mime = self._normalized_mime_type(mime_type, fallback="application/octet-stream")
         upload_mime = (
@@ -391,7 +530,13 @@ class RealtimeVoiceTutorPipeline:
             "api-subscription-key": api_key,
         }
 
-        response = requests.post(url, headers=headers, files=files, data=data, timeout=35)
+        response = requests.post(
+            url,
+            headers=headers,
+            files=files,
+            data=data,
+            timeout=timeout_seconds,
+        )
 
         if response.status_code != 200:
             raise RuntimeError(f"Sarvam STT error: {response.status_code} - {response.text[:300]}")
@@ -418,26 +563,32 @@ class RealtimeVoiceTutorPipeline:
         self,
         audio_bytes: bytes,
         mime_type: str,
-        provider_settings: Dict[str, Optional[str]],
+        provider_settings: Dict[str, object],
     ) -> Tuple[Optional[str], Optional[str], List[str]]:
         selected = provider_settings.get("voice_stt_provider") or "auto"
-        order = self._ordered_providers(selected, self.DEFAULT_STT_ORDER)
+        order = self._ordered_providers(
+            selected,
+            self.DEFAULT_STT_ORDER,
+            provider_settings.get("voice_stt_provider_order"),
+        )
 
         errors: List[str] = []
         for provider in order:
             try:
                 if provider == "deepgram":
-                    api_key = provider_settings.get("deepgram_api_key")
-                    if not api_key:
-                        raise RuntimeError("Deepgram API key missing")
-                    transcript = self._transcribe_with_deepgram(audio_bytes, mime_type, api_key)
+                    transcript = self._transcribe_with_deepgram(
+                        audio_bytes,
+                        mime_type,
+                        provider_settings,
+                    )
                     return transcript, provider, errors
 
                 if provider == "sarvam":
-                    api_key = provider_settings.get("sarvam_api_key")
-                    if not api_key:
-                        raise RuntimeError("Sarvam API key missing")
-                    transcript = self._transcribe_with_sarvam(audio_bytes, mime_type, api_key)
+                    transcript = self._transcribe_with_sarvam(
+                        audio_bytes,
+                        mime_type,
+                        provider_settings,
+                    )
                     return transcript, provider, errors
 
             except Exception as exc:
@@ -450,18 +601,36 @@ class RealtimeVoiceTutorPipeline:
 
         return None, None, errors
 
-    def _generate_with_alibaba(self, prompt: str, api_key: Optional[str]) -> Tuple[bool, str, str]:
+    def _generate_with_alibaba(
+        self,
+        prompt: str,
+        api_key: Optional[str],
+        provider_settings: Dict[str, object],
+    ) -> Tuple[bool, str, str]:
+        timeout_seconds = self._safe_int(provider_settings.get("voice_llm_timeout_seconds"), 60)
+        if self._bool_setting(provider_settings.get("voice_fast_mode"), True):
+            timeout_seconds = min(timeout_seconds, 40)
+
         return self.ai_service.generate_with_alibaba(
             prompt,
-            timeout=60,
+            timeout=timeout_seconds,
             model_name=os.getenv("VOICE_QWEN_MODEL", "qwen-turbo"),
             api_key_override=api_key,
         )
 
-    def _generate_with_groq(self, prompt: str, api_key: Optional[str]) -> Tuple[bool, str, str]:
+    def _generate_with_groq(
+        self,
+        prompt: str,
+        api_key: Optional[str],
+        provider_settings: Dict[str, object],
+    ) -> Tuple[bool, str, str]:
+        timeout_seconds = self._safe_int(provider_settings.get("voice_llm_timeout_seconds"), 60)
+        if self._bool_setting(provider_settings.get("voice_fast_mode"), True):
+            timeout_seconds = min(timeout_seconds, 35)
+
         return self.ai_service.generate_with_groq(
             prompt,
-            timeout=60,
+            timeout=timeout_seconds,
             model_name=os.getenv("VOICE_GROQ_MODEL", getattr(settings, "GROQ_MODEL", "llama-3.3-70b-versatile")),
             api_key_override=api_key,
         )
@@ -470,7 +639,7 @@ class RealtimeVoiceTutorPipeline:
         self,
         session: VoiceConversationSession,
         user_text: str,
-        provider_settings: Dict[str, Optional[str]],
+        provider_settings: Dict[str, object],
         *,
         thread_snapshot: str = "",
     ) -> Tuple[Optional[str], Optional[str], List[str]]:
@@ -480,7 +649,11 @@ class RealtimeVoiceTutorPipeline:
             if legacy_selected in self.DEFAULT_LLM_ORDER:
                 selected = legacy_selected
 
-        order = self._ordered_providers(selected, self.DEFAULT_LLM_ORDER)
+        order = self._ordered_providers(
+            selected,
+            self.DEFAULT_LLM_ORDER,
+            provider_settings.get("voice_llm_provider_order"),
+        )
 
         context = VoiceConversationContextManager.get_student_context(
             user=session.user,
@@ -491,6 +664,7 @@ class RealtimeVoiceTutorPipeline:
             session,
             user_text,
             context,
+            provider_settings,
             thread_snapshot=thread_snapshot,
         )
 
@@ -501,11 +675,13 @@ class RealtimeVoiceTutorPipeline:
                     success, response, error = self._generate_with_alibaba(
                         prompt,
                         provider_settings.get("alibaba_api_key"),
+                        provider_settings,
                     )
                 elif provider == "groq":
                     success, response, error = self._generate_with_groq(
                         prompt,
                         provider_settings.get("groq_api_key"),
+                        provider_settings,
                     )
                 else:
                     success, response, error = (False, "", f"Unsupported LLM provider: {provider}")
@@ -522,12 +698,20 @@ class RealtimeVoiceTutorPipeline:
 
         return None, None, errors
 
-    def _gemini_tts(self, text: str, api_key: str) -> Tuple[str, str]:
-        url = (
-            os.getenv("GEMINI_TTS_URL")
+    def _gemini_tts(
+        self,
+        text: str,
+        api_key: str,
+        provider_settings: Dict[str, object],
+    ) -> Tuple[str, str]:
+        url = str(
+            provider_settings.get("gemini_tts_url")
             or "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent"
         )
-        voice_name = os.getenv("GEMINI_TTS_VOICE", "Kore")
+        voice_name = str(provider_settings.get("gemini_tts_voice") or "Kore")
+        timeout_seconds = self._safe_int(provider_settings.get("voice_tts_timeout_seconds"), 40)
+        if self._bool_setting(provider_settings.get("voice_fast_mode"), True):
+            timeout_seconds = min(timeout_seconds, 32)
 
         response = requests.post(
             f"{url}?key={api_key}",
@@ -545,7 +729,7 @@ class RealtimeVoiceTutorPipeline:
                     },
                 },
             },
-            timeout=40,
+            timeout=timeout_seconds,
         )
 
         if response.status_code != 200:
@@ -564,10 +748,18 @@ class RealtimeVoiceTutorPipeline:
 
         raise RuntimeError("Gemini TTS returned no audio content")
 
-    def _sarvam_tts(self, text: str, api_key: str) -> Tuple[str, str]:
-        url = os.getenv("SARVAM_TTS_URL", "https://api.sarvam.ai/text-to-speech")
-        language_code = os.getenv("SARVAM_TTS_LANGUAGE", "bn-IN")
-        speaker = os.getenv("SARVAM_TTS_SPEAKER", "anushka")
+    def _sarvam_tts(
+        self,
+        text: str,
+        api_key: str,
+        provider_settings: Dict[str, object],
+    ) -> Tuple[str, str]:
+        url = str(provider_settings.get("sarvam_tts_url") or "https://api.sarvam.ai/text-to-speech")
+        language_code = str(provider_settings.get("sarvam_tts_language") or "bn-IN")
+        speaker = str(provider_settings.get("sarvam_tts_speaker") or "anushka")
+        timeout_seconds = self._safe_int(provider_settings.get("voice_tts_timeout_seconds"), 40)
+        if self._bool_setting(provider_settings.get("voice_fast_mode"), True):
+            timeout_seconds = min(timeout_seconds, 32)
 
         response = requests.post(
             url,
@@ -581,7 +773,7 @@ class RealtimeVoiceTutorPipeline:
                 "target_language_code": language_code,
                 "speaker": speaker,
             },
-            timeout=40,
+            timeout=timeout_seconds,
         )
 
         if response.status_code != 200:
@@ -649,10 +841,14 @@ class RealtimeVoiceTutorPipeline:
     def synthesize_audio(
         self,
         text: str,
-        provider_settings: Dict[str, Optional[str]],
+        provider_settings: Dict[str, object],
     ) -> Tuple[Optional[str], Optional[str], Optional[str], List[str]]:
         selected = provider_settings.get("voice_tts_provider") or "auto"
-        order = self._ordered_providers(selected, self.DEFAULT_TTS_ORDER)
+        order = self._ordered_providers(
+            selected,
+            self.DEFAULT_TTS_ORDER,
+            provider_settings.get("voice_tts_provider_order"),
+        )
 
         errors: List[str] = []
         for provider in order:
@@ -661,14 +857,14 @@ class RealtimeVoiceTutorPipeline:
                     api_key = provider_settings.get("gemini_api_key")
                     if not api_key:
                         raise RuntimeError("Gemini API key missing")
-                    audio_base64, mime_type = self._gemini_tts(text, api_key)
+                    audio_base64, mime_type = self._gemini_tts(text, api_key, provider_settings)
                     return audio_base64, mime_type, provider, errors
 
                 if provider == "sarvam":
                     api_key = provider_settings.get("sarvam_api_key")
                     if not api_key:
                         raise RuntimeError("Sarvam API key missing")
-                    audio_base64, mime_type = self._sarvam_tts(text, api_key)
+                    audio_base64, mime_type = self._sarvam_tts(text, api_key, provider_settings)
                     return audio_base64, mime_type, provider, errors
 
             except Exception as exc:
@@ -677,6 +873,30 @@ class RealtimeVoiceTutorPipeline:
                 logger.warning("TTS provider failed - %s", error_message)
 
         return None, None, None, errors
+
+    def _trim_voice_response(self, response_text: str, provider_settings: Dict[str, object]) -> str:
+        normalized = " ".join(str(response_text or "").split())
+        if not normalized:
+            return ""
+
+        max_chars = self._safe_int(provider_settings.get("voice_response_max_chars"), 520)
+        max_chars = max(120, max_chars)
+
+        if len(normalized) <= max_chars:
+            return normalized
+
+        clipped = normalized[:max_chars].rstrip()
+        boundary = max(
+            clipped.rfind("।"),
+            clipped.rfind("."),
+            clipped.rfind("?"),
+            clipped.rfind("!"),
+        )
+
+        if boundary >= int(max_chars * 0.55):
+            return clipped[: boundary + 1].strip()
+
+        return f"{clipped.rstrip(' .,!?:;')}..."
 
     def _upsert_summary(
         self,
@@ -883,6 +1103,8 @@ class RealtimeVoiceTutorPipeline:
             response_text = (
                 "আমি এখনই উত্তর তৈরি করতে পারছি না। একটু পরে আবার চেষ্টা করো।"
             )
+
+        response_text = self._trim_voice_response(response_text, provider_settings)
 
         audio_base64, audio_mime_type, tts_provider, tts_errors = self.synthesize_audio(
             response_text,

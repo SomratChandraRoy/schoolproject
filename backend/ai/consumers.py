@@ -22,7 +22,7 @@ class AIVoiceTutorConsumer(AsyncWebsocketConsumer):
 
     Client events:
     - audio_chunk {chunk_base64, mime_type}
-    - audio_commit {}
+    - audio_commit {audio_base64?, mime_type?}
     - text_message {text}
     - end_session {}
     - ping {}
@@ -78,7 +78,7 @@ class AIVoiceTutorConsumer(AsyncWebsocketConsumer):
             return
 
         if event_type == "audio_commit":
-            await self._handle_audio_commit()
+            await self._handle_audio_commit(payload)
             return
 
         if event_type == "text_message":
@@ -116,13 +116,34 @@ class AIVoiceTutorConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    async def _handle_audio_commit(self):
-        if not self.audio_buffer:
-            await self._send_error("No buffered audio to process")
-            return
+    async def _handle_audio_commit(self, payload: dict):
+        inline_audio_base64 = payload.get("audio_base64")
+        mime_type = payload.get("mime_type")
+        if mime_type:
+            self.audio_mime_type = str(mime_type)
 
-        audio_bytes = bytes(self.audio_buffer)
-        self.audio_buffer.clear()
+        audio_bytes = None
+
+        if inline_audio_base64:
+            try:
+                audio_bytes = base64.b64decode(inline_audio_base64)
+                self.audio_buffer.clear()
+            except Exception:
+                await self._send_error("Invalid audio_commit payload encoding")
+                return
+
+        if audio_bytes is None:
+            if not self.audio_buffer:
+                await self._send_error("No buffered audio to process")
+                return
+
+            audio_bytes = bytes(self.audio_buffer)
+            self.audio_buffer.clear()
+
+        if len(audio_bytes) < 1024:
+            await self._send_error("Voice input too short. Please speak a little longer.")
+            await self._send_status("listening")
+            return
 
         await self._send_status("thinking")
 

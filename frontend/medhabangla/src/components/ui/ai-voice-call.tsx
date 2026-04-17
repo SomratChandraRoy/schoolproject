@@ -62,10 +62,8 @@ interface ProviderTrace {
 const VAD_RMS_THRESHOLD = 0.016;
 const VAD_SILENCE_COMMIT_MS = 1200;
 const VAD_MAX_TURN_MS = 9000;
-const MIN_AUTO_COMMIT_BYTES = 4096;
+const MIN_AUTO_COMMIT_SPEECH_MS = 420;
 const FORCE_AUTO_COMMIT_MS = 12000;
-const MAX_BUFFERED_BYTES_BEFORE_COMMIT = 720000;
-const CHUNK_UPLOAD_WAIT_TIMEOUT_MS = 2500;
 const MIN_SPEECH_FRAMES = 3;
 
 const AIVoiceCall: React.FC = () => {
@@ -83,7 +81,7 @@ const AIVoiceCall: React.FC = () => {
   const analyserDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const vadIntervalRef = useRef<number | null>(null);
   const pendingAudioBytesRef = useRef(0);
-  const pendingChunkUploadsRef = useRef(0);
+  const lastRecorderBlobRef = useRef<Blob | null>(null);
   const captureStartedAtRef = useRef<number | null>(null);
   const lastSpeechAtRef = useRef(0);
   const speechStartAtRef = useRef<number | null>(null);
@@ -192,7 +190,7 @@ const AIVoiceCall: React.FC = () => {
     analyserDataRef.current = null;
     supportedMimeTypeRef.current = undefined;
     pendingAudioBytesRef.current = 0;
-    pendingChunkUploadsRef.current = 0;
+    lastRecorderBlobRef.current = null;
     captureStartedAtRef.current = null;
     lastSpeechAtRef.current = 0;
     speechStartAtRef.current = null;
@@ -409,101 +407,69 @@ const AIVoiceCall: React.FC = () => {
     [appendMessage],
   );
 
-  const startRecorderStreaming = useCallback(
-    (stream: MediaStream) => {
-      const recorder = supportedMimeTypeRef.current
-        ? new MediaRecorder(stream, { mimeType: supportedMimeTypeRef.current })
-        : new MediaRecorder(stream);
+  const startRecorderStreaming = useCallback((stream: MediaStream) => {
+    const recorder = supportedMimeTypeRef.current
+      ? new MediaRecorder(stream, { mimeType: supportedMimeTypeRef.current })
+      : new MediaRecorder(stream);
 
-      mediaRecorderRef.current = recorder;
+    mediaRecorderRef.current = recorder;
+    lastRecorderBlobRef.current = null;
+    captureStartedAtRef.current = Date.now();
 
-      recorder.ondataavailable = async (event) => {
-        if (!sessionActiveRef.current || micMutedRef.current) {
-          return;
-        }
-
-        if (event.data.size <= 0) {
-          return;
-        }
-
-        pendingChunkUploadsRef.current += 1;
-        try {
-          const normalizedMimeType = (
-            event.data.type ||
-            supportedMimeTypeRef.current ||
-            "audio/webm"
-          )
-            .split(";", 1)[0]
-            .trim();
-
-          pendingAudioBytesRef.current += event.data.size;
-          if (captureStartedAtRef.current === null) {
-            captureStartedAtRef.current = Date.now();
-          }
-
-          const chunkBase64 = await base64FromBlob(event.data);
-          sendSocketEvent(
-            {
-              type: "audio_chunk",
-              chunk_base64: chunkBase64,
-              mime_type: normalizedMimeType || "audio/webm",
-            },
-            { silent: true },
-          );
-        } catch (error) {
-          console.error("Failed to stream audio chunk", error);
-        } finally {
-          pendingChunkUploadsRef.current = Math.max(
-            0,
-            pendingChunkUploadsRef.current - 1,
-          );
-        }
-      };
-
-      recorder.start(350);
-    },
-    [sendSocketEvent],
-  );
-
-  const waitForPendingChunkUploads = useCallback(async () => {
-    const startedAt = Date.now();
-
-    while (pendingChunkUploadsRef.current > 0) {
-      if (Date.now() - startedAt >= CHUNK_UPLOAD_WAIT_TIMEOUT_MS) {
-        break;
+    recorder.ondataavailable = (event) => {
+      if (event.data.size <= 0) {
+        return;
       }
-      await new Promise<void>((resolve) => {
-        window.setTimeout(() => resolve(), 40);
-      });
-    }
+
+      const normalizedMimeType = (
+        event.data.type ||
+        supportedMimeTypeRef.current ||
+        "audio/webm"
+      )
+        .split(";", 1)[0]
+        .trim();
+
+      pendingAudioBytesRef.current = event.data.size;
+      lastRecorderBlobRef.current = event.data;
+
+      if (normalizedMimeType) {
+        supportedMimeTypeRef.current = normalizedMimeType;
+      }
+    };
+
+    recorder.start();
   }, []);
 
-  const finalizeRecorderForCommit = useCallback(async () => {
-    const recorder = mediaRecorderRef.current;
-    if (!recorder || recorder.state === "inactive") {
-      await waitForPendingChunkUploads();
-      return;
-    }
-
-    await new Promise<void>((resolve) => {
-      const onStop = () => {
-        recorder.removeEventListener("stop", onStop);
-        resolve();
-      };
-
-      recorder.addEventListener("stop", onStop, { once: true });
-
-      try {
-        recorder.requestData();
-      } catch {
-        // Ignore requestData errors for browsers that don't support it in this state.
+  const finalizeRecorderForCommit =
+    useCallback(async (): Promise<Blob | null> => {
+      const recorder = mediaRecorderRef.current;
+      if (!recorder) {
+        return null;
       }
 
-      recorder.stop();
-    });
+      if (recorder.state === "inactive") {
+        return lastRecorderBlobRef.current;
+      }
 
-    await waitForPendingChunkUploads();
-  }, [waitForPendingChunkUploads]);
+      await new Promise<void>((resolve) => {
+        const onStop = () => {
+          recorder.removeEventListener("stop", onStop);
+          resolve();
+        };
+
+        recorder.addEventListener("stop", onStop, { once: true });
+
+        try {
+          recorder.requestData();
+        } catch {
+          // Ignore requestData errors for browsers that don't support it in this state.
+        }
+
+        recorder.stop();
+      });
+
+      return lastRecorderBlobRef.current;
+    }, []);
 
   const commitBufferedVoice = useCallback(
     async (source: "manual" | "auto") => {
@@ -519,9 +485,14 @@ const AIVoiceCall: React.FC = () => {
         return false;
       }
 
+      const now = Date.now();
+      const speechDurationMs = speechStartAtRef.current
+        ? Math.max(0, now - speechStartAtRef.current)
+        : 0;
+
       if (
         source === "auto" &&
-        pendingAudioBytesRef.current < MIN_AUTO_COMMIT_BYTES
+        (!hasSpeechRef.current || speechDurationMs < MIN_AUTO_COMMIT_SPEECH_MS)
       ) {
         return false;
       }
@@ -529,9 +500,51 @@ const AIVoiceCall: React.FC = () => {
       isTurnProcessingRef.current = true;
       setVoiceState("thinking");
 
-      await finalizeRecorderForCommit();
+      const finalizedBlob = await finalizeRecorderForCommit();
+      if (!finalizedBlob || finalizedBlob.size <= 0) {
+        isTurnProcessingRef.current = false;
+        resolveIdleState();
 
-      const sent = sendSocketEvent({ type: "audio_commit" }, { silent: true });
+        if (mediaStreamRef.current && sessionActiveRef.current) {
+          startRecorderStreaming(mediaStreamRef.current);
+        }
+
+        return false;
+      }
+
+      const normalizedMimeType = (
+        finalizedBlob.type ||
+        supportedMimeTypeRef.current ||
+        "audio/webm"
+      )
+        .split(";", 1)[0]
+        .trim();
+
+      pendingAudioBytesRef.current = finalizedBlob.size;
+
+      let audioBase64 = "";
+      try {
+        audioBase64 = await base64FromBlob(finalizedBlob);
+      } catch (error) {
+        console.error("Failed to encode finalized voice blob", error);
+        isTurnProcessingRef.current = false;
+        resolveIdleState();
+
+        if (mediaStreamRef.current && sessionActiveRef.current) {
+          startRecorderStreaming(mediaStreamRef.current);
+        }
+
+        return false;
+      }
+
+      const sent = sendSocketEvent(
+        {
+          type: "audio_commit",
+          audio_base64: audioBase64,
+          mime_type: normalizedMimeType || "audio/webm",
+        },
+        { silent: true },
+      );
       if (!sent) {
         isTurnProcessingRef.current = false;
         resolveIdleState();
@@ -539,6 +552,7 @@ const AIVoiceCall: React.FC = () => {
       }
 
       pendingAudioBytesRef.current = 0;
+      lastRecorderBlobRef.current = null;
       captureStartedAtRef.current = null;
       lastSpeechAtRef.current = 0;
       speechStartAtRef.current = null;
@@ -749,19 +763,10 @@ const AIVoiceCall: React.FC = () => {
 
         const now = Date.now();
 
-        // Safety net: force a commit for long/large turns even when VAD misses very low-volume speech.
-        if (
-          hasSpeechRef.current &&
-          pendingAudioBytesRef.current >= MAX_BUFFERED_BYTES_BEFORE_COMMIT
-        ) {
-          void commitBufferedVoice("auto");
-          return;
-        }
-
+        // Safety net: force a commit for long turns even when VAD misses very low-volume speech.
         if (
           hasSpeechRef.current &&
           captureStartedAtRef.current &&
-          pendingAudioBytesRef.current >= MIN_AUTO_COMMIT_BYTES &&
           now - captureStartedAtRef.current >= FORCE_AUTO_COMMIT_MS
         ) {
           void commitBufferedVoice("auto");
