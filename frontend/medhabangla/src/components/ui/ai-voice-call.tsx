@@ -59,6 +59,11 @@ interface ProviderTrace {
   tts?: string | null;
 }
 
+const VAD_RMS_THRESHOLD = 0.018;
+const VAD_SILENCE_COMMIT_MS = 1200;
+const VAD_MAX_TURN_MS = 9000;
+const MIN_AUTO_COMMIT_BYTES = 4096;
+
 const AIVoiceCall: React.FC = () => {
   const navigate = useNavigate();
   const messagePanelRef = useRef<HTMLDivElement>(null);
@@ -67,6 +72,16 @@ const AIVoiceCall: React.FC = () => {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const playbackChainRef = useRef<Promise<void>>(Promise.resolve());
   const audioContextRef = useRef<AudioContext | null>(null);
+  const inputAudioContextRef = useRef<AudioContext | null>(null);
+  const inputSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const analyserDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const vadIntervalRef = useRef<number | null>(null);
+  const pendingAudioBytesRef = useRef(0);
+  const lastSpeechAtRef = useRef(0);
+  const speechStartAtRef = useRef<number | null>(null);
+  const hasSpeechRef = useRef(false);
+  const isTurnProcessingRef = useRef(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [composerValue, setComposerValue] = useState("");
@@ -105,6 +120,12 @@ const AIVoiceCall: React.FC = () => {
   };
 
   const resolveIdleState = useCallback(() => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = sessionActiveRef.current && !micMutedRef.current;
+      });
+    }
+
     if (!sessionActiveRef.current) {
       setVoiceState("idle");
       return;
@@ -144,6 +165,53 @@ const AIVoiceCall: React.FC = () => {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
+
+    if (vadIntervalRef.current !== null) {
+      window.clearInterval(vadIntervalRef.current);
+      vadIntervalRef.current = null;
+    }
+
+    if (inputSourceRef.current) {
+      inputSourceRef.current.disconnect();
+      inputSourceRef.current = null;
+    }
+
+    if (analyserRef.current) {
+      analyserRef.current.disconnect();
+      analyserRef.current = null;
+    }
+
+    analyserDataRef.current = null;
+    pendingAudioBytesRef.current = 0;
+    lastSpeechAtRef.current = 0;
+    speechStartAtRef.current = null;
+    hasSpeechRef.current = false;
+    isTurnProcessingRef.current = false;
+
+    if (inputAudioContextRef.current) {
+      void inputAudioContextRef.current.close();
+      inputAudioContextRef.current = null;
+    }
+  }, []);
+
+  const duckMicrophone = useCallback(() => {
+    if (!mediaStreamRef.current) {
+      return;
+    }
+
+    mediaStreamRef.current.getAudioTracks().forEach((track) => {
+      track.enabled = false;
+    });
+  }, []);
+
+  const restoreMicrophone = useCallback(() => {
+    if (!mediaStreamRef.current) {
+      return;
+    }
+
+    mediaStreamRef.current.getAudioTracks().forEach((track) => {
+      track.enabled = sessionActiveRef.current && !micMutedRef.current;
+    });
   }, []);
 
   const base64FromBlob = (blob: Blob): Promise<string> => {
@@ -176,6 +244,7 @@ const AIVoiceCall: React.FC = () => {
       }
 
       setVoiceState("speaking");
+      duckMicrophone();
 
       const playWithElement = async () => {
         const src = `data:${audioMimeType || "audio/mpeg"};base64,${audioBase64}`;
@@ -225,10 +294,70 @@ const AIVoiceCall: React.FC = () => {
         console.warn("WebAudio decode failed, using HTMLAudio fallback", error);
         await playWithElement();
       } finally {
+        restoreMicrophone();
         resolveIdleState();
       }
     },
-    [resolveIdleState],
+    [duckMicrophone, resolveIdleState, restoreMicrophone],
+  );
+
+  const speakWithBrowserTts = useCallback(
+    async (text: string) => {
+      const normalizedText = text.trim();
+      if (!normalizedText) {
+        resolveIdleState();
+        return;
+      }
+
+      if (
+        !("speechSynthesis" in window) ||
+        typeof SpeechSynthesisUtterance === "undefined"
+      ) {
+        resolveIdleState();
+        return;
+      }
+
+      setVoiceState("speaking");
+      duckMicrophone();
+
+      await new Promise<void>((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(normalizedText);
+        utterance.lang = "bn-BD";
+        utterance.rate = 1;
+        utterance.pitch = 1;
+
+        const availableVoices = window.speechSynthesis.getVoices();
+        const banglaVoice = availableVoices.find((voice) =>
+          voice.lang.toLowerCase().startsWith("bn"),
+        );
+        if (banglaVoice) {
+          utterance.voice = banglaVoice;
+        }
+
+        const fallbackTimer = window.setTimeout(
+          () => {
+            resolve();
+          },
+          Math.max(5000, normalizedText.length * 90),
+        );
+
+        utterance.onend = () => {
+          window.clearTimeout(fallbackTimer);
+          resolve();
+        };
+
+        utterance.onerror = () => {
+          window.clearTimeout(fallbackTimer);
+          resolve();
+        };
+
+        window.speechSynthesis.speak(utterance);
+      });
+
+      restoreMicrophone();
+      resolveIdleState();
+    },
+    [duckMicrophone, resolveIdleState, restoreMicrophone],
   );
 
   const enqueueAudio = useCallback(
@@ -268,6 +397,43 @@ const AIVoiceCall: React.FC = () => {
     [appendMessage],
   );
 
+  const commitBufferedVoice = useCallback(
+    (source: "manual" | "auto") => {
+      if (!sessionActiveRef.current || micMutedRef.current) {
+        return false;
+      }
+
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        return false;
+      }
+
+      if (isTurnProcessingRef.current) {
+        return false;
+      }
+
+      if (
+        source === "auto" &&
+        pendingAudioBytesRef.current < MIN_AUTO_COMMIT_BYTES
+      ) {
+        return false;
+      }
+
+      const sent = sendSocketEvent({ type: "audio_commit" }, { silent: true });
+      if (!sent) {
+        return false;
+      }
+
+      isTurnProcessingRef.current = true;
+      pendingAudioBytesRef.current = 0;
+      lastSpeechAtRef.current = 0;
+      speechStartAtRef.current = null;
+      hasSpeechRef.current = false;
+      setVoiceState("thinking");
+      return true;
+    },
+    [sendSocketEvent],
+  );
+
   const connectSocket = useCallback(
     (targetSessionId: string, token: string): Promise<void> => {
       return new Promise((resolve, reject) => {
@@ -298,6 +464,18 @@ const AIVoiceCall: React.FC = () => {
                 nextState === "disconnected"
               ) {
                 setVoiceState(nextState as VoiceState);
+
+                if (nextState === "thinking") {
+                  isTurnProcessingRef.current = true;
+                }
+
+                if (
+                  nextState === "listening" ||
+                  nextState === "idle" ||
+                  nextState === "disconnected"
+                ) {
+                  isTurnProcessingRef.current = false;
+                }
               }
               return;
             }
@@ -311,8 +489,11 @@ const AIVoiceCall: React.FC = () => {
             }
 
             if (eventType === "assistant_response") {
+              isTurnProcessingRef.current = false;
+
               const providers = (data.providers || {}) as ProviderTrace;
               setLastProviders(providers);
+              const assistantText = String(data.text || "").trim();
 
               const providerMeta = [
                 providers.stt ? `STT:${providers.stt}` : "",
@@ -324,15 +505,25 @@ const AIVoiceCall: React.FC = () => {
 
               appendMessage({
                 role: "assistant",
-                content: String(data.text || ""),
+                content: assistantText,
                 meta: providerMeta || undefined,
               });
 
-              enqueueAudio(data.audio_base64, data.audio_mime_type);
+              if (data.audio_base64) {
+                enqueueAudio(data.audio_base64, data.audio_mime_type);
+              } else {
+                playbackChainRef.current = playbackChainRef.current
+                  .then(() => speakWithBrowserTts(assistantText))
+                  .catch((error) => {
+                    console.error("Browser TTS fallback failed", error);
+                    resolveIdleState();
+                  });
+              }
               return;
             }
 
             if (eventType === "error") {
+              isTurnProcessingRef.current = false;
               appendMessage({
                 role: "assistant",
                 content: `Voice pipeline error: ${String(data.message || "Unknown error")}`,
@@ -347,19 +538,21 @@ const AIVoiceCall: React.FC = () => {
 
         ws.onerror = () => {
           setIsSocketConnected(false);
+          isTurnProcessingRef.current = false;
           setVoiceState("disconnected");
           reject(new Error("Realtime voice socket connection failed"));
         };
 
         ws.onclose = () => {
           setIsSocketConnected(false);
+          isTurnProcessingRef.current = false;
           if (sessionActiveRef.current) {
             setVoiceState("disconnected");
           }
         };
       });
     },
-    [appendMessage, enqueueAudio, resolveIdleState],
+    [appendMessage, enqueueAudio, resolveIdleState, speakWithBrowserTts],
   );
 
   const startMicStreaming = useCallback(async () => {
@@ -372,6 +565,106 @@ const AIVoiceCall: React.FC = () => {
       },
     });
     mediaStreamRef.current = stream;
+    pendingAudioBytesRef.current = 0;
+    lastSpeechAtRef.current = 0;
+    speechStartAtRef.current = null;
+    hasSpeechRef.current = false;
+
+    const InputAudioContextCtor =
+      window.AudioContext || (window as any).webkitAudioContext;
+
+    if (InputAudioContextCtor) {
+      if (!inputAudioContextRef.current) {
+        inputAudioContextRef.current = new InputAudioContextCtor();
+      }
+
+      if (inputAudioContextRef.current.state === "suspended") {
+        await inputAudioContextRef.current.resume();
+      }
+
+      if (inputSourceRef.current) {
+        inputSourceRef.current.disconnect();
+        inputSourceRef.current = null;
+      }
+
+      if (analyserRef.current) {
+        analyserRef.current.disconnect();
+        analyserRef.current = null;
+      }
+
+      inputSourceRef.current =
+        inputAudioContextRef.current.createMediaStreamSource(stream);
+      analyserRef.current = inputAudioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 2048;
+      analyserRef.current.smoothingTimeConstant = 0.82;
+      inputSourceRef.current.connect(analyserRef.current);
+      analyserDataRef.current = new Uint8Array(
+        analyserRef.current.fftSize,
+      ) as Uint8Array<ArrayBuffer>;
+
+      if (vadIntervalRef.current !== null) {
+        window.clearInterval(vadIntervalRef.current);
+      }
+
+      // Commit automatically when speech ends to avoid requiring manual "Process Voice" each turn.
+      vadIntervalRef.current = window.setInterval(() => {
+        if (
+          !sessionActiveRef.current ||
+          micMutedRef.current ||
+          isTurnProcessingRef.current
+        ) {
+          return;
+        }
+
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+          return;
+        }
+
+        const analyser = analyserRef.current;
+        const dataArray = analyserDataRef.current;
+        if (!analyser || !dataArray) {
+          return;
+        }
+
+        analyser.getByteTimeDomainData(dataArray);
+        let sumSquares = 0;
+        for (let i = 0; i < dataArray.length; i += 1) {
+          const normalized = (dataArray[i] - 128) / 128;
+          sumSquares += normalized * normalized;
+        }
+
+        const rms = Math.sqrt(sumSquares / dataArray.length);
+        const now = Date.now();
+
+        if (rms >= VAD_RMS_THRESHOLD) {
+          hasSpeechRef.current = true;
+          lastSpeechAtRef.current = now;
+          if (speechStartAtRef.current === null) {
+            speechStartAtRef.current = now;
+          }
+          return;
+        }
+
+        if (!hasSpeechRef.current) {
+          return;
+        }
+
+        if (
+          speechStartAtRef.current !== null &&
+          now - speechStartAtRef.current >= VAD_MAX_TURN_MS
+        ) {
+          commitBufferedVoice("auto");
+          return;
+        }
+
+        if (
+          lastSpeechAtRef.current &&
+          now - lastSpeechAtRef.current >= VAD_SILENCE_COMMIT_MS
+        ) {
+          commitBufferedVoice("auto");
+        }
+      }, 220);
+    }
 
     const mimeTypeCandidates = [
       "audio/webm;codecs=opus",
@@ -410,6 +703,8 @@ const AIVoiceCall: React.FC = () => {
           .split(";", 1)[0]
           .trim();
 
+        pendingAudioBytesRef.current += event.data.size;
+
         const chunkBase64 = await base64FromBlob(event.data);
         sendSocketEvent(
           {
@@ -428,7 +723,7 @@ const AIVoiceCall: React.FC = () => {
     stream.getAudioTracks().forEach((track) => {
       track.enabled = !micMutedRef.current;
     });
-  }, [sendSocketEvent]);
+  }, [commitBufferedVoice, sendSocketEvent]);
 
   const startSession = useCallback(async () => {
     const token = getAuthToken();
@@ -469,7 +764,7 @@ const AIVoiceCall: React.FC = () => {
       appendMessage({
         role: "assistant",
         content:
-          "Voice session started. Speak naturally and press 'Process Voice' when you finish a turn.",
+          "Voice session started. Speak naturally and pause after each sentence. Turns are processed automatically.",
       });
       resolveIdleState();
     } catch (error) {
@@ -518,6 +813,10 @@ const AIVoiceCall: React.FC = () => {
     } catch (error) {
       console.warn("Error while ending session", error);
     } finally {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+
       stopMicrophone();
       closeSocket();
       setIsSessionActive(false);
@@ -548,6 +847,10 @@ const AIVoiceCall: React.FC = () => {
 
   useEffect(() => {
     return () => {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+
       stopMicrophone();
       closeSocket();
       if (audioContextRef.current) {
@@ -619,10 +922,7 @@ const AIVoiceCall: React.FC = () => {
       return;
     }
 
-    const sent = sendSocketEvent({ type: "audio_commit" });
-    if (sent) {
-      setVoiceState("thinking");
-    }
+    commitBufferedVoice("manual");
   };
 
   const toggleMic = () => {

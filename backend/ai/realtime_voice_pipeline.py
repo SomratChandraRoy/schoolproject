@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 class RealtimeVoiceTutorPipeline:
     DEFAULT_STT_ORDER = ("deepgram", "sarvam")
-    DEFAULT_LLM_ORDER = ("alibaba", "groq")
-    DEFAULT_TTS_ORDER = ("gemini", "sarvam")
+    DEFAULT_LLM_ORDER = ("groq", "alibaba")
+    DEFAULT_TTS_ORDER = ("sarvam", "gemini")
     SARVAM_ACCEPTED_MIME_TYPES = {
         "audio/mpeg",
         "audio/mp3",
@@ -544,16 +544,56 @@ class RealtimeVoiceTutorPipeline:
             return base64.b64encode(response.content).decode("utf-8"), content_type
 
         payload = response.json()
+
+        def _audio_from_list(items):
+            if not isinstance(items, list):
+                return ""
+
+            for item in items:
+                if isinstance(item, str) and item.strip():
+                    return item.strip()
+                if isinstance(item, dict):
+                    candidate = (
+                        item.get("audio")
+                        or item.get("audio_base64")
+                        or item.get("audioContent")
+                        or item.get("data")
+                    )
+                    if isinstance(candidate, str) and candidate.strip():
+                        return candidate.strip()
+
+            return ""
+
+        data_payload = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+
         audio_base64 = (
             payload.get("audio")
             or payload.get("audio_base64")
-            or payload.get("data", {}).get("audio")
-            or payload.get("data", {}).get("audio_base64")
+            or payload.get("audioContent")
+            or payload.get("audio_data")
+            or data_payload.get("audio")
+            or data_payload.get("audio_base64")
+            or data_payload.get("audioContent")
+            or data_payload.get("audio_data")
+            or _audio_from_list(payload.get("audios"))
+            or _audio_from_list(data_payload.get("audios"))
         )
         if not audio_base64:
-            raise RuntimeError("Sarvam TTS returned no audio payload")
+            payload_keys = sorted([str(key) for key in payload.keys()])[:12]
+            data_keys = sorted([str(key) for key in data_payload.keys()])[:12] if data_payload else []
+            raise RuntimeError(
+                f"Sarvam TTS returned no audio payload (payload_keys={payload_keys}, data_keys={data_keys})"
+            )
 
-        mime_type = payload.get("mime_type") or payload.get("content_type") or "audio/mpeg"
+        mime_type = (
+            payload.get("mime_type")
+            or payload.get("content_type")
+            or payload.get("audio_mime_type")
+            or data_payload.get("mime_type")
+            or data_payload.get("content_type")
+            or data_payload.get("audio_mime_type")
+            or "audio/mpeg"
+        )
         return audio_base64, mime_type
 
     def synthesize_audio(
