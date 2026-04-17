@@ -55,11 +55,11 @@ class RealtimeVoiceTutorPipeline:
             "voice_llm_provider": settings_obj.voice_llm_provider or "auto",
             "voice_tts_provider": settings_obj.voice_tts_provider or "auto",
             "voice_ai_provider": settings_obj.voice_ai_provider or "auto",
-            "deepgram_api_key": settings_obj.deepgram_api_key or getattr(settings, "DEEPGRAM_API_KEY", None),
-            "sarvam_api_key": settings_obj.sarvam_api_key or getattr(settings, "SARVAM_API_KEY", None),
-            "alibaba_api_key": settings_obj.alibaba_api_key or getattr(settings, "ALIBABA_API_KEY", None),
-            "groq_api_key": settings_obj.groq_api_key or getattr(settings, "GROQ_API_KEY", None),
-            "gemini_api_key": settings_obj.gemini_api_key or getattr(settings, "GEMINI_API_KEY", None),
+            "deepgram_api_key": settings_obj.deepgram_api_key or getattr(settings, "DEEPGRAM_API_KEY", None) or os.getenv("DEEPGRAM_API_KEY"),
+            "sarvam_api_key": settings_obj.sarvam_api_key or getattr(settings, "SARVAM_API_KEY", None) or os.getenv("SARVAM_API_KEY"),
+            "alibaba_api_key": settings_obj.alibaba_api_key or getattr(settings, "ALIBABA_API_KEY", None) or os.getenv("ALIBABA_API_KEY"),
+            "groq_api_key": settings_obj.groq_api_key or getattr(settings, "GROQ_API_KEY", None) or os.getenv("GROQ_API_KEY"),
+            "gemini_api_key": settings_obj.gemini_api_key or getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY"),
         }
 
     def _ensure_profile(self, user) -> UserProfile:
