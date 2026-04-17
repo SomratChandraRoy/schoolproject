@@ -59,10 +59,12 @@ interface ProviderTrace {
   tts?: string | null;
 }
 
-const VAD_RMS_THRESHOLD = 0.018;
+const VAD_RMS_THRESHOLD = 0.012;
 const VAD_SILENCE_COMMIT_MS = 1200;
 const VAD_MAX_TURN_MS = 9000;
 const MIN_AUTO_COMMIT_BYTES = 4096;
+const FORCE_AUTO_COMMIT_MS = 12000;
+const MAX_BUFFERED_BYTES_BEFORE_COMMIT = 720000;
 
 const AIVoiceCall: React.FC = () => {
   const navigate = useNavigate();
@@ -78,6 +80,7 @@ const AIVoiceCall: React.FC = () => {
   const analyserDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const vadIntervalRef = useRef<number | null>(null);
   const pendingAudioBytesRef = useRef(0);
+  const captureStartedAtRef = useRef<number | null>(null);
   const lastSpeechAtRef = useRef(0);
   const speechStartAtRef = useRef<number | null>(null);
   const hasSpeechRef = useRef(false);
@@ -183,6 +186,7 @@ const AIVoiceCall: React.FC = () => {
 
     analyserDataRef.current = null;
     pendingAudioBytesRef.current = 0;
+    captureStartedAtRef.current = null;
     lastSpeechAtRef.current = 0;
     speechStartAtRef.current = null;
     hasSpeechRef.current = false;
@@ -425,6 +429,7 @@ const AIVoiceCall: React.FC = () => {
 
       isTurnProcessingRef.current = true;
       pendingAudioBytesRef.current = 0;
+      captureStartedAtRef.current = null;
       lastSpeechAtRef.current = 0;
       speechStartAtRef.current = null;
       hasSpeechRef.current = false;
@@ -566,6 +571,7 @@ const AIVoiceCall: React.FC = () => {
     });
     mediaStreamRef.current = stream;
     pendingAudioBytesRef.current = 0;
+    captureStartedAtRef.current = null;
     lastSpeechAtRef.current = 0;
     speechStartAtRef.current = null;
     hasSpeechRef.current = false;
@@ -620,6 +626,23 @@ const AIVoiceCall: React.FC = () => {
           return;
         }
 
+        const now = Date.now();
+
+        // Safety net: force a commit for long/large turns even when VAD misses very low-volume speech.
+        if (pendingAudioBytesRef.current >= MAX_BUFFERED_BYTES_BEFORE_COMMIT) {
+          commitBufferedVoice("auto");
+          return;
+        }
+
+        if (
+          captureStartedAtRef.current &&
+          pendingAudioBytesRef.current >= MIN_AUTO_COMMIT_BYTES &&
+          now - captureStartedAtRef.current >= FORCE_AUTO_COMMIT_MS
+        ) {
+          commitBufferedVoice("auto");
+          return;
+        }
+
         const analyser = analyserRef.current;
         const dataArray = analyserDataRef.current;
         if (!analyser || !dataArray) {
@@ -634,7 +657,6 @@ const AIVoiceCall: React.FC = () => {
         }
 
         const rms = Math.sqrt(sumSquares / dataArray.length);
-        const now = Date.now();
 
         if (rms >= VAD_RMS_THRESHOLD) {
           hasSpeechRef.current = true;
@@ -704,6 +726,9 @@ const AIVoiceCall: React.FC = () => {
           .trim();
 
         pendingAudioBytesRef.current += event.data.size;
+        if (captureStartedAtRef.current === null) {
+          captureStartedAtRef.current = Date.now();
+        }
 
         const chunkBase64 = await base64FromBlob(event.data);
         sendSocketEvent(
