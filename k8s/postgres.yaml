@@ -31,6 +31,11 @@ metadata:
   namespace: schoolproject
 spec:
   replicas: 1
+  # Single-replica PostgreSQL with ReadWriteOnce volume should avoid RollingUpdate surge,
+  # otherwise a second pod can block on multi-attach during updates.
+  strategy:
+    type: Recreate
+  progressDeadlineSeconds: 900
   selector:
     matchLabels:
       app: postgres

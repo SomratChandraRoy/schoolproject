@@ -31,6 +31,11 @@ metadata:
   namespace: schoolproject
 spec:
   replicas: 1
+  # This deployment mounts a ReadWriteOnce PVC; Recreate avoids rollout hangs caused by
+  # surge pods competing for the same volume attachment.
+  strategy:
+    type: Recreate
+  progressDeadlineSeconds: 900
   selector:
     matchLabels:
       app: web

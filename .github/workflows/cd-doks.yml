@@ -98,6 +98,18 @@ jobs:
           BACKEND_ENV_FILE: ${{ secrets.BACKEND_ENV_FILE }}
         run: |
           printf '%s' "$BACKEND_ENV_FILE" > backend.env
+          required_keys=(DB_NAME DB_USER DB_PASSWORD DB_HOST DB_PORT REDIS_URL ALLOWED_HOSTS CORS_ALLOWED_ORIGINS CSRF_TRUSTED_ORIGINS)
+          missing_keys=()
+          for key in "${required_keys[@]}"; do
+            if ! grep -q "^${key}=" backend.env; then
+              missing_keys+=("${key}")
+            fi
+          done
+          if [ "${#missing_keys[@]}" -gt 0 ]; then
+            echo "::error title=Invalid BACKEND_ENV_FILE::Missing required keys: ${missing_keys[*]}"
+            rm -f backend.env
+            exit 1
+          fi
           kubectl -n "${K8S_NAMESPACE}" create secret generic backend-secrets \
             --from-env-file=backend.env \
             --dry-run=client -o yaml | kubectl apply -f -
@@ -105,6 +117,12 @@ jobs:
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -k k8s
+
+      - name: Wait for persistent volumes to bind
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" wait --for=jsonpath='{.status.phase}'=Bound pvc/postgres-data --timeout=300s
+          kubectl -n "${K8S_NAMESPACE}" wait --for=jsonpath='{.status.phase}'=Bound pvc/redis-data --timeout=300s
+          kubectl -n "${K8S_NAMESPACE}" wait --for=jsonpath='{.status.phase}'=Bound pvc/backend-media --timeout=300s
 
       - name: Update deployment images
         run: |
@@ -114,9 +132,51 @@ jobs:
 
       - name: Wait for rollout
         run: |
-          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/postgres --timeout=600s
-          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/redis --timeout=600s
-          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/web --timeout=600s
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/postgres --timeout=900s
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/redis --timeout=900s
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/web --timeout=900s
+
+      - name: Collect Kubernetes diagnostics on failure
+        if: ${{ failure() }}
+        run: |
+          set +e
+          echo "==== Deployments ===="
+          kubectl -n "${K8S_NAMESPACE}" get deployments -o wide
+          echo "==== Pods ===="
+          kubectl -n "${K8S_NAMESPACE}" get pods -o wide
+          echo "==== PVCs ===="
+          kubectl -n "${K8S_NAMESPACE}" get pvc
+          echo "==== Recent events ===="
+          kubectl -n "${K8S_NAMESPACE}" get events --sort-by=.lastTimestamp | tail -n 120
+
+          echo "==== Describe postgres/redis/web deployments ===="
+          kubectl -n "${K8S_NAMESPACE}" describe deployment/postgres
+          kubectl -n "${K8S_NAMESPACE}" describe deployment/redis
+          kubectl -n "${K8S_NAMESPACE}" describe deployment/web
+
+          echo "==== Describe postgres/redis/web pods ===="
+          kubectl -n "${K8S_NAMESPACE}" describe pods -l app=postgres
+          kubectl -n "${K8S_NAMESPACE}" describe pods -l app=redis
+          kubectl -n "${K8S_NAMESPACE}" describe pods -l app=web
+
+          for pod in $(kubectl -n "${K8S_NAMESPACE}" get pods -l app=postgres -o jsonpath='{.items[*].metadata.name}'); do
+            echo "---- Logs: ${pod} ----"
+            kubectl -n "${K8S_NAMESPACE}" logs "${pod}" --tail=200 || true
+            kubectl -n "${K8S_NAMESPACE}" logs "${pod}" --previous --tail=200 || true
+          done
+          for pod in $(kubectl -n "${K8S_NAMESPACE}" get pods -l app=redis -o jsonpath='{.items[*].metadata.name}'); do
+            echo "---- Logs: ${pod} ----"
+            kubectl -n "${K8S_NAMESPACE}" logs "${pod}" --tail=200 || true
+            kubectl -n "${K8S_NAMESPACE}" logs "${pod}" --previous --tail=200 || true
+          done
+          for pod in $(kubectl -n "${K8S_NAMESPACE}" get pods -l app=web -o jsonpath='{.items[*].metadata.name}'); do
+            echo "---- Logs backend: ${pod} ----"
+            kubectl -n "${K8S_NAMESPACE}" logs "${pod}" -c backend --tail=200 || true
+            kubectl -n "${K8S_NAMESPACE}" logs "${pod}" -c backend --previous --tail=200 || true
+            echo "---- Logs nginx: ${pod} ----"
+            kubectl -n "${K8S_NAMESPACE}" logs "${pod}" -c nginx --tail=200 || true
+            kubectl -n "${K8S_NAMESPACE}" logs "${pod}" -c nginx --previous --tail=200 || true
+          done
 
       - name: Decide Sentry release step
         id: sentry_release_flags

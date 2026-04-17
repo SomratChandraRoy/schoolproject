@@ -31,6 +31,11 @@ metadata:
   namespace: schoolproject
 spec:
   replicas: 1
+  # Single-replica Redis with ReadWriteOnce volume should avoid RollingUpdate surge,
+  # otherwise updates can hang while the previous pod still owns the volume.
+  strategy:
+    type: Recreate
+  progressDeadlineSeconds: 900
   selector:
     matchLabels:
       app: redis
