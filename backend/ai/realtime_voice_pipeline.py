@@ -36,6 +36,23 @@ class RealtimeVoiceTutorPipeline:
     DEFAULT_STT_ORDER = ("deepgram", "sarvam")
     DEFAULT_LLM_ORDER = ("alibaba", "groq")
     DEFAULT_TTS_ORDER = ("gemini", "sarvam")
+    SARVAM_ACCEPTED_MIME_TYPES = {
+        "audio/mpeg",
+        "audio/mp3",
+        "audio/mpeg3",
+        "audio/x-mpeg-3",
+        "audio/x-mp3",
+        "audio/wav",
+        "audio/x-wav",
+        "audio/wave",
+        "audio/pcm_s16le",
+        "audio/l16",
+        "audio/raw",
+        "application/octet-stream",
+        "audio/aac",
+        "audio/x-aac",
+        "audio/aiff",
+    }
     _summary_jobs: set[int] = set()
     _summary_jobs_lock = threading.Lock()
 
@@ -171,6 +188,13 @@ class RealtimeVoiceTutorPipeline:
         ]
         return any(token in message for token in retryable_tokens)
 
+    def _normalized_mime_type(self, mime_type: str, *, fallback: str) -> str:
+        raw = str(mime_type or "").strip().lower()
+        if not raw:
+            return fallback
+        # MediaRecorder often sends codec-qualified values like audio/webm;codecs=opus.
+        return raw.split(";", 1)[0].strip() or fallback
+
     def _build_system_prompt(
         self,
         session: VoiceConversationSession,
@@ -243,23 +267,40 @@ class RealtimeVoiceTutorPipeline:
 
     def _transcribe_with_deepgram(self, audio_bytes: bytes, mime_type: str, api_key: str) -> str:
         url = os.getenv("DEEPGRAM_STT_URL", "https://api.deepgram.com/v1/listen")
+        model = os.getenv("DEEPGRAM_STT_MODEL", "general")
         params = {
-            "model": os.getenv("DEEPGRAM_STT_MODEL", "nova-2"),
+            "model": model,
             "language": os.getenv("DEEPGRAM_STT_LANGUAGE", "bn"),
             "smart_format": "true",
             "punctuate": "true",
         }
 
-        response = requests.post(
-            url,
-            params=params,
-            headers={
-                "Authorization": f"Token {api_key}",
-                "Content-Type": mime_type or "audio/webm",
-            },
-            data=audio_bytes,
-            timeout=35,
-        )
+        content_type = self._normalized_mime_type(mime_type, fallback="audio/webm")
+
+        def _post_with_params(active_params: Dict[str, str]):
+            return requests.post(
+                url,
+                params=active_params,
+                headers={
+                    "Authorization": f"Token {api_key}",
+                    "Content-Type": content_type,
+                },
+                data=audio_bytes,
+                timeout=35,
+            )
+
+        response = _post_with_params(params)
+
+        # Deepgram returns a deterministic 400 for unsupported model/language combinations.
+        # Retry once with model=general for Bangla compatibility.
+        if (
+            response.status_code == 400
+            and "No such model/language/tier combination" in response.text
+            and params.get("model") != "general"
+        ):
+            retry_params = dict(params)
+            retry_params["model"] = "general"
+            response = _post_with_params(retry_params)
 
         if response.status_code != 200:
             raise RuntimeError(f"Deepgram STT error: {response.status_code} - {response.text[:300]}")
@@ -282,8 +323,15 @@ class RealtimeVoiceTutorPipeline:
         url = os.getenv("SARVAM_STT_URL", "https://api.sarvam.ai/speech-to-text")
         language_code = os.getenv("SARVAM_STT_LANGUAGE", "bn-IN")
 
+        normalized_mime = self._normalized_mime_type(mime_type, fallback="application/octet-stream")
+        upload_mime = (
+            normalized_mime
+            if normalized_mime in self.SARVAM_ACCEPTED_MIME_TYPES
+            else "application/octet-stream"
+        )
+
         files = {
-            "file": ("voice-input.webm", audio_bytes, mime_type or "audio/webm"),
+            "file": ("voice-input.bin", audio_bytes, upload_mime),
         }
         data = {
             "language_code": language_code,

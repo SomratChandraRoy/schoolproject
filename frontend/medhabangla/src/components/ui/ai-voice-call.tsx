@@ -367,6 +367,8 @@ const AIVoiceCall: React.FC = () => {
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
       },
     });
     mediaStreamRef.current = stream;
@@ -400,12 +402,20 @@ const AIVoiceCall: React.FC = () => {
       }
 
       try {
+        const normalizedMimeType = (
+          event.data.type ||
+          supportedMimeType ||
+          "audio/webm"
+        )
+          .split(";", 1)[0]
+          .trim();
+
         const chunkBase64 = await base64FromBlob(event.data);
         sendSocketEvent(
           {
             type: "audio_chunk",
             chunk_base64: chunkBase64,
-            mime_type: event.data.type || supportedMimeType || "audio/webm",
+            mime_type: normalizedMimeType || "audio/webm",
           },
           { silent: true },
         );
