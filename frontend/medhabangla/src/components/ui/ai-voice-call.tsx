@@ -59,8 +59,8 @@ interface ProviderTrace {
   tts?: string | null;
 }
 
-const VAD_RMS_THRESHOLD = 0.0095;
-const VAD_SILENCE_COMMIT_MS = 1200;
+const VAD_RMS_THRESHOLD = 0.008;
+const VAD_SILENCE_COMMIT_MS = 900;
 const VAD_MAX_TURN_MS = 12000;
 const MIN_AUTO_COMMIT_SPEECH_MS = 220;
 const FORCE_AUTO_COMMIT_MS = 15000;
@@ -68,11 +68,12 @@ const MIN_SPEECH_FRAMES = 2;
 const RECORDER_TIMESLICE_MS = 280;
 const MIN_COMMIT_BLOB_BYTES_COMPRESSED = 120;
 const MIN_COMMIT_BLOB_BYTES_PCM = 640;
-const VAD_DYNAMIC_THRESHOLD_MIN = 0.006;
+const VAD_DYNAMIC_THRESHOLD_MIN = 0.0035;
 const VAD_DYNAMIC_THRESHOLD_MAX = 0.03;
-const VAD_DYNAMIC_MARGIN = 0.0048;
+const VAD_DYNAMIC_MARGIN = 0.0028;
 const VAD_NOISE_FLOOR_ALPHA = 0.08;
 const VAD_NOISE_FLOOR_WARMUP_ALPHA = 0.2;
+const VAD_FORCE_SIGNAL_RMS = 0.0038;
 
 const AIVoiceCall: React.FC = () => {
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ const AIVoiceCall: React.FC = () => {
   const speechStartAtRef = useRef<number | null>(null);
   const speechFramesRef = useRef(0);
   const hasSpeechRef = useRef(false);
+  const turnPeakRmsRef = useRef(0);
   const noiseFloorRmsRef = useRef(VAD_DYNAMIC_THRESHOLD_MIN);
   const dynamicVadThresholdRef = useRef(VAD_RMS_THRESHOLD);
   const isTurnProcessingRef = useRef(false);
@@ -209,6 +211,7 @@ const AIVoiceCall: React.FC = () => {
     speechStartAtRef.current = null;
     speechFramesRef.current = 0;
     hasSpeechRef.current = false;
+    turnPeakRmsRef.current = 0;
     noiseFloorRmsRef.current = VAD_DYNAMIC_THRESHOLD_MIN;
     dynamicVadThresholdRef.current = VAD_RMS_THRESHOLD;
     isTurnProcessingRef.current = false;
@@ -482,6 +485,7 @@ const AIVoiceCall: React.FC = () => {
     pendingAudioBytesRef.current = 0;
     lastRecorderBlobRef.current = null;
     captureStartedAtRef.current = Date.now();
+    turnPeakRmsRef.current = 0;
 
     recorder.ondataavailable = (event) => {
       if (event.data.size <= 0) {
@@ -557,12 +561,19 @@ const AIVoiceCall: React.FC = () => {
       const speechDurationMs = speechStartAtRef.current
         ? Math.max(0, now - speechStartAtRef.current)
         : 0;
+      const inferredMimeType = supportedMimeTypeRef.current || "audio/webm";
+      const minBufferedBytes = minCommitBlobBytesForMime(inferredMimeType);
+      const hasBufferedAudio = pendingAudioBytesRef.current >= minBufferedBytes;
+      const hasSignalEvidence =
+        hasSpeechRef.current || turnPeakRmsRef.current >= VAD_FORCE_SIGNAL_RMS;
 
       if (
         source === "auto" &&
         (!hasSpeechRef.current || speechDurationMs < MIN_AUTO_COMMIT_SPEECH_MS)
       ) {
-        return false;
+        if (!(hasBufferedAudio && hasSignalEvidence)) {
+          return false;
+        }
       }
 
       isTurnProcessingRef.current = true;
@@ -606,6 +617,7 @@ const AIVoiceCall: React.FC = () => {
         speechStartAtRef.current = null;
         speechFramesRef.current = 0;
         hasSpeechRef.current = false;
+        turnPeakRmsRef.current = 0;
         resolveIdleState();
 
         if (mediaStreamRef.current && sessionActiveRef.current) {
@@ -624,6 +636,7 @@ const AIVoiceCall: React.FC = () => {
         console.error("Failed to encode finalized voice blob", error);
         isTurnProcessingRef.current = false;
         recorderChunksRef.current = [];
+        turnPeakRmsRef.current = 0;
         resolveIdleState();
 
         if (mediaStreamRef.current && sessionActiveRef.current) {
@@ -655,6 +668,7 @@ const AIVoiceCall: React.FC = () => {
       speechStartAtRef.current = null;
       speechFramesRef.current = 0;
       hasSpeechRef.current = false;
+      turnPeakRmsRef.current = 0;
 
       if (mediaStreamRef.current && sessionActiveRef.current) {
         startRecorderStreaming(mediaStreamRef.current);
@@ -664,6 +678,7 @@ const AIVoiceCall: React.FC = () => {
     },
     [
       finalizeRecorderForCommit,
+      minCommitBlobBytesForMime,
       resolveIdleState,
       sendSocketEvent,
       startRecorderStreaming,
@@ -810,6 +825,7 @@ const AIVoiceCall: React.FC = () => {
     speechStartAtRef.current = null;
     speechFramesRef.current = 0;
     hasSpeechRef.current = false;
+    turnPeakRmsRef.current = 0;
     noiseFloorRmsRef.current = VAD_DYNAMIC_THRESHOLD_MIN;
     dynamicVadThresholdRef.current = VAD_RMS_THRESHOLD;
 
@@ -866,16 +882,6 @@ const AIVoiceCall: React.FC = () => {
 
         const now = Date.now();
 
-        // Safety net: force a commit for long turns even when VAD misses very low-volume speech.
-        if (
-          hasSpeechRef.current &&
-          captureStartedAtRef.current &&
-          now - captureStartedAtRef.current >= FORCE_AUTO_COMMIT_MS
-        ) {
-          void commitBufferedVoice("auto");
-          return;
-        }
-
         const analyser = analyserRef.current;
         const dataArray = analyserDataRef.current;
         if (!analyser || !dataArray) {
@@ -890,10 +896,30 @@ const AIVoiceCall: React.FC = () => {
         }
 
         const rms = Math.sqrt(sumSquares / dataArray.length);
+        turnPeakRmsRef.current = Math.max(turnPeakRmsRef.current, rms);
         const currentThreshold = Math.max(
           VAD_DYNAMIC_THRESHOLD_MIN,
           dynamicVadThresholdRef.current,
         );
+
+        // Safety net: if the turn runs too long, commit once enough audio and voice signal are captured.
+        if (captureStartedAtRef.current) {
+          const turnAgeMs = now - captureStartedAtRef.current;
+          if (turnAgeMs >= FORCE_AUTO_COMMIT_MS) {
+            const minBufferedBytes = minCommitBlobBytesForMime(
+              supportedMimeTypeRef.current || "audio/webm",
+            );
+            const hasBufferedAudio =
+              pendingAudioBytesRef.current >= minBufferedBytes;
+            const hasSignalEvidence =
+              hasSpeechRef.current || turnPeakRmsRef.current >= VAD_FORCE_SIGNAL_RMS;
+
+            if (hasBufferedAudio && hasSignalEvidence) {
+              void commitBufferedVoice("auto");
+              return;
+            }
+          }
+        }
 
         // Adapt threshold based on ambient floor so quieter microphones are still detected.
         if (rms < currentThreshold) {
@@ -972,7 +998,7 @@ const AIVoiceCall: React.FC = () => {
     stream.getAudioTracks().forEach((track) => {
       track.enabled = !micMutedRef.current;
     });
-  }, [commitBufferedVoice, startRecorderStreaming]);
+  }, [commitBufferedVoice, minCommitBlobBytesForMime, startRecorderStreaming]);
 
   const startSession = useCallback(async () => {
     const token = getAuthToken();
