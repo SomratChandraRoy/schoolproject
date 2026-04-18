@@ -160,6 +160,62 @@ jobs:
           kubectl -n "${K8S_NAMESPACE}" set image deployment/web nginx="${{ steps.vars.outputs.nginx_image }}"
           kubectl -n "${K8S_NAMESPACE}" set env deployment/web SENTRY_RELEASE="${{ steps.vars.outputs.short_sha }}" --containers=backend
 
+      - name: Reconcile PostgreSQL credentials with backend secret
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/postgres --timeout=900s
+
+          DB_NAME="$(kubectl -n "${K8S_NAMESPACE}" get secret backend-secrets -o jsonpath='{.data.DB_NAME}' | base64 -d)"
+          DB_USER="$(kubectl -n "${K8S_NAMESPACE}" get secret backend-secrets -o jsonpath='{.data.DB_USER}' | base64 -d)"
+          DB_PASSWORD="$(kubectl -n "${K8S_NAMESPACE}" get secret backend-secrets -o jsonpath='{.data.DB_PASSWORD}' | base64 -d)"
+
+          if [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ]; then
+            echo "::error title=Invalid backend-secrets::DB_NAME/DB_USER/DB_PASSWORD must be non-empty"
+            exit 1
+          fi
+
+          escape_sql_literal() {
+            printf '%s' "$1" | sed "s/'/''/g"
+          }
+
+          DB_NAME_SQL="$(escape_sql_literal "$DB_NAME")"
+          DB_USER_SQL="$(escape_sql_literal "$DB_USER")"
+          DB_PASSWORD_SQL="$(escape_sql_literal "$DB_PASSWORD")"
+
+          POSTGRES_POD="$(kubectl -n "${K8S_NAMESPACE}" get pods -l app=postgres -o jsonpath='{.items[0].metadata.name}')"
+          if [ -z "$POSTGRES_POD" ]; then
+            echo "::error title=Postgres pod not found::Unable to locate app=postgres pod"
+            exit 1
+          fi
+
+          cat > reconcile-postgres.sql <<EOF
+DO \$do\$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${DB_USER_SQL}') THEN
+    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', '${DB_USER_SQL}', '${DB_PASSWORD_SQL}');
+  ELSE
+    EXECUTE format('ALTER ROLE %I WITH LOGIN PASSWORD %L', '${DB_USER_SQL}', '${DB_PASSWORD_SQL}');
+  END IF;
+END
+\$do\$;
+
+DO \$do\$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_database WHERE datname = '${DB_NAME_SQL}') THEN
+    EXECUTE format('CREATE DATABASE %I OWNER %I', '${DB_NAME_SQL}', '${DB_USER_SQL}');
+  END IF;
+END
+\$do\$;
+
+DO \$do\$
+BEGIN
+  EXECUTE format('GRANT ALL PRIVILEGES ON DATABASE %I TO %I', '${DB_NAME_SQL}', '${DB_USER_SQL}');
+END
+\$do\$;
+EOF
+
+          kubectl -n "${K8S_NAMESPACE}" exec -i "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f - < reconcile-postgres.sql
+          rm -f reconcile-postgres.sql
+
       - name: Wait for rollout
         run: |
           kubectl -n "${K8S_NAMESPACE}" rollout status deployment/postgres --timeout=900s
@@ -174,6 +230,8 @@ jobs:
           kubectl -n "${K8S_NAMESPACE}" get deployments -o wide
           echo "==== Pods ===="
           kubectl -n "${K8S_NAMESPACE}" get pods -o wide
+          echo "==== Web pod state reasons (quick root cause) ===="
+          kubectl -n "${K8S_NAMESPACE}" get pods -l app=web -o jsonpath='{range .items[*]}POD: {.metadata.name}{"\n"}{range .status.initContainerStatuses[*]}  INIT {.name}: {.state.waiting.reason}{" "}{.state.waiting.message}{"\n"}{end}{range .status.containerStatuses[*]}  CONTAINER {.name}: {.state.waiting.reason}{" "}{.state.waiting.message}{"\n"}{end}{"\n"}{end}'
           echo "==== PVCs ===="
           kubectl -n "${K8S_NAMESPACE}" get pvc
           echo "==== Recent events ===="
