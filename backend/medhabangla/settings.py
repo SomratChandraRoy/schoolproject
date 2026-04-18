@@ -42,6 +42,14 @@ def env_float(name: str, default: float = 0.0) -> float:
         return default
 
 
+def env_int(name: str, default: int = 0) -> int:
+    value = os.getenv(name, str(default)).strip()
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def env_csv(name: str, default: str = '') -> list[str]:
     return [item.strip() for item in os.getenv(name, default).split(',') if item.strip()]
 
@@ -184,12 +192,12 @@ else:
 
     if use_postgres:
         db_options = {
-            'connect_timeout': int(os.getenv('DB_CONNECT_TIMEOUT', '10')),
+            'connect_timeout': env_int('DB_CONNECT_TIMEOUT', 10),
             'options': os.getenv('DB_OPTIONS', '-c statement_timeout=30000'),
-            'keepalives': int(os.getenv('DB_KEEPALIVES', '1')),
-            'keepalives_idle': int(os.getenv('DB_KEEPALIVES_IDLE', '30')),
-            'keepalives_interval': int(os.getenv('DB_KEEPALIVES_INTERVAL', '10')),
-            'keepalives_count': int(os.getenv('DB_KEEPALIVES_COUNT', '5')),
+            'keepalives': env_int('DB_KEEPALIVES', 1),
+            'keepalives_idle': env_int('DB_KEEPALIVES_IDLE', 30),
+            'keepalives_interval': env_int('DB_KEEPALIVES_INTERVAL', 10),
+            'keepalives_count': env_int('DB_KEEPALIVES_COUNT', 5),
         }
 
         db_sslmode = os.getenv('DB_SSLMODE', 'prefer').strip()
@@ -210,7 +218,7 @@ else:
                 'HOST': os.getenv('DB_HOST', 'db'),
                 'PORT': os.getenv('DB_PORT', '5432'),
                 'OPTIONS': db_options,
-                'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '300')),
+                'CONN_MAX_AGE': env_int('DB_CONN_MAX_AGE', 300),
                 'CONN_HEALTH_CHECKS': True,
                 'ATOMIC_REQUESTS': env_bool('DB_ATOMIC_REQUESTS', False),
             }
@@ -239,7 +247,7 @@ if not DEBUG:
     SESSION_COOKIE_SAMESITE = 'Lax'
     CSRF_COOKIE_SAMESITE = 'Lax'
 
-    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_SECONDS = env_int('SECURE_HSTS_SECONDS', 31536000)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', True)
     SECURE_HSTS_PRELOAD = env_bool('SECURE_HSTS_PRELOAD', True)
 
@@ -297,7 +305,7 @@ JAAS_DOMAIN = os.getenv('JAAS_DOMAIN', '8x8.vc').strip() or '8x8.vc'
 JAAS_APP_ID = os.getenv('JAAS_APP_ID', '').strip()
 JAAS_KID = os.getenv('JAAS_KID', '').strip()
 JAAS_PRIVATE_KEY = os.getenv('JAAS_PRIVATE_KEY', '').replace('\\n', '\n').strip()
-JAAS_JWT_TTL_SECONDS = int(os.getenv('JAAS_JWT_TTL_SECONDS', '3600'))
+JAAS_JWT_TTL_SECONDS = env_int('JAAS_JWT_TTL_SECONDS', 3600)
 JAAS_REQUIRE_AUTH_TOKEN = env_bool('JAAS_REQUIRE_AUTH_TOKEN', False)
 
 # Password validation
@@ -342,8 +350,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Upload limits (aligned with nginx to avoid 413/RequestDataTooBig on large PDF uploads)
-DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', str(250 * 1024 * 1024)))
-FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', str(25 * 1024 * 1024)))
+DATA_UPLOAD_MAX_MEMORY_SIZE = env_int('DATA_UPLOAD_MAX_MEMORY_SIZE', 250 * 1024 * 1024)
+FILE_UPLOAD_MAX_MEMORY_SIZE = env_int('FILE_UPLOAD_MAX_MEMORY_SIZE', 25 * 1024 * 1024)
 
 # Google Drive Configuration for Chat File Storage
 USE_GOOGLE_DRIVE = env_bool('USE_GOOGLE_DRIVE', False)
