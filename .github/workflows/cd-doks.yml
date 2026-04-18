@@ -98,7 +98,7 @@ jobs:
           BACKEND_ENV_FILE: ${{ secrets.BACKEND_ENV_FILE }}
         run: |
           printf '%s' "$BACKEND_ENV_FILE" > backend.env
-          required_keys=(DB_NAME DB_USER DB_PASSWORD DB_HOST DB_PORT REDIS_URL ALLOWED_HOSTS CORS_ALLOWED_ORIGINS CSRF_TRUSTED_ORIGINS)
+          required_keys=(DJANGO_SECRET_KEY DB_NAME DB_USER DB_PASSWORD ALLOWED_HOSTS CORS_ALLOWED_ORIGINS CSRF_TRUSTED_ORIGINS)
           missing_keys=()
           for key in "${required_keys[@]}"; do
             if ! grep -q "^${key}=" backend.env; then
@@ -110,7 +110,7 @@ jobs:
             rm -f backend.env
             exit 1
           fi
-          non_empty_keys=(DB_NAME DB_USER DB_PASSWORD DB_HOST REDIS_URL ALLOWED_HOSTS CORS_ALLOWED_ORIGINS CSRF_TRUSTED_ORIGINS)
+          non_empty_keys=(DJANGO_SECRET_KEY DB_NAME DB_USER DB_PASSWORD ALLOWED_HOSTS CORS_ALLOWED_ORIGINS CSRF_TRUSTED_ORIGINS)
           empty_keys=()
           for key in "${non_empty_keys[@]}"; do
             value="$(grep -m1 "^${key}=" backend.env | cut -d '=' -f2-)"
@@ -123,10 +123,27 @@ jobs:
             rm -f backend.env
             exit 1
           fi
+
+          # Force in-cluster service connectivity from ConfigMap to avoid secret overrides
+          # pointing the app to an external/unreachable DB/Redis endpoint.
+          if grep -q '^DB_HOST=' backend.env; then
+            echo "::warning title=BACKEND_ENV_FILE notice::DB_HOST found in BACKEND_ENV_FILE; in-cluster ConfigMap value (postgres) will be used."
+          fi
+          if grep -q '^DB_PORT=' backend.env; then
+            echo "::warning title=BACKEND_ENV_FILE notice::DB_PORT found in BACKEND_ENV_FILE; in-cluster ConfigMap value (5432) will be used."
+          fi
+          if grep -q '^DB_SSLMODE=' backend.env; then
+            echo "::warning title=BACKEND_ENV_FILE notice::DB_SSLMODE found in BACKEND_ENV_FILE; in-cluster ConfigMap value (prefer) will be used."
+          fi
+          if grep -q '^REDIS_URL=' backend.env; then
+            echo "::warning title=BACKEND_ENV_FILE notice::REDIS_URL found in BACKEND_ENV_FILE; in-cluster ConfigMap value will be used."
+          fi
+
+          grep -Ev '^(DB_HOST|DB_PORT|DB_SSLMODE|DB_SSLROOTCERT|REDIS_URL)=' backend.env > backend.secret.env
           kubectl -n "${K8S_NAMESPACE}" create secret generic backend-secrets \
-            --from-env-file=backend.env \
+            --from-env-file=backend.secret.env \
             --dry-run=client -o yaml | kubectl apply -f -
-          rm -f backend.env
+          rm -f backend.env backend.secret.env
 
       - name: Apply Kubernetes manifests
         run: kubectl apply -k k8s
