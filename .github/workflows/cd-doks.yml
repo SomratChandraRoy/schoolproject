@@ -177,9 +177,15 @@ jobs:
             printf '%s' "$1" | sed "s/'/''/g"
           }
 
+          escape_sql_identifier() {
+            printf '%s' "$1" | sed 's/"/""/g'
+          }
+
           DB_NAME_SQL="$(escape_sql_literal "$DB_NAME")"
           DB_USER_SQL="$(escape_sql_literal "$DB_USER")"
           DB_PASSWORD_SQL="$(escape_sql_literal "$DB_PASSWORD")"
+          DB_NAME_IDENT="$(escape_sql_identifier "$DB_NAME")"
+          DB_USER_IDENT="$(escape_sql_identifier "$DB_USER")"
 
           POSTGRES_POD="$(kubectl -n "${K8S_NAMESPACE}" get pods -l app=postgres -o jsonpath='{.items[0].metadata.name}')"
           if [ -z "$POSTGRES_POD" ]; then
@@ -187,9 +193,29 @@ jobs:
             exit 1
           fi
 
-          kubectl -n "${K8S_NAMESPACE}" exec "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "DO \$do\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${DB_USER_SQL}') THEN EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', '${DB_USER_SQL}', '${DB_PASSWORD_SQL}'); ELSE EXECUTE format('ALTER ROLE %I WITH LOGIN PASSWORD %L', '${DB_USER_SQL}', '${DB_PASSWORD_SQL}'); END IF; END \$do\$;"
-          kubectl -n "${K8S_NAMESPACE}" exec "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "DO \$do\$ BEGIN IF NOT EXISTS (SELECT FROM pg_database WHERE datname = '${DB_NAME_SQL}') THEN EXECUTE format('CREATE DATABASE %I OWNER %I', '${DB_NAME_SQL}', '${DB_USER_SQL}'); END IF; END \$do\$;"
-          kubectl -n "${K8S_NAMESPACE}" exec "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "DO \$do\$ BEGIN EXECUTE format('GRANT ALL PRIVILEGES ON DATABASE %I TO %I', '${DB_NAME_SQL}', '${DB_USER_SQL}'); END \$do\$;"
+          ADMIN_USER=""
+          for candidate in "$DB_USER" postgres; do
+            if kubectl -n "${K8S_NAMESPACE}" exec "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U "$candidate" -d postgres -c "SELECT 1;" >/dev/null 2>&1; then
+              ADMIN_USER="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$ADMIN_USER" ]; then
+            echo "::error title=PostgreSQL admin role not reachable::Tried DB_USER and postgres; unable to authenticate into postgres database"
+            exit 1
+          fi
+
+          echo "Using PostgreSQL admin role: ${ADMIN_USER}"
+
+          kubectl -n "${K8S_NAMESPACE}" exec "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U "$ADMIN_USER" -d postgres -c "DO \$do\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${DB_USER_SQL}') THEN EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', '${DB_USER_SQL}', '${DB_PASSWORD_SQL}'); ELSE EXECUTE format('ALTER ROLE %I WITH LOGIN PASSWORD %L', '${DB_USER_SQL}', '${DB_PASSWORD_SQL}'); END IF; END \$do\$;"
+
+          DB_EXISTS="$(kubectl -n "${K8S_NAMESPACE}" exec "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U "$ADMIN_USER" -d postgres -tA -c "SELECT 1 FROM pg_database WHERE datname = '${DB_NAME_SQL}' LIMIT 1;")"
+          if [ "$DB_EXISTS" != "1" ]; then
+            kubectl -n "${K8S_NAMESPACE}" exec "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U "$ADMIN_USER" -d postgres -c "CREATE DATABASE \"${DB_NAME_IDENT}\" OWNER \"${DB_USER_IDENT}\";"
+          fi
+
+          kubectl -n "${K8S_NAMESPACE}" exec "$POSTGRES_POD" -- psql -v ON_ERROR_STOP=1 -U "$ADMIN_USER" -d postgres -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_NAME_IDENT}\" TO \"${DB_USER_IDENT}\";"
 
       - name: Wait for rollout
         run: |
