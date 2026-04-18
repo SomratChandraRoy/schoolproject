@@ -195,7 +195,7 @@ jobs:
         run: |
           kubectl -n "${K8S_NAMESPACE}" rollout status deployment/postgres --timeout=900s
           kubectl -n "${K8S_NAMESPACE}" rollout status deployment/redis --timeout=900s
-          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/web --timeout=900s
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/web --timeout=1800s
 
       - name: Collect Kubernetes diagnostics on failure
         if: ${{ failure() }}

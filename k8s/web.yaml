@@ -35,7 +35,7 @@ spec:
   # surge pods competing for the same volume attachment.
   strategy:
     type: Recreate
-  progressDeadlineSeconds: 900
+  progressDeadlineSeconds: 1800
   selector:
     matchLabels:
       app: web
@@ -81,7 +81,7 @@ spec:
               port: 8000
             # Backend startup runs migrations + collectstatic before opening port 8000.
             # Allow longer warm-up to avoid premature restart loops.
-            failureThreshold: 180
+            failureThreshold: 360
             periodSeconds: 5
           readinessProbe:
             tcpSocket:
